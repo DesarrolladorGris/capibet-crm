@@ -130,7 +130,7 @@ class SupabaseService {
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Error desconocido',
-        details: error
+        details: error instanceof Error ? error.message : String(error)
       };
     }
   }
@@ -165,7 +165,7 @@ class SupabaseService {
       return {
         success: false,
         error: 'Error al verificar el email',
-        details: error
+        details: error instanceof Error ? error.message : String(error)
       };
     }
   }
@@ -224,7 +224,7 @@ class SupabaseService {
       return {
         success: false,
         error: 'Error de conexión. Verifica tu internet e inténtalo de nuevo.',
-        details: error
+        details: error instanceof Error ? error.message : String(error)
       };
     }
   }
@@ -256,7 +256,7 @@ class SupabaseService {
       return {
         success: false,
         error: 'Error de conexión al obtener usuarios',
-        details: error
+        details: error instanceof Error ? error.message : String(error)
       };
     }
   }

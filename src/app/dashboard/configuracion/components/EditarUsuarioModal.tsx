@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import Image from 'next/image';
-import { supabaseService, UsuarioResponse } from '@/services/supabaseService';
+import { supabaseService, UsuarioResponse, UsuarioData } from '@/services/supabaseService';
 
 interface EditarUsuarioModalProps {
   isOpen: boolean;
@@ -38,7 +38,7 @@ export default function EditarUsuarioModal({ isOpen, onClose, onUserUpdated, usu
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Países de América del Norte y del Sur
-  const americanCountries = [
+  const americanCountries = useMemo(() => [
     { code: '+1', country: 'United States', countryCode: 'us', flag: 'https://flagcdn.com/w20/us.png' },
     { code: '+1', country: 'Canada', countryCode: 'ca', flag: 'https://flagcdn.com/w20/ca.png' },
     { code: '+52', country: 'Mexico', countryCode: 'mx', flag: 'https://flagcdn.com/w20/mx.png' },
@@ -67,7 +67,7 @@ export default function EditarUsuarioModal({ isOpen, onClose, onUserUpdated, usu
     { code: '+1', country: 'Trinidad and Tobago', countryCode: 'tt', flag: 'https://flagcdn.com/w20/tt.png' },
     { code: '+1', country: 'Barbados', countryCode: 'bb', flag: 'https://flagcdn.com/w20/bb.png' },
     { code: '+1', country: 'Bahamas', countryCode: 'bs', flag: 'https://flagcdn.com/w20/bs.png' }
-  ];
+  ], []);
 
   // Cargar datos del usuario cuando se abre el modal
   useEffect(() => {
