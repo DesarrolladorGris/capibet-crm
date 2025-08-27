@@ -11,7 +11,7 @@ interface HeaderProps {
   onMenuToggle: () => void;
 }
 
-export default function Header({ userEmail, userName, userRole, agencyName, onLogout, onMenuToggle }: HeaderProps) {
+export default function Header({ userEmail, userName, userRole, onLogout, onMenuToggle }: HeaderProps) {
   const [showUserMenu, setShowUserMenu] = useState(false);
 
   return (

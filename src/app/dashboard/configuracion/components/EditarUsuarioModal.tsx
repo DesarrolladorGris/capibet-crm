@@ -94,7 +94,7 @@ export default function EditarUsuarioModal({ isOpen, onClose, onUserUpdated, usu
       setSuccess('');
       setIsLoading(false);
     }
-  }, [isOpen, usuario]);
+  }, [isOpen, usuario, americanCountries]);
 
   // Cerrar dropdown al hacer clic fuera
   useEffect(() => {
@@ -177,7 +177,7 @@ export default function EditarUsuarioModal({ isOpen, onClose, onUserUpdated, usu
       }
       
       // Preparar los datos para actualizar
-      const dataToUpdate: any = {
+      const dataToUpdate: Partial<UsuarioData> = {
         nombre_agencia: formData.agencyName,
         tipo_empresa: formData.companyType,
         nombre_usuario: formData.name,

@@ -27,7 +27,7 @@ export default function EspaciosTrabajoTab() {
     }
   ]);
 
-  const [selectedWorkspace, setSelectedWorkspace] = useState('ventas');
+  // const [selectedWorkspace, setSelectedWorkspace] = useState('ventas');
 
   return (
     <div className="p-6">

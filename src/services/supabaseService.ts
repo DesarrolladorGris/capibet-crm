@@ -32,11 +32,11 @@ export interface UsuarioResponse {
   created_at?: string;
 }
 
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
   success: boolean;
   data?: T;
   error?: string;
-  details?: any;
+  details?: string;
 }
 
 class SupabaseService {
@@ -48,7 +48,7 @@ class SupabaseService {
     };
   }
 
-  private async handleResponse(response: Response): Promise<any> {
+  private async handleResponse(response: Response): Promise<Record<string, unknown> | null> {
     // Manejar respuesta JSON de forma segura
     let data = null;
     const contentType = response.headers.get('content-type');
@@ -58,7 +58,7 @@ class SupabaseService {
       if (responseText) {
         try {
           data = JSON.parse(responseText);
-        } catch (parseError) {
+        } catch {
           data = { message: 'Operation completed successfully' };
         }
       } else {
@@ -264,7 +264,7 @@ class SupabaseService {
   /**
    * Actualiza un usuario existente
    */
-  async updateUsuario(id: number, userData: Partial<UsuarioData>): Promise<ApiResponse<any>> {
+  async updateUsuario(id: number, userData: Partial<UsuarioData>): Promise<ApiResponse<Record<string, unknown>>> {
     try {
       // Construir el payload solo con los campos que se van a actualizar
       const updatePayload: Partial<UsuarioData> = {
@@ -315,7 +315,7 @@ class SupabaseService {
   /**
    * Activa o desactiva un usuario
    */
-  async toggleUsuarioStatus(id: number, activo: boolean): Promise<ApiResponse<any>> {
+  async toggleUsuarioStatus(id: number, activo: boolean): Promise<ApiResponse<Record<string, unknown>>> {
     try {
       const updatePayload = {
         activo: activo
