@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -18,12 +19,42 @@ const menuItems = [
   { id: 'sales', icon: '🛒', label: 'Ventas', active: false },
   { id: 'bulk-sends', icon: '📤', label: 'Envíos masivos', active: false },
   { id: 'config', icon: '⚙️', label: 'Configuración', active: false },
-  { id: 'academy', icon: '🎓', label: 'Beast Academy', active: false },
-  { id: 'plans', icon: '💎', label: 'Planes', active: false },
 ];
 
 export default function Sidebar({ isOpen, onToggle }: SidebarProps) {
   const [activeItem, setActiveItem] = useState('funnels');
+  const router = useRouter();
+  const pathname = usePathname();
+
+  // Actualizar item activo basado en la ruta actual
+  useEffect(() => {
+    if (pathname === '/dashboard') {
+      setActiveItem('dashboard');
+    } else if (pathname === '/dashboard/configuracion') {
+      setActiveItem('config');
+    } else {
+      // Por defecto funnels para otras rutas del dashboard
+      setActiveItem('funnels');
+    }
+  }, [pathname]);
+
+  const handleItemClick = (itemId: string) => {
+    setActiveItem(itemId);
+    
+    // Navegar a diferentes páginas según el item
+    switch (itemId) {
+      case 'dashboard':
+        router.push('/dashboard');
+        break;
+      case 'config':
+        router.push('/dashboard/configuracion');
+        break;
+      // Agregar más rutas según sea necesario
+      default:
+        // Por ahora mantener en dashboard para otros items
+        break;
+    }
+  };
 
   return (
     <div className={`bg-[#1a1d23] border-r border-[#3a3d45] transition-all duration-300 ${isOpen ? 'w-64' : 'w-16'}`}>
@@ -51,7 +82,7 @@ export default function Sidebar({ isOpen, onToggle }: SidebarProps) {
         {menuItems.map((item) => (
           <button
             key={item.id}
-            onClick={() => setActiveItem(item.id)}
+            onClick={() => handleItemClick(item.id)}
             className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-left transition-colors duration-200 mb-1 ${
               activeItem === item.id
                 ? 'bg-[#00b894] text-white'
