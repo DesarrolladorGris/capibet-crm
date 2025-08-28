@@ -8,5 +8,6 @@ export const supabaseConfig = {
 
 // API Endpoints
 export const apiEndpoints = {
-  usuarios: `${supabaseConfig.restUrl}/usuarios`
+  usuarios: `${supabaseConfig.restUrl}/usuarios`,
+  contactos: `${supabaseConfig.restUrl}/contactos`
 };

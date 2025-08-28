@@ -127,56 +127,52 @@ export default function ConfiguracionPage() {
     );
   }
 
-  const ActiveTabComponent = tabs.find(tab => tab.id === activeTab)?.component || EspaciosTrabajoTab;
-
   return (
-    <DashboardLayout 
-      userEmail={userEmail} 
-      userName={userName}
-      userRole={userRole}
-      agencyName={agencyName}
-      onLogout={handleLogout}
-    >
-      <div className="flex-1 flex flex-col">
-        {/* Header de Configuración */}
-        <div className="bg-[#1a1d23] border-b border-[#3a3d45] px-6 py-4">
-          <div className="flex items-center space-x-3">
-            <span className="text-white text-xl font-semibold">Configuración</span>
+    <div className="flex-1 flex flex-col">
+      {/* Header de Configuración */}
+      <div className="bg-[#1a1d23] border-b border-[#3a3d45] px-6 py-4">
+        <div className="flex items-center justify-between">
+          {/* Left Section */}
+          <div className="flex items-center space-x-4">
+            {/* Page Title */}
+            <h1 className="text-white font-semibold text-2xl">Configuración</h1>
           </div>
-        </div>
-
-        {/* Pestañas */}
-        <div className="bg-[#1a1d23] border-b border-[#3a3d45] px-6">
-          <div className="flex space-x-8 overflow-x-auto">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center space-x-2 py-4 px-2 border-b-2 transition-colors whitespace-nowrap ${
-                  activeTab === tab.id
-                    ? 'border-[#00b894] text-[#00b894]'
-                    : 'border-transparent text-gray-400 hover:text-white'
-                }`}
-              >
-                <span className="text-sm">{tab.icon}</span>
-                <span className="text-sm font-medium">{tab.label}</span>
-                {tab.count !== undefined && (
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                    activeTab === tab.id ? 'bg-[#00b894] text-white' : 'bg-gray-600 text-gray-300'
-                  }`}>
-                    {tab.count}
-                  </span>
-                )}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Contenido de la pestaña activa */}
-        <div className="flex-1 bg-[#1a1d23]">
-          <ActiveTabComponent />
         </div>
       </div>
-    </DashboardLayout>
+
+      {/* Tabs */}
+      <div className="bg-[#1a1d23] border-b border-[#3a3d45] px-6">
+        <div className="flex space-x-6">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex items-center space-x-2 py-4 px-2 border-b-2 transition-colors ${
+                activeTab === tab.id
+                  ? 'border-[#00b894] text-[#00b894]'
+                  : 'border-transparent text-gray-400 hover:text-white'
+              }`}
+            >
+              <span className="text-sm">{tab.icon}</span>
+              <span className="text-sm font-medium">{tab.label}</span>
+              {tab.count !== undefined && (
+                <span className="bg-[#2a2d35] text-gray-400 text-xs px-2 py-1 rounded-full">
+                  {tab.count}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="flex-1 bg-[#1a1d23] p-6">
+        {/* Renderizar el componente de la pestaña activa */}
+        {(() => {
+          const ActiveTabComponent = tabs.find(tab => tab.id === activeTab)?.component;
+          return ActiveTabComponent ? <ActiveTabComponent /> : null;
+        })()}
+      </div>
+    </div>
   );
 }

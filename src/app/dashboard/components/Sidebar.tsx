@@ -30,8 +30,12 @@ export default function Sidebar({ isOpen, onToggle }: SidebarProps) {
   useEffect(() => {
     if (pathname === '/dashboard') {
       setActiveItem('dashboard');
+    } else if (pathname === '/dashboard/contactos') {
+      setActiveItem('contacts');
     } else if (pathname === '/dashboard/configuracion') {
       setActiveItem('config');
+    } else if (pathname === '/dashboard/chat-interno') {
+      setActiveItem('internal-chat');
     } else {
       // Por defecto funnels para otras rutas del dashboard
       setActiveItem('funnels');
@@ -46,8 +50,14 @@ export default function Sidebar({ isOpen, onToggle }: SidebarProps) {
       case 'dashboard':
         router.push('/dashboard');
         break;
+      case 'contacts':
+        router.push('/dashboard/contactos');
+        break;
       case 'config':
         router.push('/dashboard/configuracion');
+        break;
+      case 'internal-chat':
+        router.push('/dashboard/chat-interno');
         break;
       // Agregar más rutas según sea necesario
       default:
