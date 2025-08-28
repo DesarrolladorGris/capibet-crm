@@ -6,6 +6,7 @@ import DashboardLayout from '../components/DashboardLayout';
 import EspaciosTrabajoTab from './components/EspaciosTrabajoTab';
 import UsuariosTab from './components/UsuariosTab';
 import EtiquetasTab from './components/EtiquetasTab';
+import RespuestasRapidasTab from './components/RespuestasRapidasTab';
 import { supabaseService } from '@/services/supabaseService';
 
 // Tipos para las pestañas
@@ -17,7 +18,7 @@ interface TabConfig {
   component: React.ComponentType;
 }
 
-// Componentes de cada pestaña (temporales, los crearemos después)
+// Componentes temporales
 const PersonalizarTab = () => (
   <div className="p-6">
     <h3 className="text-white text-lg font-medium mb-4">Personalizar</h3>
@@ -25,23 +26,10 @@ const PersonalizarTab = () => (
   </div>
 );
 
-
-
 const SesionesTab = () => (
   <div className="p-6">
     <h3 className="text-white text-lg font-medium mb-4">Sesiones</h3>
     <p className="text-gray-400">Gestión de sesiones activas del sistema.</p>
-  </div>
-);
-
-
-
-
-
-const RespuestasRapidasTab = () => (
-  <div className="p-6">
-    <h3 className="text-white text-lg font-medium mb-4">Respuestas rápidas</h3>
-    <p className="text-gray-400">Configurar respuestas automáticas y plantillas.</p>
   </div>
 );
 
@@ -59,9 +47,9 @@ export default function ConfiguracionPage() {
     { id: 'personalizar', label: 'Personalizar', icon: '⚙️', component: PersonalizarTab },
     { id: 'espacios-trabajo', label: 'Espacios de trabajo', icon: '🏢', count: 1, component: EspaciosTrabajoTab },
     { id: 'sesiones', label: 'Sesiones', icon: '🔄', count: 0, component: SesionesTab },
-    { id: 'etiquetas', label: 'Etiquetas', icon: '🏷️', count: 3, component: EtiquetasTab },
+    { id: 'etiquetas', label: 'Etiquetas', icon: '🏷️', count: 4, component: EtiquetasTab },
     { id: 'usuarios', label: 'Usuarios', icon: '👥', count: userCount, component: UsuariosTab },
-    { id: 'respuestas-rapidas', label: 'Respuestas rápidas', icon: '⚡', count: 0, component: RespuestasRapidasTab },
+    { id: 'respuestas-rapidas', label: 'Respuestas rápidas', icon: '💬', count: 4, component: RespuestasRapidasTab },
   ];
 
   useEffect(() => {

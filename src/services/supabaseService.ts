@@ -13,16 +13,6 @@ export interface UsuarioData {
   activo?: boolean;
 }
 
-// Tipos para las etiquetas
-export interface Etiqueta {
-  id?: number;
-  nombre: string;
-  color: string;
-  descripcion?: string;
-  activa: boolean;
-  created_at?: string;
-}
-
 export interface LoginCredentials {
   correo_electronico: string;
   contrasena: string;
@@ -47,6 +37,30 @@ export interface ApiResponse<T = unknown> {
   data?: T;
   error?: string;
   details?: string;
+}
+
+export interface Etiqueta {
+  id?: number;
+  nombre: string;
+  color: string;
+  descripcion?: string;
+  activa: boolean;
+  created_at?: string;
+}
+
+export interface RespuestaRapida {
+  id?: number;
+  titulo: string;
+  contenido: string;
+  categoria: string;
+  activa: boolean;
+  created_at?: string;
+}
+
+export interface RespuestaRapidaFormData {
+  titulo: string;
+  contenido: string;
+  categoria: string;
 }
 
 class SupabaseService {
@@ -360,181 +374,99 @@ class SupabaseService {
     }
   }
 
-  // ==================== SERVICIOS DE ETIQUETAS ====================
-
-  /**
-   * Obtiene todas las etiquetas
-   */
-  async getAllEtiquetas(): Promise<ApiResponse<Etiqueta[]>> {
+  // Métodos para Respuestas Rápidas
+  async getAllRespuestasRapidas(): Promise<ApiResponse<RespuestaRapida[]>> {
     try {
-      const response = await fetch(`${apiEndpoints.etiquetas}?order=created_at.desc`, {
-        method: 'GET',
+      const response = await fetch(`${apiEndpoints.respuestasRapidas}?order=created_at.desc`, {
         headers: this.getHeaders(),
       });
-
-      if (!response.ok) {
-        const errorData = await response.text();
-        return {
-          success: false,
-          error: `Error del servidor: ${response.status} ${response.statusText}`,
-          details: errorData
-        };
-      }
-
-      const data = await response.json();
       
-      return {
-        success: true,
-        data: data || []
-      };
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+      
+      const data = await this.handleResponse(response);
+      return { success: true, data: Array.isArray(data) ? data : [] };
     } catch (error) {
-      return {
-        success: false,
-        error: 'Error de conexión al obtener etiquetas',
-        details: error instanceof Error ? error.message : String(error)
-      };
+      console.error('Error al obtener respuestas rápidas:', error);
+      return { success: false, error: error instanceof Error ? error.message : 'Error desconocido' };
     }
   }
 
-  /**
-   * Obtiene una etiqueta por ID
-   */
-  async getEtiquetaById(id: number): Promise<ApiResponse<Etiqueta>> {
+  async getRespuestaRapidaById(id: number): Promise<ApiResponse<RespuestaRapida>> {
     try {
-      const response = await fetch(`${apiEndpoints.etiquetas}?id=eq.${id}`, {
-        method: 'GET',
+      const response = await fetch(`${apiEndpoints.respuestasRapidas}?id=eq.${id}`, {
         headers: this.getHeaders(),
       });
-
-      if (!response.ok) {
-        const errorData = await response.text();
-        return {
-          success: false,
-          error: `Error del servidor: ${response.status} ${response.statusText}`,
-          details: errorData
-        };
-      }
-
-      const data = await response.json();
       
-      return {
-        success: true,
-        data: data?.[0] || null
-      };
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+      
+      const data = await this.handleResponse(response);
+      return { success: true, data: Array.isArray(data) ? data[0] : null };
     } catch (error) {
-      return {
-        success: false,
-        error: 'Error de conexión al obtener etiqueta',
-        details: error instanceof Error ? error.message : String(error)
-      };
+      console.error('Error al obtener respuesta rápida:', error);
+      return { success: false, error: error instanceof Error ? error.message : 'Error desconocido' };
     }
   }
 
-  /**
-   * Crea una nueva etiqueta
-   */
-  async createEtiqueta(etiquetaData: Omit<Etiqueta, 'id' | 'created_at'>): Promise<ApiResponse<Record<string, unknown>>> {
+  async createRespuestaRapida(data: RespuestaRapidaFormData): Promise<ApiResponse> {
     try {
-      const response = await fetch(apiEndpoints.etiquetas, {
+      const response = await fetch(apiEndpoints.respuestasRapidas, {
         method: 'POST',
         headers: this.getHeaders(),
-        body: JSON.stringify(etiquetaData),
+        body: JSON.stringify({
+          ...data,
+          activa: true
+        }),
       });
-
-      if (!response.ok) {
-        const errorData = await response.text();
-        return {
-          success: false,
-          error: `Error del servidor: ${response.status} ${response.statusText}`,
-          details: errorData
-        };
-      }
-
-      const data = await this.handleResponse(response);
       
-      return {
-        success: true,
-        data: data || { message: 'Etiqueta creada exitosamente' }
-      };
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+      
+      return { success: true };
     } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Error al crear etiqueta'
-      };
+      console.error('Error al crear respuesta rápida:', error);
+      return { success: false, error: error instanceof Error ? error.message : 'Error desconocido' };
     }
   }
 
-  /**
-   * Actualiza una etiqueta existente
-   */
-  async updateEtiqueta(id: number, etiquetaData: Partial<Etiqueta>): Promise<ApiResponse<Record<string, unknown>>> {
+  async updateRespuestaRapida(id: number, data: Partial<RespuestaRapida>): Promise<ApiResponse> {
     try {
-      const updatePayload: Partial<Etiqueta> = {
-        nombre: etiquetaData.nombre,
-        color: etiquetaData.color,
-        descripcion: etiquetaData.descripcion,
-        activa: etiquetaData.activa
-      };
-
-      const response = await fetch(`${apiEndpoints.etiquetas}?id=eq.${id}`, {
+      const response = await fetch(`${apiEndpoints.respuestasRapidas}?id=eq.${id}`, {
         method: 'PATCH',
         headers: this.getHeaders(),
-        body: JSON.stringify(updatePayload),
+        body: JSON.stringify(data),
       });
-
-      if (!response.ok) {
-        const errorData = await response.text();
-        return {
-          success: false,
-          error: `Error del servidor: ${response.status} ${response.statusText}`,
-          details: errorData
-        };
-      }
-
-      const data = await this.handleResponse(response);
       
-      return {
-        success: true,
-        data: data || { message: 'Etiqueta actualizada exitosamente' }
-      };
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+      
+      return { success: true };
     } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Error al actualizar etiqueta'
-      };
+      console.error('Error al actualizar respuesta rápida:', error);
+      return { success: false, error: error instanceof Error ? error.message : 'Error desconocido' };
     }
   }
 
-  /**
-   * Elimina una etiqueta
-   */
-  async deleteEtiqueta(id: number): Promise<ApiResponse<Record<string, unknown>>> {
+  async deleteRespuestaRapida(id: number): Promise<ApiResponse> {
     try {
-      const response = await fetch(`${apiEndpoints.etiquetas}?id=eq.${id}`, {
+      const response = await fetch(`${apiEndpoints.respuestasRapidas}?id=eq.${id}`, {
         method: 'DELETE',
         headers: this.getHeaders(),
       });
-
-      if (!response.ok) {
-        const errorData = await response.text();
-        return {
-          success: false,
-          error: `Error del servidor: ${response.status} ${response.statusText}`,
-          details: errorData
-        };
-      }
-
-      const data = await this.handleResponse(response);
       
-      return {
-        success: true,
-        data: data || { message: 'Etiqueta eliminada exitosamente' }
-      };
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+      
+      return { success: true };
     } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Error al eliminar etiqueta'
-      };
+      console.error('Error al eliminar respuesta rápida:', error);
+      return { success: false, error: error instanceof Error ? error.message : 'Error desconocido' };
     }
   }
 }

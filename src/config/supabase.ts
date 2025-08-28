@@ -9,5 +9,6 @@ export const supabaseConfig = {
 // API Endpoints
 export const apiEndpoints = {
   usuarios: `${supabaseConfig.restUrl}/usuarios`,
-  etiquetas: `${supabaseConfig.restUrl}/etiquetas`
+  etiquetas: `${supabaseConfig.restUrl}/etiquetas`,
+  respuestasRapidas: `${supabaseConfig.restUrl}/respuestas_rapidas`
 };

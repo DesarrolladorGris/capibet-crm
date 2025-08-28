@@ -18,6 +18,42 @@ interface EtiquetaFormData {
   descripcion: string;
 }
 
+// Datos de prueba
+const etiquetasPrueba: Etiqueta[] = [
+  {
+    id: 1,
+    nombre: 'Cliente VIP',
+    color: '#00b894',
+    descripcion: 'Clientes de alto valor',
+    activa: true,
+    created_at: '2024-12-28T10:00:00Z'
+  },
+  {
+    id: 2,
+    nombre: 'Urgente',
+    color: '#d63031',
+    descripcion: 'Tareas prioritarias',
+    activa: true,
+    created_at: '2024-12-28T10:00:00Z'
+  },
+  {
+    id: 3,
+    nombre: 'Nuevo',
+    color: '#0984e3',
+    descripcion: 'Elementos recientes',
+    activa: true,
+    created_at: '2024-12-28T10:00:00Z'
+  },
+  {
+    id: 4,
+    nombre: 'Oferta',
+    color: '#fd79a8',
+    descripcion: 'Promociones activas',
+    activa: false,
+    created_at: '2024-12-28T10:00:00Z'
+  }
+];
+
 export default function EtiquetasTab() {
   const [etiquetas, setEtiquetas] = useState<Etiqueta[]>([]);
   const [loading, setLoading] = useState(true);
@@ -36,40 +72,12 @@ export default function EtiquetasTab() {
     '#fdcb6e', '#e17055', '#d63031', '#2d3436', '#636e72'
   ];
 
-  // Datos de prueba para desarrollo
-  const etiquetasPrueba: Etiqueta[] = [
-    {
-      id: 1,
-      nombre: 'Cliente VIP',
-      color: '#00b894',
-      descripcion: 'Clientes de alto valor con beneficios especiales',
-      activa: true,
-      created_at: new Date().toISOString()
-    },
-    {
-      id: 2,
-      nombre: 'Urgente',
-      color: '#d63031',
-      descripcion: 'Tickets que requieren atención inmediata',
-      activa: true,
-      created_at: new Date().toISOString()
-    },
-    {
-      id: 3,
-      nombre: 'En Proceso',
-      color: '#00cec9',
-      descripcion: 'Tickets que están siendo atendidos',
-      activa: true,
-      created_at: new Date().toISOString()
-    }
-  ];
-
   useEffect(() => {
     console.log('EtiquetasTab: Componente montado, cargando etiquetas de prueba...');
     // Usar datos de prueba por ahora
     setEtiquetas(etiquetasPrueba);
     setLoading(false);
-  }, []);
+  }, [etiquetasPrueba]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
