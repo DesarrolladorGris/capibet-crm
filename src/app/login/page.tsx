@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
+
 import { useRouter } from 'next/navigation';
+import { supabaseService, LoginCredentials } from '@/services/supabaseService';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -13,7 +14,16 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Pre-llenar email si viene del registro
+  useEffect(() => {
+    const registeredEmail = localStorage.getItem('registeredEmail');
+    if (registeredEmail) {
+      setEmail(registeredEmail);
+      localStorage.removeItem('registeredEmail'); // Limpiar después de usar
+    }
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     
@@ -28,21 +38,52 @@ export default function LoginPage() {
       return;
     }
     
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setError('Por favor ingresa un email válido');
+      return;
+    }
+    
     setIsLoading(true);
     
-    // Simular validación (en el futuro conectar con API)
-    setTimeout(() => {
-      // Por ahora acepta cualquier email válido con contraseña de 6+ caracteres
-      if (email.includes('@') && password.length >= 6) {
-        // Guardar datos de sesión básicos
-        localStorage.setItem('userEmail', email);
+    try {
+      const credentials: LoginCredentials = {
+        correo_electronico: email,
+        contrasena: password
+      };
+      
+      const result = await supabaseService.loginUsuario(credentials);
+      
+      if (result.success && result.data) {
+        // Login exitoso - guardar datos de sesión
+        const userData = result.data;
+        
+        // Guardar información de sesión en localStorage
         localStorage.setItem('isLoggedIn', 'true');
+        localStorage.setItem('userEmail', userData.correo_electronico);
+        localStorage.setItem('userName', userData.nombre_usuario);
+        localStorage.setItem('userRole', userData.rol);
+        localStorage.setItem('userId', userData.id?.toString() || '');
+        localStorage.setItem('agencyName', userData.nombre_agencia);
+        
+        // Opcional: guardar toda la información del usuario
+        localStorage.setItem('userData', JSON.stringify(userData));
+        
+        console.log('Login exitoso:', userData);
+        
+        // Redireccionar al dashboard
         router.push('/dashboard');
+        
       } else {
-        setError('Credenciales inválidas');
-        setIsLoading(false);
+        setError(result.error || 'Email o contraseña incorrectos');
       }
-    }, 1000);
+      
+    } catch (error) {
+      console.error('Login error:', error);
+      setError('Error de conexión. Verifica tu internet e inténtalo de nuevo.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

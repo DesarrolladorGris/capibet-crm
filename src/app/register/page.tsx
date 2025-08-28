@@ -3,6 +3,8 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
+import { supabaseService, UsuarioData } from '@/services/supabaseService';
 
 export default function RegisterPage() {
   const [currentStep, setCurrentStep] = useState(1);
@@ -18,6 +20,9 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [rememberPassword, setRememberPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [selectedCountry, setSelectedCountry] = useState({
     code: '+54',
     country: 'Argentina',
@@ -26,6 +31,7 @@ export default function RegisterPage() {
   });
   const [showCountryDropdown, setShowCountryDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
 
   // Países de América del Norte y del Sur
   const americanCountries = [
@@ -96,14 +102,83 @@ export default function RegisterPage() {
     setShowCountryDropdown(false);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Conectar con API REST
-    console.log('Register attempt:', { 
-      ...formData, 
-      countryCode: selectedCountry.code, 
-      country: selectedCountry.country 
-    });
+    setError('');
+    setSuccess('');
+    
+    // Validaciones básicas
+    if (!formData.name || !formData.email || !formData.phone || !formData.password || !formData.confirmPassword) {
+      setError('Por favor completa todos los campos');
+      return;
+    }
+    
+    if (formData.password !== formData.confirmPassword) {
+      setError('Las contraseñas no coinciden');
+      return;
+    }
+    
+    if (formData.password.length < 6) {
+      setError('La contraseña debe tener al menos 6 caracteres');
+      return;
+    }
+    
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      setError('Por favor ingresa un email válido');
+      return;
+    }
+    
+    setIsLoading(true);
+    
+    try {
+      // Verificar si el email ya existe
+      const emailCheck = await supabaseService.checkEmailExists(formData.email);
+      
+      if (emailCheck.success && emailCheck.data) {
+        setError('Este email ya está registrado');
+        setIsLoading(false);
+        return;
+      }
+      
+      // Preparar datos para la API
+      const userData: UsuarioData = {
+        nombre_agencia: formData.agencyName,
+        tipo_empresa: formData.companyType,
+        nombre_usuario: formData.name,
+        correo_electronico: formData.email,
+        telefono: formData.phone,
+        codigo_pais: selectedCountry.code.replace('+', ''),
+        contrasena: formData.password,
+        rol: 'Operador',
+        activo: true
+      };
+      
+      // Crear usuario en Supabase
+      const result = await supabaseService.createUsuario(userData);
+      
+      if (result.success) {
+        setSuccess('¡Registro exitoso! Redirigiendo al login...');
+        
+        // Guardar algunos datos en localStorage para mejor UX
+        localStorage.setItem('registeredEmail', formData.email);
+        
+        // Redireccionar al login después de 2 segundos
+        setTimeout(() => {
+          router.push('/login');
+        }, 2000);
+        
+      } else {
+        setError(result.error || 'Error al crear la cuenta. Inténtalo de nuevo.');
+        console.error('Registration error:', result);
+      }
+      
+    } catch (error) {
+      console.error('Registration error:', error);
+      setError('Error de conexión. Verifica tu internet e inténtalo de nuevo.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -383,12 +458,27 @@ export default function RegisterPage() {
               </label>
             </div>
 
+            {/* Error Message */}
+            {error && (
+              <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 text-red-400 text-sm">
+                {error}
+              </div>
+            )}
+
+            {/* Success Message */}
+            {success && (
+              <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-3 text-green-400 text-sm">
+                {success}
+              </div>
+            )}
+
             {/* Register Button */}
             <button
               type="submit"
-              className="w-full bg-[#00b894] hover:bg-[#00a085] text-white font-medium py-4 px-4 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#00b894] focus:ring-offset-2 focus:ring-offset-[#1a1d23] mt-6 text-base"
+              disabled={isLoading}
+              className="w-full bg-[#00b894] hover:bg-[#00a085] disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-medium py-4 px-4 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#00b894] focus:ring-offset-2 focus:ring-offset-[#1a1d23] mt-6 text-base"
             >
-              REGISTRAR
+              {isLoading ? 'REGISTRANDO...' : 'REGISTRAR'}
             </button>
 
             {/* Back to Step 1 Button */}

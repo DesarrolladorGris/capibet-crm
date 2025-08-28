@@ -4,11 +4,14 @@ import { useState } from 'react';
 
 interface HeaderProps {
   userEmail: string;
+  userName: string;
+  userRole: string;
+  agencyName: string;
   onLogout: () => void;
   onMenuToggle: () => void;
 }
 
-export default function Header({ userEmail, onLogout, onMenuToggle }: HeaderProps) {
+export default function Header({ userEmail, userName, userRole, onLogout, onMenuToggle }: HeaderProps) {
   const [showUserMenu, setShowUserMenu] = useState(false);
 
   return (
@@ -103,12 +106,12 @@ export default function Header({ userEmail, onLogout, onMenuToggle }: HeaderProp
             >
               <div className="w-8 h-8 bg-[#00b894] rounded-full flex items-center justify-center">
                 <span className="text-white text-sm font-medium">
-                  {userEmail.charAt(0).toUpperCase()}
+                  {userName ? userName.charAt(0).toUpperCase() : userEmail.charAt(0).toUpperCase()}
                 </span>
               </div>
               <div className="text-left">
-                <div className="text-sm font-medium">Seba</div>
-                <div className="text-xs text-gray-400">Admin</div>
+                <div className="text-sm font-medium">{userName || 'Usuario'}</div>
+                <div className="text-xs text-gray-400">{userRole || 'Usuario'}</div>
               </div>
               <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
