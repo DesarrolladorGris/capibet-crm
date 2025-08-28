@@ -13,6 +13,16 @@ export interface UsuarioData {
   activo?: boolean;
 }
 
+// Tipos para las etiquetas
+export interface Etiqueta {
+  id?: number;
+  nombre: string;
+  color: string;
+  descripcion?: string;
+  activa: boolean;
+  created_at?: string;
+}
+
 export interface LoginCredentials {
   correo_electronico: string;
   contrasena: string;
@@ -346,6 +356,184 @@ class SupabaseService {
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Error al cambiar estado del usuario'
+      };
+    }
+  }
+
+  // ==================== SERVICIOS DE ETIQUETAS ====================
+
+  /**
+   * Obtiene todas las etiquetas
+   */
+  async getAllEtiquetas(): Promise<ApiResponse<Etiqueta[]>> {
+    try {
+      const response = await fetch(`${apiEndpoints.etiquetas}?order=created_at.desc`, {
+        method: 'GET',
+        headers: this.getHeaders(),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        return {
+          success: false,
+          error: `Error del servidor: ${response.status} ${response.statusText}`,
+          details: errorData
+        };
+      }
+
+      const data = await response.json();
+      
+      return {
+        success: true,
+        data: data || []
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: 'Error de conexión al obtener etiquetas',
+        details: error instanceof Error ? error.message : String(error)
+      };
+    }
+  }
+
+  /**
+   * Obtiene una etiqueta por ID
+   */
+  async getEtiquetaById(id: number): Promise<ApiResponse<Etiqueta>> {
+    try {
+      const response = await fetch(`${apiEndpoints.etiquetas}?id=eq.${id}`, {
+        method: 'GET',
+        headers: this.getHeaders(),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        return {
+          success: false,
+          error: `Error del servidor: ${response.status} ${response.statusText}`,
+          details: errorData
+        };
+      }
+
+      const data = await response.json();
+      
+      return {
+        success: true,
+        data: data?.[0] || null
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: 'Error de conexión al obtener etiqueta',
+        details: error instanceof Error ? error.message : String(error)
+      };
+    }
+  }
+
+  /**
+   * Crea una nueva etiqueta
+   */
+  async createEtiqueta(etiquetaData: Omit<Etiqueta, 'id' | 'created_at'>): Promise<ApiResponse<Record<string, unknown>>> {
+    try {
+      const response = await fetch(apiEndpoints.etiquetas, {
+        method: 'POST',
+        headers: this.getHeaders(),
+        body: JSON.stringify(etiquetaData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        return {
+          success: false,
+          error: `Error del servidor: ${response.status} ${response.statusText}`,
+          details: errorData
+        };
+      }
+
+      const data = await this.handleResponse(response);
+      
+      return {
+        success: true,
+        data: data || { message: 'Etiqueta creada exitosamente' }
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Error al crear etiqueta'
+      };
+    }
+  }
+
+  /**
+   * Actualiza una etiqueta existente
+   */
+  async updateEtiqueta(id: number, etiquetaData: Partial<Etiqueta>): Promise<ApiResponse<Record<string, unknown>>> {
+    try {
+      const updatePayload: Partial<Etiqueta> = {
+        nombre: etiquetaData.nombre,
+        color: etiquetaData.color,
+        descripcion: etiquetaData.descripcion,
+        activa: etiquetaData.activa
+      };
+
+      const response = await fetch(`${apiEndpoints.etiquetas}?id=eq.${id}`, {
+        method: 'PATCH',
+        headers: this.getHeaders(),
+        body: JSON.stringify(updatePayload),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        return {
+          success: false,
+          error: `Error del servidor: ${response.status} ${response.statusText}`,
+          details: errorData
+        };
+      }
+
+      const data = await this.handleResponse(response);
+      
+      return {
+        success: true,
+        data: data || { message: 'Etiqueta actualizada exitosamente' }
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Error al actualizar etiqueta'
+      };
+    }
+  }
+
+  /**
+   * Elimina una etiqueta
+   */
+  async deleteEtiqueta(id: number): Promise<ApiResponse<Record<string, unknown>>> {
+    try {
+      const response = await fetch(`${apiEndpoints.etiquetas}?id=eq.${id}`, {
+        method: 'DELETE',
+        headers: this.getHeaders(),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        return {
+          success: false,
+          error: `Error del servidor: ${response.status} ${response.statusText}`,
+          details: errorData
+        };
+      }
+
+      const data = await this.handleResponse(response);
+      
+      return {
+        success: true,
+        data: data || { message: 'Etiqueta eliminada exitosamente' }
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Error al eliminar etiqueta'
       };
     }
   }

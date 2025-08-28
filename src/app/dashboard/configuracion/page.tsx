@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import DashboardLayout from '../components/DashboardLayout';
 import EspaciosTrabajoTab from './components/EspaciosTrabajoTab';
 import UsuariosTab from './components/UsuariosTab';
+import EtiquetasTab from './components/EtiquetasTab';
 import { supabaseService } from '@/services/supabaseService';
 
 // Tipos para las pestañas
@@ -33,12 +34,7 @@ const SesionesTab = () => (
   </div>
 );
 
-const EtiquetasTab = () => (
-  <div className="p-6">
-    <h3 className="text-white text-lg font-medium mb-4">Etiquetas</h3>
-    <p className="text-gray-400">Administrar etiquetas para organizar contenido.</p>
-  </div>
-);
+
 
 
 
