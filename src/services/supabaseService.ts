@@ -78,6 +78,45 @@ export interface ApiResponse<T = any> {
   details?: any;
 }
 
+// Tipos para espacios de trabajo
+export interface EspacioTrabajoData {
+  nombre: string;
+  creado_por: number;
+}
+
+export interface EspacioTrabajoResponse {
+  id: number;
+  nombre: string;
+  creado_por: number;
+  creado_en: string;
+  actualizado_en: string;
+}
+
+// Tipos para embudos
+export interface EmbUpdoData {
+  nombre: string;
+  descripcion?: string;
+  creado_por: number;
+  espacio_id: number;
+  orden?: number;
+}
+
+export interface EmbUpdoResponse {
+  id: number;
+  nombre: string;
+  descripcion: string | null;
+  creado_por: number;
+  creado_en: string;
+  actualizado_en: string;
+  espacio_id: number;
+  orden?: number;
+}
+
+// Tipo extendido para espacios con sus embudos
+export interface EspacioConEmbudos extends EspacioTrabajoResponse {
+  embudos: EmbUpdoResponse[];
+}
+
 class SupabaseService {
   private getHeaders() {
     return {
@@ -530,6 +569,381 @@ class SupabaseService {
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Error al eliminar contacto'
+      };
+    }
+  }
+
+  // ===== MÉTODOS PARA ESPACIOS DE TRABAJO =====
+
+  /**
+   * Obtiene todos los espacios de trabajo
+   */
+  async getAllEspaciosTrabajo(): Promise<ApiResponse<EspacioTrabajoResponse[]>> {
+    try {
+      const response = await fetch(apiEndpoints.espacios_de_trabajo, {
+        method: 'GET',
+        headers: this.getHeaders()
+      });
+
+      if (!response.ok) {
+        return {
+          success: false,
+          error: 'Error al obtener los espacios de trabajo'
+        };
+      }
+
+      const data = await this.handleResponse(response);
+      
+      return {
+        success: true,
+        data: Array.isArray(data) ? data : []
+      };
+
+    } catch (error) {
+      console.error('Error fetching espacios de trabajo:', error);
+      
+      return {
+        success: false,
+        error: 'Error de conexión al obtener espacios de trabajo',
+        details: error
+      };
+    }
+  }
+
+  /**
+   * Crea un nuevo espacio de trabajo
+   */
+  async createEspacioTrabajo(espacioData: EspacioTrabajoData): Promise<ApiResponse<any>> {
+    try {
+      const response = await fetch(apiEndpoints.espacios_de_trabajo, {
+        method: 'POST',
+        headers: this.getHeaders(),
+        body: JSON.stringify(espacioData)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        
+        return {
+          success: false,
+          error: `Error del servidor: ${response.status} ${response.statusText}`,
+          details: errorData
+        };
+      }
+
+      const data = await this.handleResponse(response);
+      
+      return {
+        success: true,
+        data
+      };
+
+    } catch (error) {
+      console.error('Error creating espacio de trabajo:', error);
+      
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Error desconocido',
+        details: error
+      };
+    }
+  }
+
+  /**
+   * Actualiza un espacio de trabajo existente
+   */
+  async updateEspacioTrabajo(id: number, espacioData: Partial<EspacioTrabajoData>): Promise<ApiResponse<any>> {
+    try {
+      const response = await fetch(`${apiEndpoints.espacios_de_trabajo}?id=eq.${id}`, {
+        method: 'PATCH',
+        headers: this.getHeaders(),
+        body: JSON.stringify(espacioData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        return {
+          success: false,
+          error: `Error del servidor: ${response.status} ${response.statusText}`,
+          details: errorData
+        };
+      }
+
+      const data = await this.handleResponse(response);
+      
+      return {
+        success: true,
+        data: data || { message: 'Espacio de trabajo actualizado exitosamente' }
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Error al actualizar espacio de trabajo'
+      };
+    }
+  }
+
+  /**
+   * Elimina un espacio de trabajo
+   */
+  async deleteEspacioTrabajo(id: number): Promise<ApiResponse<any>> {
+    try {
+      const response = await fetch(`${apiEndpoints.espacios_de_trabajo}?id=eq.${id}`, {
+        method: 'DELETE',
+        headers: this.getHeaders()
+      });
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        return {
+          success: false,
+          error: `Error del servidor: ${response.status} ${response.statusText}`,
+          details: errorData
+        };
+      }
+
+      const data = await this.handleResponse(response);
+      
+      return {
+        success: true,
+        data: data || { message: 'Espacio de trabajo eliminado exitosamente' }
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Error al eliminar espacio de trabajo'
+      };
+    }
+  }
+
+  // ===== MÉTODOS PARA EMBUDOS =====
+
+  /**
+   * Obtiene todos los embudos
+   */
+  async getAllEmbudos(): Promise<ApiResponse<EmbUpdoResponse[]>> {
+    try {
+      const response = await fetch(apiEndpoints.embudos, {
+        method: 'GET',
+        headers: this.getHeaders()
+      });
+
+      if (!response.ok) {
+        return {
+          success: false,
+          error: 'Error al obtener los embudos'
+        };
+      }
+
+      const data = await this.handleResponse(response);
+      
+      return {
+        success: true,
+        data: Array.isArray(data) ? data : []
+      };
+
+    } catch (error) {
+      console.error('Error fetching embudos:', error);
+      
+      return {
+        success: false,
+        error: 'Error de conexión al obtener embudos',
+        details: error
+      };
+    }
+  }
+
+  /**
+   * Obtiene embudos por espacio de trabajo
+   */
+  async getEmbudosByEspacio(espacioId: number): Promise<ApiResponse<EmbUpdoResponse[]>> {
+    try {
+      const response = await fetch(`${apiEndpoints.embudos}?espacio_id=eq.${espacioId}`, {
+        method: 'GET',
+        headers: this.getHeaders()
+      });
+
+      if (!response.ok) {
+        return {
+          success: false,
+          error: 'Error al obtener los embudos del espacio'
+        };
+      }
+
+      const data = await this.handleResponse(response);
+      
+      return {
+        success: true,
+        data: Array.isArray(data) ? data : []
+      };
+
+    } catch (error) {
+      console.error('Error fetching embudos by espacio:', error);
+      
+      return {
+        success: false,
+        error: 'Error de conexión al obtener embudos del espacio',
+        details: error
+      };
+    }
+  }
+
+  /**
+   * Crea un nuevo embudo
+   */
+  async createEmbudo(embudoData: EmbUpdoData): Promise<ApiResponse<any>> {
+    try {
+      console.log('Creando embudo:', embudoData);
+
+      const response = await fetch(apiEndpoints.embudos, {
+        method: 'POST',
+        headers: this.getHeaders(),
+        body: JSON.stringify(embudoData)
+      });
+
+      if (!response.ok) {
+        console.error('Error response:', response.status, response.statusText);
+        return {
+          success: false,
+          error: `Error al crear embudo: ${response.status} ${response.statusText}`
+        };
+      }
+
+      const data = await this.handleResponse(response);
+      console.log('Embudo creado exitosamente:', data);
+
+      return {
+        success: true,
+        data: data
+      };
+
+    } catch (error) {
+      console.error('Error creating embudo:', error);
+      
+      return {
+        success: false,
+        error: 'Error de conexión al crear embudo',
+        details: error
+      };
+    }
+  }
+
+  /**
+   * Actualiza un embudo existente
+   */
+  async updateEmbudo(id: number, embudoData: Partial<EmbUpdoData>): Promise<ApiResponse<any>> {
+    try {
+      console.log('Actualizando embudo:', id, embudoData);
+
+      const response = await fetch(`${apiEndpoints.embudos}?id=eq.${id}`, {
+        method: 'PATCH',
+        headers: this.getHeaders(),
+        body: JSON.stringify(embudoData)
+      });
+
+      if (!response.ok) {
+        console.error('Error response:', response.status, response.statusText);
+        return {
+          success: false,
+          error: `Error al actualizar embudo: ${response.status} ${response.statusText}`
+        };
+      }
+
+      const data = await this.handleResponse(response);
+      console.log('Embudo actualizado exitosamente:', data);
+
+      return {
+        success: true,
+        data: data
+      };
+
+    } catch (error) {
+      console.error('Error updating embudo:', error);
+      
+      return {
+        success: false,
+        error: 'Error de conexión al actualizar embudo',
+        details: error
+      };
+    }
+  }
+
+  /**
+   * Elimina un embudo existente
+   */
+  async deleteEmbudo(id: number): Promise<ApiResponse<any>> {
+    try {
+      console.log('Eliminando embudo:', id);
+
+      const response = await fetch(`${apiEndpoints.embudos}?id=eq.${id}`, {
+        method: 'DELETE',
+        headers: this.getHeaders()
+      });
+
+      if (!response.ok) {
+        console.error('Error response:', response.status, response.statusText);
+        return {
+          success: false,
+          error: `Error al eliminar embudo: ${response.status} ${response.statusText}`
+        };
+      }
+
+      const data = await this.handleResponse(response);
+      console.log('Embudo eliminado exitosamente:', data);
+
+      return {
+        success: true,
+        data: data
+      };
+
+    } catch (error) {
+      console.error('Error deleting embudo:', error);
+      
+      return {
+        success: false,
+        error: 'Error de conexión al eliminar embudo',
+        details: error
+      };
+    }
+  }
+
+  /**
+   * Actualiza el orden de múltiples embudos
+   */
+  async updateEmbudosOrder(embudosConOrden: Array<{id: number, orden: number}>): Promise<ApiResponse<any>> {
+    try {
+      console.log('Actualizando orden de embudos:', embudosConOrden);
+
+      // Hacer múltiples PATCH requests para actualizar el orden
+      const updatePromises = embudosConOrden.map(async ({ id, orden }) => {
+        const response = await fetch(`${apiEndpoints.embudos}?id=eq.${id}`, {
+          method: 'PATCH',
+          headers: this.getHeaders(),
+          body: JSON.stringify({ orden })
+        });
+
+        if (!response.ok) {
+          throw new Error(`Error updating embudo ${id}: ${response.status} ${response.statusText}`);
+        }
+
+        return this.handleResponse(response);
+      });
+
+      await Promise.all(updatePromises);
+      console.log('Orden de embudos actualizado exitosamente');
+
+      return {
+        success: true,
+        data: 'Orden actualizado correctamente'
+      };
+
+    } catch (error) {
+      console.error('Error updating embudos order:', error);
+      
+      return {
+        success: false,
+        error: 'Error de conexión al actualizar orden de embudos',
+        details: error
       };
     }
   }

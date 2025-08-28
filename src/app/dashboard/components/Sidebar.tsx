@@ -36,9 +36,11 @@ export default function Sidebar({ isOpen, onToggle }: SidebarProps) {
       setActiveItem('config');
     } else if (pathname === '/dashboard/chat-interno') {
       setActiveItem('internal-chat');
-    } else {
-      // Por defecto funnels para otras rutas del dashboard
+    } else if (pathname === '/dashboard/embudos') {
       setActiveItem('funnels');
+    } else {
+      // Por defecto dashboard para otras rutas
+      setActiveItem('dashboard');
     }
   }, [pathname]);
 
@@ -49,6 +51,9 @@ export default function Sidebar({ isOpen, onToggle }: SidebarProps) {
     switch (itemId) {
       case 'dashboard':
         router.push('/dashboard');
+        break;
+      case 'funnels':
+        router.push('/dashboard/embudos');
         break;
       case 'contacts':
         router.push('/dashboard/contactos');

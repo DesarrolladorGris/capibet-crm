@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import DashboardLayout from '../components/DashboardLayout';
+
 import EspaciosTrabajoTab from './components/EspaciosTrabajoTab';
 import UsuariosTab from './components/UsuariosTab';
 import { supabaseService } from '@/services/supabaseService';
@@ -56,12 +56,13 @@ export default function ConfiguracionPage() {
   const [userRole, setUserRole] = useState('');
   const [agencyName, setAgencyName] = useState('');
   const [userCount, setUserCount] = useState(0);
+  const [espaciosCount, setEspaciosCount] = useState(0);
   const router = useRouter();
 
   // Configuración de pestañas
   const tabs: TabConfig[] = [
     { id: 'personalizar', label: 'Personalizar', icon: '⚙️', component: PersonalizarTab },
-    { id: 'espacios-trabajo', label: 'Espacios de trabajo', icon: '🏢', count: 1, component: EspaciosTrabajoTab },
+    { id: 'espacios-trabajo', label: 'Espacios de trabajo', icon: '🏢', count: espaciosCount, component: EspaciosTrabajoTab },
     { id: 'sesiones', label: 'Sesiones', icon: '🔄', count: 0, component: SesionesTab },
     { id: 'etiquetas', label: 'Etiquetas', icon: '🏷️', count: 3, component: EtiquetasTab },
     { id: 'usuarios', label: 'Usuarios', icon: '👥', count: userCount, component: UsuariosTab },
@@ -84,8 +85,9 @@ export default function ConfiguracionPage() {
     setUserRole(localStorage.getItem('userRole') || '');
     setAgencyName(localStorage.getItem('agencyName') || '');
     
-    // Cargar conteo de usuarios
+    // Cargar conteo de usuarios y espacios de trabajo
     loadUserCount();
+    loadEspaciosCount();
   }, [router]);
 
   const loadUserCount = async () => {
@@ -99,10 +101,23 @@ export default function ConfiguracionPage() {
     }
   };
 
-  // Actualizar contador cada vez que se active la pestaña de usuarios
+  const loadEspaciosCount = async () => {
+    try {
+      const result = await supabaseService.getAllEspaciosTrabajo();
+      if (result.success && result.data) {
+        setEspaciosCount(result.data.length);
+      }
+    } catch (error) {
+      console.error('Error loading espacios count:', error);
+    }
+  };
+
+  // Actualizar contadores cada vez que se activen las pestañas correspondientes
   useEffect(() => {
     if (activeTab === 'usuarios') {
       loadUserCount();
+    } else if (activeTab === 'espacios-trabajo') {
+      loadEspaciosCount();
     }
   }, [activeTab]);
 
