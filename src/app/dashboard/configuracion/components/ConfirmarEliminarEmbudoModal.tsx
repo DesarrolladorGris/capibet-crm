@@ -78,7 +78,7 @@ export default function ConfirmarEliminarEmbudoModal({
           {embudo && (
             <div className="bg-[#2a2d35] rounded-lg p-3 mb-4">
               <p className="text-white text-sm font-medium">
-                📊 "{embudo.nombre}"
+                📊 &quot;{embudo.nombre}&quot;
               </p>
               <p className="text-gray-400 text-xs mt-1">
                 ID: #{embudo.id} • Espacio: #{embudo.espacio_id}
@@ -88,7 +88,7 @@ export default function ConfirmarEliminarEmbudoModal({
               </p>
               {embudo.descripcion && (
                 <p className="text-gray-500 text-xs mt-1 italic">
-                  "{embudo.descripcion}"
+                  &quot;{embudo.descripcion}&quot;
                 </p>
               )}
             </div>

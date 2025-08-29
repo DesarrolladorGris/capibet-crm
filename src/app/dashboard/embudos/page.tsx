@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabaseService, EspacioConEmbudos, EspacioTrabajoResponse, EmbUpdoResponse } from '@/services/supabaseService';
 import NuevoEmbudoModal from '@/app/dashboard/configuracion/components/NuevoEmbudoModal';
 import EditarEmbudoModal from '@/app/dashboard/configuracion/components/EditarEmbudoModal';
@@ -20,10 +20,10 @@ import {
   sortableKeyboardCoordinates,
   rectSortingStrategy,
 } from '@dnd-kit/sortable';
-import {
-  useSortable,
-} from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
+// import {
+//   useSortable,
+// } from '@dnd-kit/sortable';
+// import { CSS } from '@dnd-kit/utilities';
 import DraggableEmbudo from './components/DraggableEmbudo';
 
 export default function EmbudosPage() {
@@ -47,11 +47,7 @@ export default function EmbudosPage() {
     })
   );
 
-  useEffect(() => {
-    loadEspaciosYEmbudos();
-  }, []);
-
-  const loadEspaciosYEmbudos = async () => {
+  const loadEspaciosYEmbudos = useCallback(async () => {
     setIsLoading(true);
     setError('');
     
@@ -91,7 +87,11 @@ export default function EmbudosPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [selectedEspacio]);
+
+  useEffect(() => {
+    loadEspaciosYEmbudos();
+  }, [loadEspaciosYEmbudos]);
 
   const handleEspacioSelect = (espacio: EspacioTrabajoResponse) => {
     setSelectedEspacio(espacio);

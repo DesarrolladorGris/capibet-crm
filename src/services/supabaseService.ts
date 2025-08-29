@@ -1,7 +1,14 @@
 import { supabaseConfig, apiEndpoints } from '@/config/supabase';
 
-// Tipos para el usuario
+// Tipos para autenticación
+export interface LoginCredentials {
+  correo_electronico: string;
+  contrasena: string;
+}
+
+// Tipos para usuarios
 export interface UsuarioData {
+  id?: number;
   nombre_agencia: string;
   tipo_empresa: string;
   nombre_usuario: string;
@@ -13,13 +20,8 @@ export interface UsuarioData {
   activo?: boolean;
 }
 
-export interface LoginCredentials {
-  correo_electronico: string;
-  contrasena: string;
-}
-
 export interface UsuarioResponse {
-  id?: number;
+  id: number;
   nombre_agencia: string;
   tipo_empresa: string;
   nombre_usuario: string;
@@ -71,11 +73,35 @@ export interface ContactResponse {
   empresa_id: number | null;
 }
 
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
   success: boolean;
   data?: T;
   error?: string;
-  details?: any;
+  details?: string;
+}
+
+export interface Etiqueta {
+  id?: number;
+  nombre: string;
+  color: string;
+  descripcion?: string;
+  activa: boolean;
+  created_at?: string;
+}
+
+export interface RespuestaRapida {
+  id?: number;
+  titulo: string;
+  contenido: string;
+  categoria: string;
+  activa: boolean;
+  created_at?: string;
+}
+
+export interface RespuestaRapidaFormData {
+  titulo: string;
+  contenido: string;
+  categoria: string;
 }
 
 // Tipos para espacios de trabajo
@@ -109,15 +135,14 @@ export interface EmbUpdoResponse {
   creado_en: string;
   actualizado_en: string;
   espacio_id: number;
-  orden?: number;
+  orden: number;
 }
 
-// Tipo extendido para espacios con sus embudos
 export interface EspacioConEmbudos extends EspacioTrabajoResponse {
   embudos: EmbUpdoResponse[];
 }
 
-class SupabaseService {
+export class SupabaseService {
   private getHeaders() {
     return {
       'Content-Type': 'application/json',
@@ -126,7 +151,7 @@ class SupabaseService {
     };
   }
 
-  private async handleResponse(response: Response): Promise<any> {
+  private async handleResponse(response: Response): Promise<Record<string, unknown> | null> {
     // Manejar respuesta JSON de forma segura
     let data = null;
     const contentType = response.headers.get('content-type');
@@ -136,7 +161,7 @@ class SupabaseService {
       if (responseText) {
         try {
           data = JSON.parse(responseText);
-        } catch (parseError) {
+        } catch {
           data = { message: 'Operation completed successfully' };
         }
       } else {
@@ -205,106 +230,12 @@ class SupabaseService {
       };
 
     } catch (error) {
-      console.error('Error creating usuario:', error);
+      console.error('Error creating user:', error);
       
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Error desconocido',
-        details: error
-      };
-    }
-  }
-
-  async checkEmailExists(email: string): Promise<ApiResponse<boolean>> {
-    try {
-      const filters = { correo_electronico: email };
-      const url = this.buildFilterUrl(filters, 'correo_electronico');
-      
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: this.getHeaders()
-      });
-
-      if (!response.ok) {
-        return {
-          success: false,
-          error: 'Error al verificar el email'
-        };
-      }
-
-      const data = await this.handleResponse(response);
-      
-      return {
-        success: true,
-        data: Array.isArray(data) ? data.length > 0 : false
-      };
-
-    } catch (error) {
-      console.error('Error checking email:', error);
-      
-      return {
-        success: false,
-        error: 'Error al verificar el email',
-        details: error
-      };
-    }
-  }
-
-  async loginUsuario(credentials: LoginCredentials): Promise<ApiResponse<UsuarioResponse>> {
-    try {
-      // Construir la URL con filtros usando la sintaxis de PostgREST (eq. = equal)
-      const filters = {
-        correo_electronico: credentials.correo_electronico,
-        contrasena: credentials.contrasena
-      };
-      
-      const url = this.buildFilterUrl(filters);
-
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: this.getHeaders()
-      });
-
-      if (!response.ok) {
-        return {
-          success: false,
-          error: 'Error en el servidor al intentar iniciar sesión'
-        };
-      }
-
-      const data = await this.handleResponse(response);
-
-      // Si la respuesta es un array y tiene elementos, login exitoso
-      if (Array.isArray(data) && data.length > 0) {
-        const usuario = data[0] as UsuarioResponse;
-        
-        // Verificar que el usuario esté activo
-        if (usuario.activo !== true) {
-          return {
-            success: false,
-            error: 'Tu cuenta está desactivada. Contacta al administrador.'
-          };
-        }
-
-        return {
-          success: true,
-          data: usuario
-        };
-      } else {
-        // Si no hay datos o el array está vacío, credenciales incorrectas
-        return {
-          success: false,
-          error: 'Email o contraseña incorrectos'
-        };
-      }
-
-    } catch (error) {
-      console.error('Error during login:', error);
-      
-      return {
-        success: false,
-        error: 'Error de conexión. Verifica tu internet e inténtalo de nuevo.',
-        details: error
+        error: 'Error de conexión al crear usuario',
+        details: error instanceof Error ? error.message : 'Error desconocido'
       };
     }
   }
@@ -336,37 +267,49 @@ class SupabaseService {
       return {
         success: false,
         error: 'Error de conexión al obtener usuarios',
-        details: error
+        details: error instanceof Error ? error.message : 'Error desconocido'
       };
     }
   }
 
-  /**
-   * Actualiza un usuario existente
-   */
-  async updateUsuario(id: number, userData: Partial<UsuarioData>): Promise<ApiResponse<any>> {
+  async getUsuarioById(id: number): Promise<ApiResponse<UsuarioResponse>> {
     try {
-      // Construir el payload solo con los campos que se van a actualizar
-      const updatePayload: Partial<UsuarioData> = {
-        nombre_agencia: userData.nombre_agencia,
-        tipo_empresa: userData.tipo_empresa,
-        nombre_usuario: userData.nombre_usuario,
-        correo_electronico: userData.correo_electronico,
-        telefono: userData.telefono,
-        codigo_pais: userData.codigo_pais,
-        rol: userData.rol,
-        activo: userData.activo !== undefined ? userData.activo : true
-      };
+      const response = await fetch(`${apiEndpoints.usuarios}?id=eq.${id}`, {
+        method: 'GET',
+        headers: this.getHeaders()
+      });
 
-      // Solo incluir contraseña si se proporcionó una nueva
-      if (userData.contrasena && userData.contrasena.trim() !== '') {
-        updatePayload.contrasena = userData.contrasena;
+      if (!response.ok) {
+        return {
+          success: false,
+          error: 'Error al obtener el usuario'
+        };
       }
 
+      const data = await this.handleResponse(response);
+      
+      return {
+        success: true,
+        data: Array.isArray(data) ? data[0] : null
+      };
+
+    } catch (error) {
+      console.error('Error fetching user:', error);
+      
+      return {
+        success: false,
+        error: 'Error de conexión al obtener usuario',
+        details: error instanceof Error ? error.message : 'Error desconocido'
+      };
+    }
+  }
+
+  async updateUsuario(id: number, userData: Partial<UsuarioData>): Promise<ApiResponse> {
+    try {
       const response = await fetch(`${apiEndpoints.usuarios}?id=eq.${id}`, {
         method: 'PATCH',
         headers: this.getHeaders(),
-        body: JSON.stringify(updatePayload),
+        body: JSON.stringify(userData),
       });
 
       if (!response.ok) {
@@ -382,7 +325,7 @@ class SupabaseService {
       
       return {
         success: true,
-        data: data || { message: 'Usuario actualizado exitosamente' }
+        data: data as unknown as UsuarioResponse
       };
     } catch (error) {
       return {
@@ -392,19 +335,11 @@ class SupabaseService {
     }
   }
 
-  /**
-   * Activa o desactiva un usuario
-   */
-  async toggleUsuarioStatus(id: number, activo: boolean): Promise<ApiResponse<any>> {
+  async deleteUsuario(id: number): Promise<ApiResponse> {
     try {
-      const updatePayload = {
-        activo: activo
-      };
-
       const response = await fetch(`${apiEndpoints.usuarios}?id=eq.${id}`, {
-        method: 'PATCH',
-        headers: this.getHeaders(),
-        body: JSON.stringify(updatePayload),
+        method: 'DELETE',
+        headers: this.getHeaders()
       });
 
       if (!response.ok) {
@@ -416,16 +351,116 @@ class SupabaseService {
         };
       }
 
-      const data = await this.handleResponse(response);
+      await this.handleResponse(response);
       
       return {
         success: true,
-        data: data || { message: `Usuario ${activo ? 'activado' : 'desactivado'} exitosamente` }
+        data: undefined
       };
     } catch (error) {
       return {
         success: false,
+        error: error instanceof Error ? error.message : 'Error al eliminar usuario'
+      };
+    }
+  }
+
+  async toggleUsuarioStatus(id: number, activo: boolean): Promise<ApiResponse<Record<string, unknown>>> {
+    try {
+      const response = await fetch(`${apiEndpoints.usuarios}?id=eq.${id}`, {
+        method: 'PATCH',
+        headers: this.getHeaders(),
+        body: JSON.stringify({ activo }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+
+      return { success: true };
+    } catch (error) {
+      return {
+        success: false,
         error: error instanceof Error ? error.message : 'Error al cambiar estado del usuario'
+      };
+    }
+  }
+
+  /**
+   * Verifica si un email ya existe en el sistema
+   */
+  async checkEmailExists(email: string): Promise<ApiResponse<boolean>> {
+    try {
+      const response = await fetch(`${apiEndpoints.usuarios}?correo_electronico=eq.${encodeURIComponent(email)}`, {
+        method: 'GET',
+        headers: this.getHeaders()
+      });
+
+      if (!response.ok) {
+        return {
+          success: false,
+          error: 'Error al verificar el email'
+        };
+      }
+
+      const data = await this.handleResponse(response);
+      const exists = Array.isArray(data) && data.length > 0;
+      
+      return {
+        success: true,
+        data: exists
+      };
+
+    } catch (error) {
+      console.error('Error checking email:', error);
+      
+      return {
+        success: false,
+        error: 'Error de conexión al verificar email',
+        details: error instanceof Error ? error.message : 'Error desconocido'
+      };
+    }
+  }
+
+  /**
+   * Realiza el login de un usuario
+   */
+  async loginUsuario(credentials: LoginCredentials): Promise<ApiResponse<UsuarioData>> {
+    try {
+      const response = await fetch(`${apiEndpoints.usuarios}?correo_electronico=eq.${encodeURIComponent(credentials.correo_electronico)}&contrasena=eq.${encodeURIComponent(credentials.contrasena)}`, {
+        method: 'GET',
+        headers: this.getHeaders()
+      });
+
+      if (!response.ok) {
+        return {
+          success: false,
+          error: 'Error en las credenciales'
+        };
+      }
+
+      const data = await this.handleResponse(response);
+      
+      if (Array.isArray(data) && data.length > 0) {
+        const usuario = data[0] as UsuarioData;
+        return {
+          success: true,
+          data: usuario
+        };
+      } else {
+        return {
+          success: false,
+          error: 'Credenciales incorrectas'
+        };
+      }
+
+    } catch (error) {
+      console.error('Error in login:', error);
+      
+      return {
+        success: false,
+        error: 'Error de conexión al iniciar sesión',
+        details: error instanceof Error ? error.message : 'Error desconocido'
       };
     }
   }
@@ -462,7 +497,7 @@ class SupabaseService {
       return {
         success: false,
         error: 'Error de conexión al obtener contactos',
-        details: error
+        details: error instanceof Error ? error.message : 'Error desconocido'
       };
     }
   }
@@ -470,7 +505,7 @@ class SupabaseService {
   /**
    * Crea un nuevo contacto
    */
-  async createContacto(contactData: ContactData): Promise<ApiResponse<any>> {
+  async createContacto(contactData: ContactData): Promise<ApiResponse<ContactResponse>> {
     try {
       const response = await fetch(apiEndpoints.contactos, {
         method: 'POST',
@@ -492,7 +527,7 @@ class SupabaseService {
       
       return {
         success: true,
-        data
+        data: data as unknown as ContactResponse
       };
 
     } catch (error) {
@@ -501,7 +536,7 @@ class SupabaseService {
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Error desconocido',
-        details: error
+        details: error instanceof Error ? error.message : 'Error desconocido'
       };
     }
   }
@@ -509,7 +544,7 @@ class SupabaseService {
   /**
    * Actualiza un contacto existente
    */
-  async updateContacto(id: number, contactData: Partial<ContactData>): Promise<ApiResponse<any>> {
+  async updateContacto(id: number, contactData: Partial<ContactData>): Promise<ApiResponse<ContactResponse>> {
     try {
       const response = await fetch(`${apiEndpoints.contactos}?id=eq.${id}`, {
         method: 'PATCH',
@@ -530,7 +565,7 @@ class SupabaseService {
       
       return {
         success: true,
-        data: data || { message: 'Contacto actualizado exitosamente' }
+        data: data as unknown as ContactResponse
       };
     } catch (error) {
       return {
@@ -543,7 +578,7 @@ class SupabaseService {
   /**
    * Elimina un contacto
    */
-  async deleteContacto(id: number): Promise<ApiResponse<any>> {
+  async deleteContacto(id: number): Promise<ApiResponse<void>> {
     try {
       const response = await fetch(`${apiEndpoints.contactos}?id=eq.${id}`, {
         method: 'DELETE',
@@ -559,11 +594,11 @@ class SupabaseService {
         };
       }
 
-      const data = await this.handleResponse(response);
+      await this.handleResponse(response);
       
       return {
         success: true,
-        data: data || { message: 'Contacto eliminado exitosamente' }
+        data: undefined
       };
     } catch (error) {
       return {
@@ -605,7 +640,7 @@ class SupabaseService {
       return {
         success: false,
         error: 'Error de conexión al obtener espacios de trabajo',
-        details: error
+        details: error instanceof Error ? error.message : 'Error desconocido'
       };
     }
   }
@@ -613,7 +648,7 @@ class SupabaseService {
   /**
    * Crea un nuevo espacio de trabajo
    */
-  async createEspacioTrabajo(espacioData: EspacioTrabajoData): Promise<ApiResponse<any>> {
+  async createEspacioTrabajo(espacioData: EspacioTrabajoData): Promise<ApiResponse<EspacioTrabajoResponse>> {
     try {
       const response = await fetch(apiEndpoints.espacios_de_trabajo, {
         method: 'POST',
@@ -635,7 +670,7 @@ class SupabaseService {
       
       return {
         success: true,
-        data
+        data: data as unknown as EspacioTrabajoResponse
       };
 
     } catch (error) {
@@ -644,7 +679,7 @@ class SupabaseService {
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Error desconocido',
-        details: error
+        details: error instanceof Error ? error.message : 'Error desconocido'
       };
     }
   }
@@ -652,7 +687,7 @@ class SupabaseService {
   /**
    * Actualiza un espacio de trabajo existente
    */
-  async updateEspacioTrabajo(id: number, espacioData: Partial<EspacioTrabajoData>): Promise<ApiResponse<any>> {
+  async updateEspacioTrabajo(id: number, espacioData: Partial<EspacioTrabajoData>): Promise<ApiResponse<EspacioTrabajoResponse>> {
     try {
       const response = await fetch(`${apiEndpoints.espacios_de_trabajo}?id=eq.${id}`, {
         method: 'PATCH',
@@ -673,7 +708,7 @@ class SupabaseService {
       
       return {
         success: true,
-        data: data || { message: 'Espacio de trabajo actualizado exitosamente' }
+        data: data as unknown as EspacioTrabajoResponse
       };
     } catch (error) {
       return {
@@ -686,7 +721,7 @@ class SupabaseService {
   /**
    * Elimina un espacio de trabajo
    */
-  async deleteEspacioTrabajo(id: number): Promise<ApiResponse<any>> {
+  async deleteEspacioTrabajo(id: number): Promise<ApiResponse<void>> {
     try {
       const response = await fetch(`${apiEndpoints.espacios_de_trabajo}?id=eq.${id}`, {
         method: 'DELETE',
@@ -702,11 +737,11 @@ class SupabaseService {
         };
       }
 
-      const data = await this.handleResponse(response);
+      await this.handleResponse(response);
       
       return {
         success: true,
-        data: data || { message: 'Espacio de trabajo eliminado exitosamente' }
+        data: undefined
       };
     } catch (error) {
       return {
@@ -748,7 +783,7 @@ class SupabaseService {
       return {
         success: false,
         error: 'Error de conexión al obtener embudos',
-        details: error
+        details: error instanceof Error ? error.message : 'Error desconocido'
       };
     }
   }
@@ -783,7 +818,7 @@ class SupabaseService {
       return {
         success: false,
         error: 'Error de conexión al obtener embudos del espacio',
-        details: error
+        details: error instanceof Error ? error.message : 'Error desconocido'
       };
     }
   }
@@ -791,7 +826,7 @@ class SupabaseService {
   /**
    * Crea un nuevo embudo
    */
-  async createEmbudo(embudoData: EmbUpdoData): Promise<ApiResponse<any>> {
+  async createEmbudo(embudoData: EmbUpdoData): Promise<ApiResponse<EmbUpdoResponse>> {
     try {
       console.log('Creando embudo:', embudoData);
 
@@ -814,7 +849,7 @@ class SupabaseService {
 
       return {
         success: true,
-        data: data
+        data: data as unknown as EmbUpdoResponse
       };
 
     } catch (error) {
@@ -823,7 +858,7 @@ class SupabaseService {
       return {
         success: false,
         error: 'Error de conexión al crear embudo',
-        details: error
+        details: error instanceof Error ? error.message : 'Error desconocido'
       };
     }
   }
@@ -831,7 +866,7 @@ class SupabaseService {
   /**
    * Actualiza un embudo existente
    */
-  async updateEmbudo(id: number, embudoData: Partial<EmbUpdoData>): Promise<ApiResponse<any>> {
+  async updateEmbudo(id: number, embudoData: Partial<EmbUpdoData>): Promise<ApiResponse<EmbUpdoResponse>> {
     try {
       console.log('Actualizando embudo:', id, embudoData);
 
@@ -854,7 +889,7 @@ class SupabaseService {
 
       return {
         success: true,
-        data: data
+        data: data as unknown as EmbUpdoResponse
       };
 
     } catch (error) {
@@ -863,7 +898,7 @@ class SupabaseService {
       return {
         success: false,
         error: 'Error de conexión al actualizar embudo',
-        details: error
+        details: error instanceof Error ? error.message : 'Error desconocido'
       };
     }
   }
@@ -871,7 +906,7 @@ class SupabaseService {
   /**
    * Elimina un embudo existente
    */
-  async deleteEmbudo(id: number): Promise<ApiResponse<any>> {
+  async deleteEmbudo(id: number): Promise<ApiResponse<void>> {
     try {
       console.log('Eliminando embudo:', id);
 
@@ -888,12 +923,12 @@ class SupabaseService {
         };
       }
 
-      const data = await this.handleResponse(response);
-      console.log('Embudo eliminado exitosamente:', data);
+      await this.handleResponse(response);
+      console.log('Embudo eliminado exitosamente');
 
       return {
         success: true,
-        data: data
+        data: undefined
       };
 
     } catch (error) {
@@ -902,7 +937,7 @@ class SupabaseService {
       return {
         success: false,
         error: 'Error de conexión al eliminar embudo',
-        details: error
+        details: error instanceof Error ? error.message : 'Error desconocido'
       };
     }
   }
@@ -910,7 +945,7 @@ class SupabaseService {
   /**
    * Actualiza el orden de múltiples embudos
    */
-  async updateEmbudosOrder(embudosConOrden: Array<{id: number, orden: number}>): Promise<ApiResponse<any>> {
+  async updateEmbudosOrder(embudosConOrden: Array<{id: number, orden: number}>): Promise<ApiResponse<void>> {
     try {
       console.log('Actualizando orden de embudos:', embudosConOrden);
 
@@ -943,7 +978,144 @@ class SupabaseService {
       return {
         success: false,
         error: 'Error de conexión al actualizar orden de embudos',
-        details: error
+        details: error instanceof Error ? error.message : 'Error desconocido'
+      };
+    }
+  }
+
+  // ===== MÉTODOS PARA RESPUESTAS RÁPIDAS =====
+
+  /**
+   * Obtiene todas las respuestas rápidas
+   */
+  async getAllRespuestasRapidas(): Promise<ApiResponse<RespuestaRapida[]>> {
+    try {
+      const response = await fetch(`${apiEndpoints.respuestasRapidas}?order=created_at.desc`, {
+        headers: this.getHeaders(),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+      
+      const data = await this.handleResponse(response);
+      return { success: true, data: Array.isArray(data) ? data : [] };
+    } catch (error) {
+      console.error('Error al obtener respuestas rápidas:', error);
+      return { success: false, error: error instanceof Error ? error.message : 'Error desconocido' };
+    }
+  }
+
+  /**
+   * Obtiene una respuesta rápida por ID
+   */
+  async getRespuestaRapidaById(id: number): Promise<ApiResponse<RespuestaRapida>> {
+    try {
+      const response = await fetch(`${apiEndpoints.respuestasRapidas}?id=eq.${id}`, {
+        headers: this.getHeaders(),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+      
+      const data = await this.handleResponse(response);
+      return { success: true, data: Array.isArray(data) ? data[0] : null };
+    } catch (error) {
+      console.error('Error al obtener respuesta rápida:', error);
+      return { success: false, error: error instanceof Error ? error.message : 'Error desconocido' };
+    }
+  }
+
+  /**
+   * Crea una nueva respuesta rápida
+   */
+  async createRespuestaRapida(data: RespuestaRapidaFormData): Promise<ApiResponse> {
+    try {
+      const response = await fetch(apiEndpoints.respuestasRapidas, {
+        method: 'POST',
+        headers: this.getHeaders(),
+        body: JSON.stringify({
+          ...data,
+          activa: true
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+      
+      return { success: true };
+    } catch (error) {
+      console.error('Error al crear respuesta rápida:', error);
+      return { success: false, error: error instanceof Error ? error.message : 'Error desconocido' };
+    }
+  }
+
+  /**
+   * Actualiza una respuesta rápida existente
+   */
+  async updateRespuestaRapida(id: number, data: Partial<RespuestaRapida>): Promise<ApiResponse> {
+    try {
+      const response = await fetch(`${apiEndpoints.respuestasRapidas}?id=eq.${id}`, {
+        method: 'PATCH',
+        headers: this.getHeaders(),
+        body: JSON.stringify(data),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+      
+      return { success: true };
+    } catch (error) {
+      console.error('Error al actualizar respuesta rápida:', error);
+      return { success: false, error: error instanceof Error ? error.message : 'Error desconocido' };
+    }
+  }
+
+  /**
+   * Elimina una respuesta rápida
+   */
+  async deleteRespuestaRapida(id: number): Promise<ApiResponse> {
+    try {
+      const response = await fetch(`${apiEndpoints.respuestasRapidas}?id=eq.${id}`, {
+        method: 'DELETE',
+        headers: this.getHeaders(),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+      
+      return { success: true };
+    } catch (error) {
+      console.error('Error al eliminar respuesta rápida:', error);
+      return { success: false, error: error instanceof Error ? error.message : 'Error desconocido' };
+    }
+  }
+
+  /**
+   * Cambia el estado activo/inactivo de una respuesta rápida
+   */
+  async toggleRespuestaRapidaStatus(id: number, activa: boolean): Promise<ApiResponse<Record<string, unknown>>> {
+    try {
+      const response = await fetch(`${apiEndpoints.respuestasRapidas}?id=eq.${id}`, {
+        method: 'PATCH',
+        headers: this.getHeaders(),
+        body: JSON.stringify({ activa }),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+      
+      return { success: true };
+    } catch (error) {
+      console.error('Error al cambiar estado de respuesta rápida:', error);
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Error al cambiar estado de respuesta rápida'
       };
     }
   }

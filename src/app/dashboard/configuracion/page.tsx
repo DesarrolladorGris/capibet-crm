@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 
 import EspaciosTrabajoTab from './components/EspaciosTrabajoTab';
 import UsuariosTab from './components/UsuariosTab';
+import EtiquetasTab from './components/EtiquetasTab';
+import RespuestasRapidasTab from './components/RespuestasRapidasTab';
 import { supabaseService } from '@/services/supabaseService';
 
 // Tipos para las pestañas
@@ -16,15 +18,13 @@ interface TabConfig {
   component: React.ComponentType;
 }
 
-// Componentes de cada pestaña (temporales, los crearemos después)
+// Componentes temporales
 const PersonalizarTab = () => (
   <div className="p-6">
     <h3 className="text-white text-lg font-medium mb-4">Personalizar</h3>
     <p className="text-gray-400">Configuración de personalización del sistema.</p>
   </div>
 );
-
-
 
 const SesionesTab = () => (
   <div className="p-6">
@@ -33,27 +33,14 @@ const SesionesTab = () => (
   </div>
 );
 
-const EtiquetasTab = () => (
-  <div className="p-6">
-    <h3 className="text-white text-lg font-medium mb-4">Etiquetas</h3>
-    <p className="text-gray-400">Administrar etiquetas para organizar contenido.</p>
-  </div>
-);
-
-
-
-const RespuestasRapidasTab = () => (
-  <div className="p-6">
-    <h3 className="text-white text-lg font-medium mb-4">Respuestas rápidas</h3>
-    <p className="text-gray-400">Configurar respuestas automáticas y plantillas.</p>
-  </div>
-);
-
 export default function ConfiguracionPage() {
   const [activeTab, setActiveTab] = useState('espacios-trabajo');
   const [userEmail, setUserEmail] = useState('');
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [userName, setUserName] = useState('');
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [userRole, setUserRole] = useState('');
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [agencyName, setAgencyName] = useState('');
   const [userCount, setUserCount] = useState(0);
   const [espaciosCount, setEspaciosCount] = useState(0);
@@ -64,9 +51,9 @@ export default function ConfiguracionPage() {
     { id: 'personalizar', label: 'Personalizar', icon: '⚙️', component: PersonalizarTab },
     { id: 'espacios-trabajo', label: 'Espacios de trabajo', icon: '🏢', count: espaciosCount, component: EspaciosTrabajoTab },
     { id: 'sesiones', label: 'Sesiones', icon: '🔄', count: 0, component: SesionesTab },
-    { id: 'etiquetas', label: 'Etiquetas', icon: '🏷️', count: 3, component: EtiquetasTab },
+    { id: 'etiquetas', label: 'Etiquetas', icon: '🏷️', count: 4, component: EtiquetasTab },
     { id: 'usuarios', label: 'Usuarios', icon: '👥', count: userCount, component: UsuariosTab },
-    { id: 'respuestas-rapidas', label: 'Respuestas rápidas', icon: '⚡', count: 0, component: RespuestasRapidasTab },
+    { id: 'respuestas-rapidas', label: 'Respuestas rápidas', icon: '💬', count: 4, component: RespuestasRapidasTab },
   ];
 
   useEffect(() => {
@@ -121,6 +108,7 @@ export default function ConfiguracionPage() {
     }
   }, [activeTab]);
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleLogout = () => {
     // Limpiar todos los datos de sesión
     localStorage.removeItem('isLoggedIn');

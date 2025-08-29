@@ -1,4 +1,4 @@
-import { Plus, Search, Mic, Smile, Trash2, Paperclip } from 'lucide-react';
+import { Plus, Mic, Smile, Trash2, Paperclip } from 'lucide-react';
 
 const ChatInternoPage = () => {
   return (

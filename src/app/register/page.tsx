@@ -151,7 +151,7 @@ export default function RegisterPage() {
         codigo_pais: selectedCountry.code.replace('+', ''),
         contrasena: formData.password,
         rol: 'Operador',
-        activo: 1
+        activo: true
       };
       
       // Crear usuario en Supabase

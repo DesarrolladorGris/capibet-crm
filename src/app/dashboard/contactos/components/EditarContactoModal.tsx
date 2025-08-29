@@ -1,13 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ContactData } from '@/services/supabaseService';
+import { ContactData, ContactResponse } from '@/services/supabaseService';
 
 interface EditarContactoModalProps {
   isOpen: boolean;
   onClose: () => void;
   onContactUpdated: () => void;
-  contact: ContactData | null;
+  contact: ContactResponse | null;
 }
 
 export default function EditarContactoModal({ isOpen, onClose, onContactUpdated, contact }: EditarContactoModalProps) {
@@ -33,7 +33,7 @@ export default function EditarContactoModal({ isOpen, onClose, onContactUpdated,
         empresa: contact.empresa || '',
         cargo: contact.cargo || '',
         etiqueta: contact.etiqueta || '',
-        empresa_id: contact.empresa_id,
+        empresa_id: contact.empresa_id || undefined,
         creado_por: contact.creado_por
       });
     }
@@ -61,8 +61,8 @@ export default function EditarContactoModal({ isOpen, onClose, onContactUpdated,
         nombre: formData.nombre.trim(),
         correo: formData.correo.trim(),
         telefono: formData.telefono.trim(),
-        empresa: formData.empresa.trim(),
-        cargo: formData.cargo.trim(),
+        empresa: formData.empresa?.trim() || '',
+        cargo: formData.cargo?.trim() || '',
         etiqueta: formData.etiqueta
       };
 

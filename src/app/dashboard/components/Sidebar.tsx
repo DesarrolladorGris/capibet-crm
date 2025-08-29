@@ -21,7 +21,7 @@ const menuItems = [
   { id: 'config', icon: '⚙️', label: 'Configuración', active: false },
 ];
 
-export default function Sidebar({ isOpen, onToggle }: SidebarProps) {
+export default function Sidebar({ isOpen }: SidebarProps) {
   const [activeItem, setActiveItem] = useState('funnels');
   const router = useRouter();
   const pathname = usePathname();

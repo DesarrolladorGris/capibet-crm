@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import DashboardLayout from '../components/DashboardLayout';
+// import DashboardLayout from '../layout';
 import AgregarContactoModal from './components/AgregarContactoModal';
 import EditarContactoModal from './components/EditarContactoModal';
 import ConfirmarEliminarModal from './components/ConfirmarEliminarModal';
@@ -192,6 +192,7 @@ export default function ContactosPage() {
   };
 
   // Función para enviar mensaje a contactos seleccionados
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const sendMessageToSelected = async () => {
     if (selectedContacts.length === 0) return;
     

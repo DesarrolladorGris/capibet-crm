@@ -78,7 +78,7 @@ export default function ConfirmarEliminarEspacioModal({
           {espacio && (
             <div className="bg-[#2a2d35] rounded-lg p-3 mb-4">
               <p className="text-gray-300 text-sm font-medium">
-                "{espacio.nombre}"
+                &quot;{espacio.nombre}&quot;
               </p>
               <p className="text-gray-400 text-xs mt-1">
                 ID: #{espacio.id} • Creado: {new Date(espacio.creado_en).toLocaleDateString('es-ES')}

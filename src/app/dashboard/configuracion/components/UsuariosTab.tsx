@@ -68,7 +68,7 @@ export default function UsuariosTab() {
       } else {
         setError(result.error || 'Error al dar de baja al usuario');
       }
-    } catch (error) {
+    } catch {
       setError('Error de conexión al dar de baja al usuario');
     } finally {
       setIsTogglingStatus(false);
@@ -89,7 +89,7 @@ export default function UsuariosTab() {
       } else {
         setError(result.error || 'Error al reactivar al usuario');
       }
-    } catch (error) {
+    } catch {
       setError('Error de conexión al reactivar al usuario');
     } finally {
       setIsTogglingStatus(false);
