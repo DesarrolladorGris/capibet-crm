@@ -8,6 +8,7 @@ import UsuariosTab from './components/UsuariosTab';
 import EtiquetasTab from './components/EtiquetasTab';
 import RespuestasRapidasTab from './components/RespuestasRapidasTab';
 import { supabaseService } from '@/services/supabaseService';
+import { useAuth } from '@/contexts/AuthContext';
 
 // Tipos para las pestañas
 interface TabConfig {
@@ -34,11 +35,8 @@ const SesionesTab = () => (
 );
 
 export default function ConfiguracionPage() {
+  const { user, isAuthenticated, isLoading, logout } = useAuth();
   const [activeTab, setActiveTab] = useState('espacios-trabajo');
-  const [userEmail, setUserEmail] = useState('');
-  const [userName, setUserName] = useState('');
-  const [userRole, setUserRole] = useState('');
-  const [agencyName, setAgencyName] = useState('');
   const [userCount, setUserCount] = useState(0);
   const router = useRouter();
 
@@ -53,24 +51,14 @@ export default function ConfiguracionPage() {
   ];
 
   useEffect(() => {
-    // Verificar autenticación
-    const isLoggedIn = localStorage.getItem('isLoggedIn');
-    const email = localStorage.getItem('userEmail');
-    
-    if (!isLoggedIn || !email) {
+    if (!isAuthenticated && !isLoading) {
       router.push('/login');
       return;
     }
     
-    // Cargar datos del usuario
-    setUserEmail(email);
-    setUserName(localStorage.getItem('userName') || '');
-    setUserRole(localStorage.getItem('userRole') || '');
-    setAgencyName(localStorage.getItem('agencyName') || '');
-    
     // Cargar conteo de usuarios
     loadUserCount();
-  }, [router]);
+  }, [isAuthenticated, isLoading, router]);
 
   const loadUserCount = async () => {
     try {
@@ -91,19 +79,11 @@ export default function ConfiguracionPage() {
   }, [activeTab]);
 
   const handleLogout = () => {
-    // Limpiar todos los datos de sesión
-    localStorage.removeItem('isLoggedIn');
-    localStorage.removeItem('userEmail');
-    localStorage.removeItem('userName');
-    localStorage.removeItem('userRole');
-    localStorage.removeItem('userId');
-    localStorage.removeItem('agencyName');
-    localStorage.removeItem('userData');
-    
+    logout();
     router.push('/login');
   };
 
-  if (!userEmail) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-[#1a1d23] flex items-center justify-center">
         <div className="text-white">Cargando...</div>
@@ -111,14 +91,17 @@ export default function ConfiguracionPage() {
     );
   }
 
+  if (!user) {
+    return null;
+  }
+
   const ActiveTabComponent = tabs.find(tab => tab.id === activeTab)?.component || EspaciosTrabajoTab;
 
   return (
     <DashboardLayout 
-      userEmail={userEmail} 
-      userName={userName}
-      userRole={userRole}
-      agencyName={agencyName}
+      userName={user.name}
+      userRole={user.role}
+      agencyName={user.agencyName}
       onLogout={handleLogout}
     >
       <div className="flex-1 flex flex-col">

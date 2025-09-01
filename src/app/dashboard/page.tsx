@@ -1,48 +1,27 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import DashboardLayout from './components/DashboardLayout';
 import MetricsCard from './components/MetricsCard';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function DashboardPage() {
-  const [userEmail, setUserEmail] = useState('');
-  const [userName, setUserName] = useState('');
-  const [userRole, setUserRole] = useState('');
-  const [agencyName, setAgencyName] = useState('');
+  const { user, isAuthenticated, isLoading, logout } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    // Verificar si el usuario está logueado
-    const isLoggedIn = localStorage.getItem('isLoggedIn');
-    const email = localStorage.getItem('userEmail');
-    
-    if (!isLoggedIn || !email) {
+    if (!isAuthenticated && !isLoading) {
       router.push('/login');
-      return;
     }
-    
-    // Cargar datos del usuario
-    setUserEmail(email);
-    setUserName(localStorage.getItem('userName') || '');
-    setUserRole(localStorage.getItem('userRole') || '');
-    setAgencyName(localStorage.getItem('agencyName') || '');
-  }, [router]);
+  }, [isAuthenticated, isLoading, router]);
 
   const handleLogout = () => {
-    // Limpiar todos los datos de sesión
-    localStorage.removeItem('isLoggedIn');
-    localStorage.removeItem('userEmail');
-    localStorage.removeItem('userName');
-    localStorage.removeItem('userRole');
-    localStorage.removeItem('userId');
-    localStorage.removeItem('agencyName');
-    localStorage.removeItem('userData');
-    
+    logout();
     router.push('/login');
   };
 
-  if (!userEmail) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-[#1a1d23] flex items-center justify-center">
         <div className="text-white">Cargando...</div>
@@ -50,12 +29,15 @@ export default function DashboardPage() {
     );
   }
 
+  if (!user) {
+    return null;
+  }
+
   return (
     <DashboardLayout 
-      userEmail={userEmail} 
-      userName={userName}
-      userRole={userRole}
-      agencyName={agencyName}
+      userName={user.name}
+      userRole={user.role}
+      agencyName={user.agencyName}
       onLogout={handleLogout}
     >
       {/* Main Content Area */}

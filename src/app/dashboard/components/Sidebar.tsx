@@ -14,6 +14,7 @@ const menuItems = [
   { id: 'chats', icon: '💬', label: 'Chats', active: false },
   { id: 'internal-chat', icon: '💭', label: 'Chat Interno', active: false },
   { id: 'emails', icon: '✉️', label: 'Emails', active: false },
+  { id: 'actividades', icon: '📋', label: 'Actividades', active: false },
   { id: 'calendar', icon: '📅', label: 'Calendario', active: false },
   { id: 'contacts', icon: '👥', label: 'Contactos', active: false },
   { id: 'sales', icon: '🛒', label: 'Ventas', active: false },
@@ -30,11 +31,29 @@ export default function Sidebar({ isOpen }: SidebarProps) {
   useEffect(() => {
     if (pathname === '/dashboard') {
       setActiveItem('dashboard');
+    } else if (pathname === '/dashboard/funnels') {
+      setActiveItem('funnels');
+    } else if (pathname === '/dashboard/chats') {
+      setActiveItem('chats');
+    } else if (pathname === '/dashboard/internal-chat') {
+      setActiveItem('internal-chat');
+    } else if (pathname === '/dashboard/emails') {
+      setActiveItem('emails');
+    } else if (pathname === '/dashboard/actividades') {
+      setActiveItem('actividades');
+    } else if (pathname === '/dashboard/calendar') {
+      setActiveItem('calendar');
+    } else if (pathname === '/dashboard/contacts') {
+      setActiveItem('contacts');
+    } else if (pathname === '/dashboard/sales') {
+      setActiveItem('sales');
+    } else if (pathname === '/dashboard/bulk-sends') {
+      setActiveItem('bulk-sends');
     } else if (pathname === '/dashboard/configuracion') {
       setActiveItem('config');
     } else {
-      // Por defecto funnels para otras rutas del dashboard
-      setActiveItem('funnels');
+      // Por defecto dashboard para rutas no reconocidas
+      setActiveItem('dashboard');
     }
   }, [pathname]);
 
@@ -46,12 +65,39 @@ export default function Sidebar({ isOpen }: SidebarProps) {
       case 'dashboard':
         router.push('/dashboard');
         break;
+      case 'funnels':
+        router.push('/dashboard/funnels');
+        break;
+      case 'chats':
+        router.push('/dashboard/chats');
+        break;
+      case 'internal-chat':
+        router.push('/dashboard/internal-chat');
+        break;
+      case 'emails':
+        router.push('/dashboard/emails');
+        break;
+      case 'actividades':
+        router.push('/dashboard/actividades');
+        break;
+      case 'calendar':
+        router.push('/dashboard/calendar');
+        break;
+      case 'contacts':
+        router.push('/dashboard/contacts');
+        break;
+      case 'sales':
+        router.push('/dashboard/sales');
+        break;
+      case 'bulk-sends':
+        router.push('/dashboard/bulk-sends');
+        break;
       case 'config':
         router.push('/dashboard/configuracion');
         break;
-      // Agregar más rutas según sea necesario
       default:
-        // Por ahora mantener en dashboard para otros items
+        // Por defecto ir al dashboard
+        router.push('/dashboard');
         break;
     }
   };
