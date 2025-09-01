@@ -7,6 +7,7 @@ import EspaciosTrabajoTab from './components/EspaciosTrabajoTab';
 import UsuariosTab from './components/UsuariosTab';
 import EtiquetasTab from './components/EtiquetasTab';
 import RespuestasRapidasTab from './components/RespuestasRapidasTab';
+import SesionesTab from './components/SesionesTab';
 import { supabaseService } from '@/services/supabaseService';
 
 // Tipos para las pestañas
@@ -23,13 +24,6 @@ const PersonalizarTab = () => (
   <div className="p-6">
     <h3 className="text-white text-lg font-medium mb-4">Personalizar</h3>
     <p className="text-gray-400">Configuración de personalización del sistema.</p>
-  </div>
-);
-
-const SesionesTab = () => (
-  <div className="p-6">
-    <h3 className="text-white text-lg font-medium mb-4">Sesiones</h3>
-    <p className="text-gray-400">Gestión de sesiones activas del sistema.</p>
   </div>
 );
 
@@ -50,7 +44,7 @@ export default function ConfiguracionPage() {
   const tabs: TabConfig[] = [
     { id: 'personalizar', label: 'Personalizar', icon: '⚙️', component: PersonalizarTab },
     { id: 'espacios-trabajo', label: 'Espacios de trabajo', icon: '🏢', count: espaciosCount, component: EspaciosTrabajoTab },
-    { id: 'sesiones', label: 'Sesiones', icon: '🔄', count: 0, component: SesionesTab },
+    { id: 'sesiones', label: 'Sesiones', icon: '🔗', count: 0, component: SesionesTab },
     { id: 'etiquetas', label: 'Etiquetas', icon: '🏷️', count: 4, component: EtiquetasTab },
     { id: 'usuarios', label: 'Usuarios', icon: '👥', count: userCount, component: UsuariosTab },
     { id: 'respuestas-rapidas', label: 'Respuestas rápidas', icon: '💬', count: 4, component: RespuestasRapidasTab },
