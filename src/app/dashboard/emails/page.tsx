@@ -1,10 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { PlusIcon, BellIcon, ChevronDownIcon, EnvelopeIcon, StarIcon, FolderIcon, MagnifyingGlassIcon, FunnelIcon, ArrowPathIcon, Cog6ToothIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, StarIcon, MagnifyingGlassIcon, FunnelIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 import { StarIcon as StarIconSolid } from '@heroicons/react/24/solid';
 import EmailAccountManager from './components/EmailAccountManager';
 import EmailComposer from './components/EmailComposer';
+import DashboardLayout from '../components/DashboardLayout';
+import { useAuth } from '../../../contexts/AuthContext';
 
 interface Email {
   id: string;
@@ -28,6 +30,7 @@ interface EmailAccount {
 }
 
 export default function EmailsPage() {
+  const { user, logout } = useAuth();
   const [selectedTab, setSelectedTab] = useState<'inbox' | 'starred' | 'sent' | 'drafts' | 'trash'>('inbox');
   const [selectedEmail, setSelectedEmail] = useState<Email | null>(null);
   const [emails, setEmails] = useState<Email[]>([]);
@@ -113,6 +116,7 @@ export default function EmailsPage() {
   };
 
   const handleSendEmail = async (emailData: {
+    fromAccountId: string;
     to: string;
     cc?: string;
     bcc?: string;
@@ -121,18 +125,25 @@ export default function EmailsPage() {
     attachments: File[];
   }) => {
     // Aquí se implementaría la lógica real de envío
-    console.log('Enviando email:', emailData);
+    console.log('Enviando email desde cuenta:', emailData.fromAccountId);
+    console.log('Datos del email:', emailData);
+    
+    // Obtener la cuenta seleccionada
+    const selectedAccount = accounts.find(acc => acc.id === emailData.fromAccountId);
+    if (!selectedAccount) {
+      throw new Error('Cuenta no encontrada');
+    }
     
     // Simular envío exitoso
     const newEmail: Email = {
       id: Date.now().toString(),
-      from: 'admin@capibet.com',
+      from: selectedAccount.email,
       subject: emailData.subject,
       preview: emailData.content.substring(0, 100) + '...',
       date: 'Ahora',
       isRead: true,
       isStarred: false,
-      account: 'Cuenta Principal',
+      account: selectedAccount.name,
       labels: ['enviado']
     };
     
@@ -154,242 +165,308 @@ export default function EmailsPage() {
     return matchesSearch;
   });
 
-  const totalUnread = accounts.reduce((sum, account) => sum + account.unreadCount, 0);
+  if (!user) {
+    return null;
+  }
 
   return (
-    <div className="flex h-screen bg-[#0f1419] text-white">
-      {/* Sidebar izquierda - Lista de emails */}
-      <div className="w-80 bg-[#1a1d23] border-r border-[#3a3d45] flex flex-col">
-        {/* Header con botón de nuevo email */}
-        <div className="p-4 border-b border-[#3a3d45]">
-          <button
-            onClick={() => setIsComposing(true)}
-            className="w-full bg-[#00b894] hover:bg-[#00a085] text-white font-medium py-2 px-4 rounded-lg flex items-center justify-center space-x-2 transition-colors duration-200"
-          >
-            <PlusIcon className="w-5 h-5" />
-            <span>Nuevo Email</span>
-          </button>
-        </div>
-
-        {/* Selector de cuenta */}
-        <div className="p-4 border-b border-[#3a3d45]">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-gray-300">Cuentas</span>
-            <button
-              onClick={() => setShowAccountSelector(!showAccountSelector)}
-              className="text-[#00b894] hover:text-[#00a085] text-sm"
-            >
-              Gestionar
-            </button>
-          </div>
-          <div className="space-y-2">
-            {accounts.map(account => (
-              <div key={account.id} className="flex items-center justify-between p-2 rounded-lg hover:bg-[#2a2d35] cursor-pointer">
-                <div className="flex items-center space-x-2">
-                  <div className={`w-2 h-2 rounded-full ${account.isConnected ? 'bg-[#00b894]' : 'bg-gray-500'}`}></div>
-                  <span className="text-sm text-gray-300">{account.name}</span>
-                </div>
-                {account.unreadCount > 0 && (
-                  <span className="bg-[#00b894] text-white text-xs px-2 py-1 rounded-full">
-                    {account.unreadCount}
-                  </span>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Tabs de navegación */}
-        <div className="flex-1 overflow-hidden">
-          <div className="flex border-b border-[#3a3d45]">
-            {[
-              { id: 'inbox', label: 'Bandeja de entrada', icon: EnvelopeIcon, count: totalUnread },
-              { id: 'starred', label: 'Destacados', icon: StarIcon, count: emails.filter(e => e.isStarred).length },
-              { id: 'sent', label: 'Enviados', icon: FolderIcon, count: 0 },
-              { id: 'drafts', label: 'Borradores', icon: FolderIcon, count: 0 },
-              { id: 'trash', label: 'Papelera', icon: FolderIcon, count: 0 }
-            ].map(tab => (
+    <DashboardLayout 
+      userName={user.name}
+      userRole={user.role}
+      agencyName={user.agencyName}
+      onLogout={logout}
+    >
+      {/* Main Content Area - Sistema de Emails */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Header */}
+        <div className="p-4 border-b border-[#3a3d45] bg-[#2a2d35]">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h1 className="text-white text-xl font-semibold mb-2">Emails</h1>
+              <p className="text-gray-400 text-sm">Gestiona todas tus cuentas de email en un solo lugar</p>
+            </div>
+            <div className="flex items-center space-x-3">
               <button
-                key={tab.id}
-                onClick={() => setSelectedTab(tab.id as 'inbox' | 'starred' | 'sent' | 'drafts' | 'trash')}
-                className={`flex-1 flex items-center justify-center space-x-2 py-3 px-2 text-sm font-medium transition-colors duration-200 ${
-                  selectedTab === tab.id
-                    ? 'text-[#00b894] border-b-2 border-[#00b894]'
-                    : 'text-gray-400 hover:text-white'
-                }`}
+                onClick={() => setShowAccountSelector(true)}
+                className="bg-[#00b894] hover:bg-[#00a085] text-white px-4 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-2"
               >
-                <tab.icon className="w-4 h-4" />
-                <span>{tab.label}</span>
-                {tab.count > 0 && (
-                  <span className="bg-gray-600 text-white text-xs px-2 py-1 rounded-full">
-                    {tab.count}
-                  </span>
-                )}
+                <PlusIcon className="w-4 h-4" />
+                <span>Gestionar Cuentas</span>
               </button>
-            ))}
+              <button
+                onClick={() => setIsComposing(true)}
+                className="bg-[#2a2d35] hover:bg-[#3a3d45] text-white px-4 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-2"
+              >
+                <PlusIcon className="w-4 h-4" />
+                <span>Nuevo Email</span>
+              </button>
+            </div>
           </div>
 
-          {/* Barra de búsqueda */}
-          <div className="p-4">
-            <div className="relative">
-              <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+          {/* Filtros y búsqueda */}
+          <div className="flex items-center space-x-4">
+            <div className="flex-1 relative">
+              <MagnifyingGlassIcon className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
                 placeholder="Buscar emails..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-[#2a2d35] border border-[#3a3d45] rounded-lg pl-10 pr-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#00b894] focus:border-transparent"
+                className="w-full bg-[#1a1d23] border border-[#3a3d45] rounded-lg pl-10 pr-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-[#00b894] transition-colors duration-200"
               />
             </div>
+            
+            {/* Filtro por cuenta */}
+            <select 
+              className="bg-[#1a1d23] border border-[#3a3d45] rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-[#00b894]"
+              onChange={(e) => {
+                // Aquí se filtraría por cuenta seleccionada
+                console.log('Filtrando por cuenta:', e.target.value);
+              }}
+            >
+              <option value="">Todas las cuentas</option>
+              {accounts.map(account => (
+                <option key={account.id} value={account.id}>
+                  {account.name} ({account.email})
+                </option>
+              ))}
+            </select>
+            
+            <button className="bg-[#2a2d35] hover:bg-[#3a3d45] text-white px-3 py-2 rounded-lg transition-colors duration-200">
+              <ArrowPathIcon className="w-4 h-4" />
+            </button>
+            <button className="bg-[#2a2d35] hover:bg-[#3a3d45] text-white px-3 py-2 rounded-lg transition-colors duration-200">
+              <FunnelIcon className="w-4 h-4" />
+            </button>
           </div>
+        </div>
 
+        {/* Tabs de navegación */}
+        <div className="flex space-x-1 px-4 py-2 bg-[#1a1d23] border-b border-[#3a3d45]">
+          {[
+            { id: 'inbox', label: 'Bandeja de entrada', icon: '📥' },
+            { id: 'starred', label: 'Destacados', icon: '⭐' },
+            { id: 'sent', label: 'Enviados', icon: '📤' },
+            { id: 'drafts', label: 'Borradores', icon: '📝' },
+            { id: 'trash', label: 'Papelera', icon: '🗑️' }
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setSelectedTab(tab.id as 'inbox' | 'starred' | 'sent' | 'drafts' | 'trash')}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                selectedTab === tab.id
+                  ? 'bg-[#00b894] text-white'
+                  : 'text-gray-400 hover:text-white hover:bg-[#3a3d45]'
+              }`}
+            >
+              <span>{tab.icon}</span>
+              <span>{tab.label}</span>
+            </button>
+          ))}
+        </div>
+
+        {/* Contenido principal - Lista de emails y preview */}
+        <div className="flex-1 flex overflow-hidden">
           {/* Lista de emails */}
-          <div className="flex-1 overflow-y-auto">
-            {filteredEmails.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-64 text-gray-400">
-                <EnvelopeIcon className="w-12 h-12 mb-4" />
-                <p className="text-center">No se encontraron emails</p>
-                <p className="text-sm text-gray-500">Intenta con otros filtros o busca algo diferente</p>
-              </div>
-            ) : (
-              <div className="space-y-1 p-2">
-                {filteredEmails.map(email => (
-                  <div
-                    key={email.id}
-                    onClick={() => handleEmailClick(email)}
-                    className={`p-3 rounded-lg cursor-pointer transition-colors duration-200 ${
-                      selectedEmail?.id === email.id
-                        ? 'bg-[#00b894] bg-opacity-20 border border-[#00b894]'
-                        : email.isRead
-                        ? 'hover:bg-[#2a2d35]'
-                        : 'bg-[#2a2d35] hover:bg-[#3a3d45]'
-                    }`}
-                  >
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="flex items-center space-x-2">
-                        <span className={`w-2 h-2 rounded-full ${email.isRead ? 'bg-gray-500' : 'bg-[#00b894]'}`}></span>
-                        <span className={`font-medium text-sm ${email.isRead ? 'text-gray-300' : 'text-white'}`}>
+          <div className="w-1/3 border-r border-[#3a3d45] overflow-y-auto">
+            <div className="p-2">
+              {filteredEmails.map((email) => (
+                <div
+                  key={email.id}
+                  onClick={() => handleEmailClick(email)}
+                  className={`p-3 rounded-lg cursor-pointer transition-all duration-200 mb-2 ${
+                    selectedEmail?.id === email.id
+                      ? 'bg-[#00b894] text-white'
+                      : 'bg-[#2a2d35] hover:bg-[#3a3d45] text-gray-300'
+                  }`}
+                >
+                  <div className="flex items-start space-x-3">
+                    <div className="flex-shrink-0">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleStarToggle(email.id);
+                        }}
+                        className="text-gray-400 hover:text-yellow-400 transition-colors duration-200"
+                      >
+                        {email.isStarred ? (
+                          <StarIconSolid className="w-4 h-4 text-yellow-400" />
+                        ) : (
+                          <StarIcon className="w-4 h-4" />
+                        )}
+                      </button>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between mb-1">
+                        <p className={`font-medium text-sm truncate ${
+                          selectedEmail?.id === email.id ? 'text-white' : 'text-white'
+                        }`}>
                           {email.from}
+                        </p>
+                        <span className={`text-xs ${
+                          selectedEmail?.id === email.id ? 'text-white' : 'text-gray-400'
+                        }`}>
+                          {email.date}
                         </span>
                       </div>
-                      <div className="flex items-center space-x-1">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleStarToggle(email.id);
-                          }}
-                          className="text-gray-400 hover:text-yellow-400 transition-colors duration-200"
-                        >
-                          {email.isStarred ? (
-                            <StarIconSolid className="w-4 h-4 text-yellow-400" />
-                          ) : (
-                            <StarIcon className="w-4 h-4" />
-                          )}
-                        </button>
-                        <span className="text-xs text-gray-500">{email.date}</span>
-                      </div>
-                    </div>
-                    <div className="mb-2">
-                      <h4 className={`font-medium text-sm mb-1 ${email.isRead ? 'text-gray-300' : 'text-white'}`}>
+                      <p className={`font-medium text-sm mb-1 truncate ${
+                        selectedEmail?.id === email.id ? 'text-white' : 'text-white'
+                      }`}>
                         {email.subject}
-                      </h4>
-                      <p className="text-xs text-gray-400 line-clamp-2">{email.preview}</p>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-gray-500">{email.account}</span>
-                      <div className="flex space-x-1">
-                        {email.labels.map(label => (
+                      </p>
+                      <p className={`text-sm truncate ${
+                        selectedEmail?.id === email.id ? 'text-white' : 'text-gray-400'
+                      }`}>
+                        {email.preview}
+                      </p>
+                      <div className="flex items-center space-x-2 mt-2">
+                        <span className={`text-xs px-2 py-1 rounded-full ${
+                          selectedEmail?.id === email.id ? 'bg-white text-[#00b894]' : 'bg-[#3a3d45] text-gray-400'
+                        }`}>
+                          {email.account}
+                        </span>
+                        {email.labels.slice(0, 2).map((label, index) => (
                           <span
-                            key={label}
-                            className="text-xs bg-[#3a3d45] text-gray-300 px-2 py-1 rounded-full"
+                            key={index}
+                            className={`text-xs px-2 py-1 rounded-full ${
+                              selectedEmail?.id === email.id ? 'bg-white text-[#00b894]' : 'bg-[#1a1d23] text-gray-400'
+                            }`}
                           >
                             {label}
                           </span>
                         ))}
+                        {email.labels.length > 2 && (
+                          <span className={`text-xs px-2 py-1 rounded-full ${
+                            selectedEmail?.id === email.id ? 'bg-white text-[#00b894]' : 'bg-[#1a1d23] text-gray-400'
+                          }`}>
+                            +{email.labels.length - 2}
+                          </span>
+                        )}
                       </div>
                     </div>
                   </div>
-                ))}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Panel derecho - Preview del email o estado vacío */}
+          <div className="flex-1 bg-[#1a1d23] overflow-hidden">
+            {selectedEmail ? (
+              /* Preview del email seleccionado */
+              <div className="h-full flex flex-col">
+                {/* Header del email */}
+                <div className="p-4 border-b border-[#3a3d45] bg-[#2a2d35]">
+                  <div className="flex items-center justify-between mb-3">
+                    <h2 className="text-white text-lg font-semibold">{selectedEmail.subject}</h2>
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={() => handleReply(selectedEmail)}
+                        className="bg-[#00b894] hover:bg-[#00a085] text-white px-3 py-2 rounded-lg text-sm transition-colors duration-200"
+                      >
+                        Responder
+                      </button>
+                      <button className="bg-[#2a2d35] hover:bg-[#3a3d45] text-white px-3 py-2 rounded-lg text-sm transition-colors duration-200">
+                        Reenviar
+                      </button>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-4 text-sm text-gray-400">
+                    <span><strong>De:</strong> {selectedEmail.from}</span>
+                    <span><strong>Fecha:</strong> {selectedEmail.date}</span>
+                    <span><strong>Cuenta:</strong> {selectedEmail.account}</span>
+                  </div>
+                </div>
+                
+                {/* Contenido del email */}
+                <div className="flex-1 p-4 overflow-y-auto">
+                  <div className="bg-[#2a2d35] rounded-lg p-4">
+                    <p className="text-white leading-relaxed">{selectedEmail.preview}</p>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              /* Estado vacío cuando no hay email seleccionado - Mostrar Cards de Cuentas */
+              <div className="flex-1 p-4 overflow-y-auto">
+                <div className="mb-6">
+                  <h2 className="text-white text-lg font-semibold mb-4">Cuentas de Email</h2>
+                  <p className="text-gray-400 text-sm mb-4">Gestiona y visualiza el estado de todas tus cuentas conectadas</p>
+                </div>
+                
+                {/* Grid de Cards de Cuentas */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  {accounts.map((account) => (
+                    <div
+                      key={account.id}
+                      className="bg-[#2a2d35] border border-[#3a3d45] rounded-lg p-4 hover:border-[#00b894] transition-all duration-200 cursor-pointer"
+                      onClick={() => {
+                        // Aquí se filtraría para mostrar solo emails de esta cuenta
+                        console.log('Filtrando por cuenta:', account.name);
+                      }}
+                    >
+                      {/* Header de la cuenta */}
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center space-x-3">
+                          <div className={`w-3 h-3 rounded-full ${account.isConnected ? 'bg-[#00b894]' : 'bg-gray-500'}`}></div>
+                          <h3 className="text-white font-medium">{account.name}</h3>
+                        </div>
+                        <span className={`text-xs px-2 py-1 rounded-full ${
+                          account.isConnected ? 'bg-[#00b894] text-white' : 'bg-gray-600 text-gray-300'
+                        }`}>
+                          {account.isConnected ? 'Conectada' : 'Desconectada'}
+                        </span>
+                      </div>
+                      
+                      {/* Detalles de la cuenta */}
+                      <div className="space-y-2 mb-4">
+                        <div className="flex items-center justify-between">
+                          <span className="text-gray-400 text-sm">Email:</span>
+                          <span className="text-white text-sm font-mono">{account.email}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-gray-400 text-sm">Proveedor:</span>
+                          <span className="text-white text-sm capitalize">{account.provider}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-gray-400 text-sm">No leídos:</span>
+                          <span className={`text-sm font-medium ${
+                            account.unreadCount > 0 ? 'text-[#00b894]' : 'text-gray-400'
+                          }`}>
+                            {account.unreadCount}
+                          </span>
+                        </div>
+                      </div>
+                      
+                      {/* Acciones */}
+                      <div className="flex items-center justify-between pt-3 border-t border-[#3a3d45]">
+                        <button className="text-[#00b894] hover:text-[#00a085] text-sm font-medium transition-colors duration-200">
+                          Ver emails
+                        </button>
+                        <button className="text-gray-400 hover:text-white text-sm transition-colors duration-200">
+                          Configurar
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                
+                {/* Card de nueva cuenta */}
+                <div className="mt-6">
+                  <div 
+                    className="bg-[#1a1d23] border-2 border-dashed border-[#3a3d45] rounded-lg p-6 text-center hover:border-[#00b894] transition-all duration-200 cursor-pointer"
+                    onClick={() => setShowAccountSelector(true)}
+                  >
+                    <div className="w-12 h-12 bg-[#2a2d35] rounded-full flex items-center justify-center mx-auto mb-3">
+                      <PlusIcon className="w-6 h-6 text-[#00b894]" />
+                    </div>
+                    <h3 className="text-white font-medium mb-2">Agregar Nueva Cuenta</h3>
+                    <p className="text-gray-400 text-sm">Conecta Gmail, Outlook, Yahoo o una cuenta personalizada</p>
+                  </div>
+                </div>
               </div>
             )}
           </div>
         </div>
-      </div>
-
-      {/* Panel derecho - Vista previa del email */}
-      <div className="flex-1 bg-[#0f1419] flex flex-col">
-        {selectedEmail ? (
-          <>
-            {/* Header del email */}
-            <div className="p-6 border-b border-[#3a3d45]">
-              <div className="flex items-center justify-between mb-4">
-                <h1 className="text-2xl font-bold text-white">{selectedEmail.subject}</h1>
-                <div className="flex items-center space-x-3">
-                  <button className="text-gray-400 hover:text-white transition-colors duration-200">
-                    <ArrowPathIcon className="w-5 h-5" />
-                  </button>
-                  <button className="text-gray-400 hover:text-white transition-colors duration-200">
-                    <FunnelIcon className="w-5 h-5" />
-                  </button>
-                  <button className="text-gray-400 hover:text-white transition-colors duration-200">
-                    <Cog6ToothIcon className="w-5 h-5" />
-                  </button>
-                </div>
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <div className="w-10 h-10 bg-[#00b894] rounded-full flex items-center justify-center">
-                    <span className="text-white font-bold text-sm">
-                      {selectedEmail.from.charAt(0).toUpperCase()}
-                    </span>
-                  </div>
-                  <div>
-                    <p className="text-white font-medium">{selectedEmail.from}</p>
-                    <p className="text-gray-400 text-sm">{selectedEmail.date}</p>
-                  </div>
-                </div>
-                                 <div className="flex items-center space-x-2">
-                   <button 
-                     onClick={() => handleReply(selectedEmail)}
-                     className="bg-[#00b894] hover:bg-[#00a085] text-white px-4 py-2 rounded-lg transition-colors duration-200"
-                   >
-                     Responder
-                   </button>
-                   <button className="bg-[#2a2d35] hover:bg-[#3a3d45] text-white px-4 py-2 rounded-lg transition-colors duration-200">
-                     Reenviar
-                   </button>
-                 </div>
-              </div>
-            </div>
-
-            {/* Contenido del email */}
-            <div className="flex-1 p-6 overflow-y-auto">
-              <div className="bg-[#1a1d23] rounded-lg p-6 border border-[#3a3d45]">
-                <div className="prose prose-invert max-w-none">
-                  <p className="text-gray-300 leading-relaxed">
-                    {selectedEmail.preview}
-                  </p>
-                  <p className="text-gray-300 leading-relaxed mt-4">
-                    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
-                  </p>
-                  <p className="text-gray-300 leading-relaxed mt-4">
-                    Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </>
-        ) : (
-          /* Estado vacío cuando no hay email seleccionado */
-          <div className="flex-1 flex items-center justify-center">
-            <div className="text-center text-gray-400">
-              <EnvelopeIcon className="w-24 h-24 mx-auto mb-6 opacity-50" />
-              <h3 className="text-xl font-medium mb-2">Selecciona un email</h3>
-              <p className="text-gray-500">Elige un email de la lista para ver su contenido</p>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Modal de gestión de cuentas */}
@@ -409,6 +486,7 @@ export default function EmailsPage() {
             setIsComposing(false);
             setReplyToEmail(null);
           }}
+          accounts={accounts}
           replyTo={replyToEmail ? {
             to: replyToEmail.from,
             subject: replyToEmail.subject,
@@ -417,6 +495,6 @@ export default function EmailsPage() {
           onSend={handleSendEmail}
         />
       )}
-    </div>
+    </DashboardLayout>
   );
 }

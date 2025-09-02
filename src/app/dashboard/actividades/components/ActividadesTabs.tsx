@@ -32,27 +32,27 @@ export default function ActividadesTabs() {
   };
 
   return (
-    <div className="bg-[#2a2d35] rounded-lg p-6">
+    <div className="bg-[#2a2d35] rounded-lg p-4 overflow-hidden">
       {/* Tabs Navigation */}
-      <div className="flex space-x-1 mb-6 bg-[#1a1d23] rounded-lg p-1">
+      <div className="flex space-x-1 mb-4 bg-[#1a1d23] rounded-lg p-1">
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`flex-1 flex items-center justify-center space-x-2 px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+            className={`flex-1 flex items-center justify-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
               activeTab === tab.id
                 ? 'bg-[#00b894] text-white shadow-lg'
                 : 'text-gray-400 hover:text-white hover:bg-[#3a3d45]'
             }`}
           >
-            <span className="text-lg">{tab.icon}</span>
+            <span className="text-base">{tab.icon}</span>
             <span>{tab.label.split(' ')[1]}</span>
           </button>
         ))}
       </div>
 
       {/* Tab Content */}
-      <div className="min-h-[600px]">
+      <div className="min-h-[500px] overflow-hidden">
         {renderTabContent()}
       </div>
     </div>

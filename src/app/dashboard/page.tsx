@@ -40,23 +40,23 @@ export default function DashboardPage() {
       agencyName={user.agencyName}
       onLogout={handleLogout}
     >
-      {/* Main Content Area */}
-      <div className="flex-1 p-6">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-white text-2xl font-semibold mb-2">Dashboard</h1>
+      {/* Main Content Area - Sin scroll horizontal */}
+      <div className="flex-1 p-4 overflow-hidden">
+        {/* Header - Compacto pero legible */}
+        <div className="mb-5">
+          <h1 className="text-white text-xl font-semibold mb-2">Dashboard</h1>
           <div className="flex items-center justify-between">
-            <h2 className="text-white text-xl font-medium">Mensajes</h2>
-            <div className="flex items-center space-x-4">
+            <h2 className="text-white text-lg font-medium">Mensajes</h2>
+            <div className="flex items-center space-x-2">
               <div className="flex items-center space-x-2">
                 <span className="text-gray-400 text-sm">Agente</span>
-                <select className="bg-[#2a2d35] border border-[#3a3d45] rounded px-3 py-1 text-white text-sm">
+                <select className="bg-[#2a2d35] border border-[#3a3d45] rounded px-2 py-1 text-white text-sm">
                   <option>Todos</option>
                 </select>
               </div>
               <div className="flex items-center space-x-2">
                 <span className="text-gray-400 text-sm">Sesión</span>
-                <select className="bg-[#2a2d35] border border-[#3a3d45] rounded px-3 py-1 text-white text-sm">
+                <select className="bg-[#2a2d35] border border-[#3a3d45] rounded px-2 py-1 text-white text-sm">
                   <option>Todos</option>
                 </select>
               </div>
@@ -73,8 +73,8 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Metrics Grid - First Row */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+        {/* Metrics Grid - Primera fila (4 métricas principales) */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
           <MetricsCard
             title="Nuevos prospectos"
             value={0}
@@ -109,22 +109,6 @@ export default function DashboardPage() {
             }
           />
           <MetricsCard
-            title="Total de chats por etiqueta"
-            value={0}
-            percentage="0%"
-            iconColor="bg-orange-500"
-            hasFilters={true}
-            icon={
-              <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-              </svg>
-            }
-          />
-        </div>
-
-        {/* Metrics Grid - Second Row */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-          <MetricsCard
             title="Total de mensajes"
             value={0}
             percentage="0%"
@@ -135,8 +119,12 @@ export default function DashboardPage() {
               </svg>
             }
           />
+        </div>
+
+        {/* Metrics Grid - Segunda fila (4 métricas secundarias) */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
           <MetricsCard
-            title="Total de mensajes mandados"
+            title="Mensajes enviados"
             value={0}
             percentage="0%"
             iconColor="bg-purple-500"
@@ -147,61 +135,13 @@ export default function DashboardPage() {
             }
           />
           <MetricsCard
-            title="Total de mensajes de nuevos prospectos"
+            title="Prospectos nuevos"
             value={0}
             percentage="0%"
             iconColor="bg-purple-500"
             icon={
               <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-4 4v-4z" />
-              </svg>
-            }
-          />
-          <MetricsCard
-            title="Total de mensajes hacia nuevos prospectos"
-            value={0}
-            percentage="0%"
-            iconColor="bg-purple-500"
-            icon={
-              <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-              </svg>
-            }
-          />
-        </div>
-
-        {/* Metrics Grid - Third Row */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <MetricsCard
-            title="Mensajes hacia clientes recurrentes"
-            value={0}
-            percentage="0%"
-            iconColor="bg-purple-500"
-            icon={
-              <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-              </svg>
-            }
-          />
-          <MetricsCard
-            title="Mensajes de clientes recurrentes"
-            value={0}
-            percentage="0%"
-            iconColor="bg-purple-500"
-            icon={
-              <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-              </svg>
-            }
-          />
-          <MetricsCard
-            title="Mensajes totales de clientes recurrentes"
-            value={0}
-            percentage="0%"
-            iconColor="bg-purple-500"
-            icon={
-              <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
               </svg>
             }
           />
@@ -216,14 +156,26 @@ export default function DashboardPage() {
               </svg>
             }
           />
+          <MetricsCard
+            title="Total etiquetas"
+            value={0}
+            percentage="0%"
+            iconColor="bg-orange-500"
+            hasFilters={true}
+            icon={
+              <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+              </svg>
+            }
+          />
         </div>
 
-        {/* Tiempos Section */}
-        <div className="mb-8">
-          <h2 className="text-white text-xl font-medium mb-6">Tiempos</h2>
-          <div className="bg-[#2a2d35] border border-[#3a3d45] rounded-lg p-6">
-            <div className="text-gray-400 text-center py-8">
-              <svg className="w-12 h-12 mx-auto mb-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        {/* Tiempos Section - Compacto pero legible */}
+        <div className="mb-5">
+          <h2 className="text-white text-lg font-medium mb-3">Tiempos</h2>
+          <div className="bg-[#2a2d35] border border-[#3a3d45] rounded-lg p-4">
+            <div className="text-gray-400 text-center py-6">
+              <svg className="w-8 h-8 mx-auto mb-3 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               <p className="text-sm">No hay datos de tiempos disponibles</p>

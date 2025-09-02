@@ -13,10 +13,10 @@ interface DashboardLayoutProps {
 }
 
 export default function DashboardLayout({ children, userName, userRole, agencyName, onLogout }: DashboardLayoutProps) {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-[#1a1d23] flex">
+    <div className="min-h-screen bg-[#1a1d23] flex overflow-hidden">
       {/* Sidebar */}
       <Sidebar 
         isOpen={isSidebarOpen} 
@@ -24,7 +24,7 @@ export default function DashboardLayout({ children, userName, userRole, agencyNa
       />
       
       {/* Main Content */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col min-w-0">
         {/* Header */}
         <Header 
           userName={userName}
@@ -35,7 +35,7 @@ export default function DashboardLayout({ children, userName, userRole, agencyNa
         />
         
         {/* Page Content */}
-        <main className="flex-1 flex">
+        <main className="flex-1 flex overflow-hidden">
           {children}
         </main>
       </div>

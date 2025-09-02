@@ -334,61 +334,66 @@ export default function TareasTab() {
 
       {/* Lista de Tareas */}
       <div className="bg-[#1a1d23] rounded-lg overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
+        <div className="overflow-x-auto max-w-full">
+          <table className="w-full table-fixed">
             <thead className="bg-[#3a3d45]">
               <tr>
-                <th className="px-4 py-3 text-left text-white font-medium">Tarea</th>
-                <th className="px-4 py-3 text-left text-white font-medium">Asignado</th>
-                <th className="px-4 py-3 text-left text-white font-medium">Prioridad</th>
-                <th className="px-4 py-3 text-left text-white font-medium">Estado</th>
-                <th className="px-4 py-3 text-left text-white font-medium">Fecha Límite</th>
-                <th className="px-4 py-3 text-left text-white font-medium">Categoría</th>
-                <th className="px-4 py-3 text-left text-white font-medium">Acciones</th>
+                <th className="px-3 py-2 text-left text-white font-medium text-sm w-1/4">Tarea</th>
+                <th className="px-3 py-2 text-left text-white font-medium text-sm w-1/6">Asignado</th>
+                <th className="px-3 py-2 text-left text-white font-medium text-sm w-1/6">Prioridad</th>
+                <th className="px-3 py-2 text-left text-white font-medium text-sm w-1/6">Estado</th>
+                <th className="px-3 py-2 text-left text-white font-medium text-sm w-1/6">Fecha Límite</th>
+                <th className="px-3 py-2 text-left text-white font-medium text-sm w-1/6">Categoría</th>
+                <th className="px-3 py-2 text-left text-white font-medium text-sm w-1/6">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#3a3d45]">
               {tareasFiltradas.map((tarea) => (
                 <tr key={tarea.id} className="hover:bg-[#2a2d35] transition-colors">
-                  <td className="px-4 py-3">
-                    <div>
-                      <div className="text-white font-medium">{tarea.titulo}</div>
-                      <div className="text-gray-400 text-sm">{tarea.descripcion}</div>
+                  <td className="px-3 py-2">
+                    <div className="truncate">
+                      <div className="text-white font-medium text-sm truncate">{tarea.titulo}</div>
+                      <div className="text-gray-400 text-xs truncate">{tarea.descripcion}</div>
                       <div className="flex flex-wrap gap-1 mt-1">
-                        {tarea.etiquetas.map((etiqueta, index) => (
-                          <span key={index} className="bg-[#3a3d45] text-gray-300 text-xs px-2 py-1 rounded">
+                        {tarea.etiquetas.slice(0, 2).map((etiqueta, index) => (
+                          <span key={index} className="bg-[#3a3d45] text-gray-300 text-xs px-1.5 py-0.5 rounded truncate">
                             {etiqueta}
                           </span>
                         ))}
+                        {tarea.etiquetas.length > 2 && (
+                          <span className="bg-[#3a3d45] text-gray-300 text-xs px-1.5 py-0.5 rounded">
+                            +{tarea.etiquetas.length - 2}
+                          </span>
+                        )}
                       </div>
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-gray-300">{tarea.asignadoA}</td>
-                  <td className="px-4 py-3">
-                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getPrioridadBgColor(tarea.prioridad)} text-white`}>
+                  <td className="px-3 py-2 text-gray-300 text-sm truncate">{tarea.asignadoA}</td>
+                  <td className="px-3 py-2">
+                    <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${getPrioridadBgColor(tarea.prioridad)} text-white`}>
                       {tarea.prioridad.toUpperCase()}
                     </span>
                   </td>
-                  <td className="px-4 py-3">
-                    <span className={`inline-block w-3 h-3 rounded-full ${getEstadoColor(tarea.estado)} mr-2`}></span>
-                    <span className="text-gray-300">{getEstadoText(tarea.estado)}</span>
+                  <td className="px-3 py-2">
+                    <span className={`inline-block w-2 h-2 rounded-full ${getEstadoColor(tarea.estado)} mr-1`}></span>
+                    <span className="text-gray-300 text-xs">{getEstadoText(tarea.estado)}</span>
                   </td>
-                  <td className="px-4 py-3 text-gray-300">
+                  <td className="px-3 py-2 text-gray-300 text-sm truncate">
                     {tarea.fechaLimite ? (
                       <span className={new Date(tarea.fechaLimite) < new Date() ? 'text-red-400' : ''}>
                         {tarea.fechaLimite}
                       </span>
                     ) : (
-                      <span className="text-gray-500">Sin fecha</span>
+                      <span className="text-gray-500 text-xs">Sin fecha</span>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-gray-300">{tarea.categoria}</td>
-                  <td className="px-4 py-3">
-                    <div className="flex space-x-2">
+                  <td className="px-3 py-2 text-gray-300 text-sm truncate">{tarea.categoria}</td>
+                  <td className="px-3 py-2">
+                    <div className="flex space-x-1">
                       {tarea.estado === 'pendiente' && (
                         <button
                           onClick={() => cambiarEstado(tarea.id, 'en_progreso')}
-                          className="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-xs transition-colors"
+                          className="bg-blue-600 hover:bg-blue-700 text-white px-1.5 py-0.5 rounded text-xs transition-colors"
                         >
                           Iniciar
                         </button>
@@ -396,12 +401,12 @@ export default function TareasTab() {
                       {tarea.estado === 'en_progreso' && (
                         <button
                           onClick={() => cambiarEstado(tarea.id, 'completada')}
-                          className="bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded text-xs transition-colors"
+                          className="bg-green-600 hover:bg-green-700 text-white px-1.5 py-0.5 rounded text-xs transition-colors"
                         >
                           Completar
                         </button>
                       )}
-                      <button className="bg-[#00b894] hover:bg-[#00a085] text-white px-2 py-1 rounded text-xs transition-colors">
+                      <button className="bg-[#00b894] hover:bg-[#00a085] text-white px-1.5 py-0.5 rounded text-xs transition-colors">
                         Editar
                       </button>
                     </div>

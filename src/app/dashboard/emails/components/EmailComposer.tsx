@@ -1,11 +1,20 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { PaperClipIcon, XMarkIcon, PaperAirplaneIcon, DocumentArrowDownIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { PaperClipIcon, XMarkIcon, PaperAirplaneIcon, DocumentArrowDownIcon } from '@heroicons/react/24/outline';
+
+interface EmailAccount {
+  id: string;
+  name: string;
+  email: string;
+  provider: 'gmail' | 'outlook' | 'yahoo' | 'custom';
+  isConnected: boolean;
+}
 
 interface EmailComposerProps {
   isOpen: boolean;
   onClose: () => void;
+  accounts: EmailAccount[];
   replyTo?: {
     to: string;
     subject: string;
@@ -15,6 +24,7 @@ interface EmailComposerProps {
 }
 
 interface EmailData {
+  fromAccountId: string;
   to: string;
   cc?: string;
   bcc?: string;
@@ -23,8 +33,9 @@ interface EmailData {
   attachments: File[];
 }
 
-export default function EmailComposer({ isOpen, onClose, replyTo, onSend }: EmailComposerProps) {
+export default function EmailComposer({ isOpen, onClose, accounts, replyTo, onSend }: EmailComposerProps) {
   const [emailData, setEmailData] = useState<EmailData>({
+    fromAccountId: accounts.length > 0 ? accounts[0].id : '',
     to: replyTo?.to || '',
     cc: '',
     bcc: '',
@@ -33,10 +44,11 @@ export default function EmailComposer({ isOpen, onClose, replyTo, onSend }: Emai
     attachments: []
   });
   
-  const [showCc, setShowCc] = useState(false);
-  const [showBcc, setShowBcc] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Filtrar solo cuentas conectadas
+  const connectedAccounts = accounts.filter(account => account.isConnected);
 
   const handleInputChange = (field: keyof EmailData, value: string) => {
     setEmailData(prev => ({ ...prev, [field]: value }));
@@ -58,6 +70,11 @@ export default function EmailComposer({ isOpen, onClose, replyTo, onSend }: Emai
   };
 
   const handleSend = async () => {
+    if (!emailData.fromAccountId) {
+      alert('Debes seleccionar una cuenta para enviar el email');
+      return;
+    }
+    
     if (!emailData.to || !emailData.subject || !emailData.content.trim()) {
       alert('Por favor completa todos los campos obligatorios');
       return;
@@ -69,6 +86,7 @@ export default function EmailComposer({ isOpen, onClose, replyTo, onSend }: Emai
       onClose();
       // Reset form
       setEmailData({
+        fromAccountId: accounts.length > 0 ? accounts[0].id : '',
         to: '',
         cc: '',
         bcc: '',
@@ -90,24 +108,16 @@ export default function EmailComposer({ isOpen, onClose, replyTo, onSend }: Emai
     alert('Borrador guardado');
   };
 
-  const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-  };
-
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-[#1a1d23] rounded-lg w-full max-w-4xl mx-4 max-h-[90vh] overflow-hidden flex flex-col">
+      <div className="bg-[#1a1d23] border border-[#3a3d45] rounded-lg w-full max-w-4xl max-h-[90vh] overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-[#3a3d45]">
-          <h3 className="text-lg font-medium text-white">
+        <div className="flex items-center justify-between p-4 border-b border-[#3a3d45] bg-[#2a2d35]">
+          <h2 className="text-white text-lg font-semibold">
             {replyTo ? 'Responder Email' : 'Nuevo Email'}
-          </h3>
+          </h2>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-white transition-colors duration-200"
@@ -116,10 +126,35 @@ export default function EmailComposer({ isOpen, onClose, replyTo, onSend }: Emai
           </button>
         </div>
 
-        {/* Formulario */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        {/* Contenido del formulario */}
+        <div className="p-4 overflow-y-auto max-h-[calc(90vh-120px)]">
+          {/* Selector de cuenta remitente */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Enviar desde: <span className="text-red-400">*</span>
+            </label>
+            <select 
+              value={emailData.fromAccountId}
+              onChange={(e) => handleInputChange('fromAccountId', e.target.value)}
+              className="w-full bg-[#1a1d23] border border-[#3a3d45] rounded-lg px-3 py-2 text-white focus:outline-none focus:border-[#00b894] transition-colors duration-200"
+              required
+            >
+              <option value="">Selecciona una cuenta</option>
+              {connectedAccounts.map(account => (
+                <option key={account.id} value={account.id}>
+                  {account.name} ({account.email}) - {account.provider}
+                </option>
+              ))}
+            </select>
+            {connectedAccounts.length === 0 && (
+              <p className="text-red-400 text-sm mt-1">
+                No hay cuentas conectadas. Primero debes conectar una cuenta de email.
+              </p>
+            )}
+          </div>
+
           {/* Campo Para */}
-          <div>
+          <div className="mb-4">
             <label className="block text-sm font-medium text-gray-300 mb-2">
               Para: <span className="text-red-400">*</span>
             </label>
@@ -128,62 +163,41 @@ export default function EmailComposer({ isOpen, onClose, replyTo, onSend }: Emai
               value={emailData.to}
               onChange={(e) => handleInputChange('to', e.target.value)}
               placeholder="destinatario@ejemplo.com"
-              className="w-full bg-[#2a2d35] border border-[#3a3d45] rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#00b894] focus:border-transparent"
+              className="w-full bg-[#1a1d23] border border-[#3a3d45] rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-[#00b894] transition-colors duration-200"
+              required
             />
           </div>
 
           {/* Campo CC */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <label className="block text-sm font-medium text-gray-300">
-                CC:
-              </label>
-              <button
-                type="button"
-                onClick={() => setShowCc(!showCc)}
-                className="text-[#00b894] hover:text-[#00a085] text-sm"
-              >
-                {showCc ? 'Ocultar' : 'Mostrar'}
-              </button>
-            </div>
-            {showCc && (
-              <input
-                type="email"
-                value={emailData.cc}
-                onChange={(e) => handleInputChange('cc', e.target.value)}
-                placeholder="cc@ejemplo.com"
-                className="w-full bg-[#2a2d35] border border-[#3a3d45] rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#00b894] focus:border-transparent"
-              />
-            )}
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              CC:
+            </label>
+            <input
+              type="email"
+              value={emailData.cc}
+              onChange={(e) => handleInputChange('cc', e.target.value)}
+              placeholder="copia@ejemplo.com"
+              className="w-full bg-[#1a1d23] border border-[#3a3d45] rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-[#00b894] transition-colors duration-200"
+            />
           </div>
 
           {/* Campo BCC */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <label className="block text-sm font-medium text-gray-300">
-                BCC:
-              </label>
-              <button
-                type="button"
-                onClick={() => setShowBcc(!showBcc)}
-                className="text-[#00b894] hover:text-[#00a085] text-sm"
-              >
-                {showBcc ? 'Ocultar' : 'Mostrar'}
-              </button>
-            </div>
-            {showBcc && (
-              <input
-                type="email"
-                value={emailData.bcc}
-                onChange={(e) => handleInputChange('bcc', e.target.value)}
-                placeholder="bcc@ejemplo.com"
-                className="w-full bg-[#2a2d35] border border-[#3a3d45] rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#00b894] focus:border-transparent"
-              />
-            )}
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              BCC:
+            </label>
+            <input
+              type="email"
+              value={emailData.bcc}
+              onChange={(e) => handleInputChange('bcc', e.target.value)}
+              placeholder="copiaoculta@ejemplo.com"
+              className="w-full bg-[#1a1d23] border border-[#3a3d45] rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-[#00b894] transition-colors duration-200"
+            />
           </div>
 
           {/* Campo Asunto */}
-          <div>
+          <div className="mb-4">
             <label className="block text-sm font-medium text-gray-300 mb-2">
               Asunto: <span className="text-red-400">*</span>
             </label>
@@ -192,43 +206,57 @@ export default function EmailComposer({ isOpen, onClose, replyTo, onSend }: Emai
               value={emailData.subject}
               onChange={(e) => handleInputChange('subject', e.target.value)}
               placeholder="Asunto del email"
-              className="w-full bg-[#2a2d35] border border-[#3a3d45] rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#00b894] focus:border-transparent"
+              className="w-full bg-[#1a1d23] border border-[#3a3d45] rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-[#00b894] transition-colors duration-200"
+              required
+            />
+          </div>
+
+          {/* Campo Contenido */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Mensaje: <span className="text-red-400">*</span>
+            </label>
+            <textarea
+              value={emailData.content}
+              onChange={(e) => handleInputChange('content', e.target.value)}
+              placeholder="Escribe tu mensaje aquí..."
+              rows={8}
+              className="w-full bg-[#1a1d23] border border-[#3a3d45] rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-[#00b894] transition-colors duration-200 resize-vertical"
+              required
             />
           </div>
 
           {/* Adjuntos */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <label className="block text-sm font-medium text-gray-300">
-                Adjuntos:
-              </label>
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Adjuntos:
+            </label>
+            <div className="flex items-center space-x-2">
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                onChange={handleFileSelect}
+                className="hidden"
+              />
               <button
-                type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="text-[#00b894] hover:text-[#00a085] text-sm flex items-center space-x-1"
+                className="bg-[#2a2d35] hover:bg-[#3a3d45] text-white px-3 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-2"
               >
                 <PaperClipIcon className="w-4 h-4" />
-                <span>Agregar archivo</span>
+                <span>Agregar archivos</span>
               </button>
             </div>
-            <input
-              ref={fileInputRef}
-              type="file"
-              multiple
-              onChange={handleFileSelect}
-              className="hidden"
-            />
+            
+            {/* Lista de archivos adjuntos */}
             {emailData.attachments.length > 0 && (
-              <div className="space-y-2">
+              <div className="mt-3 space-y-2">
                 {emailData.attachments.map((file, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center justify-between p-2 bg-[#2a2d35] rounded-lg border border-[#3a3d45]"
-                  >
+                  <div key={index} className="flex items-center justify-between bg-[#2a2d35] rounded-lg px-3 py-2">
                     <div className="flex items-center space-x-2">
                       <PaperClipIcon className="w-4 h-4 text-gray-400" />
-                      <span className="text-sm text-gray-300">{file.name}</span>
-                      <span className="text-xs text-gray-500">({formatFileSize(file.size)})</span>
+                      <span className="text-white text-sm">{file.name}</span>
+                      <span className="text-gray-400 text-xs">({(file.size / 1024).toFixed(1)} KB)</span>
                     </div>
                     <button
                       onClick={() => removeAttachment(index)}
@@ -241,44 +269,28 @@ export default function EmailComposer({ isOpen, onClose, replyTo, onSend }: Emai
               </div>
             )}
           </div>
-
-          {/* Contenido del email */}
-          <div className="flex-1">
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Mensaje: <span className="text-red-400">*</span>
-            </label>
-            <textarea
-              value={emailData.content}
-              onChange={(e) => handleInputChange('content', e.target.value)}
-              placeholder="Escribe tu mensaje aquí..."
-              rows={12}
-              className="w-full bg-[#2a2d35] border border-[#3a3d45] rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#00b894] focus:border-transparent resize-none"
-            />
-          </div>
         </div>
 
-        {/* Footer con botones de acción */}
-        <div className="flex items-center justify-between p-4 border-t border-[#3a3d45] bg-[#1a1d23]">
-          <div className="flex items-center space-x-2">
-            <button
-              onClick={handleSaveDraft}
-              className="bg-[#3a3d45] hover:bg-[#4a4d55] text-white px-4 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-2"
-            >
-              <DocumentArrowDownIcon className="w-4 h-4" />
-              <span>Guardar borrador</span>
-            </button>
+        {/* Footer con botones */}
+        <div className="flex items-center justify-between p-4 border-t border-[#3a3d45] bg-[#2a2d35]">
+          <button
+            onClick={handleSaveDraft}
+            className="bg-[#1a1d23] hover:bg-[#3a3d45] text-white px-4 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-2"
+          >
+            <DocumentArrowDownIcon className="w-4 h-4" />
+            <span>Guardar borrador</span>
+          </button>
+          
+          <div className="flex items-center space-x-3">
             <button
               onClick={onClose}
-              className="bg-[#3a3d45] hover:bg-[#4a4d55] text-white px-4 py-2 rounded-lg transition-colors duration-200"
+              className="bg-[#1a1d23] hover:bg-[#3a3d45] text-white px-4 py-2 rounded-lg transition-colors duration-200"
             >
               Cancelar
             </button>
-          </div>
-          
-          <div className="flex items-center space-x-2">
             <button
               onClick={handleSend}
-              disabled={isSending || !emailData.to || !emailData.subject || !emailData.content.trim()}
+              disabled={isSending || !emailData.fromAccountId || !emailData.to || !emailData.subject || !emailData.content.trim()}
               className="bg-[#00b894] hover:bg-[#00a085] disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-2"
             >
               <PaperAirplaneIcon className="w-4 h-4" />

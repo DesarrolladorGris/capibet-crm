@@ -37,13 +37,13 @@ export default function ActividadesPage() {
       onLogout={logout}
     >
       {/* Main Content Area */}
-      <div className="flex-1 p-6">
+      <div className="flex-1 p-4 overflow-hidden">
         {/* Header */}
-        <div className="mb-8">
+        <div className="mb-5">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-white text-2xl font-semibold mb-2">Actividades</h1>
-              <p className="text-gray-400">Gestiona tus llamadas, reuniones, tareas y calendario</p>
+              <h1 className="text-white text-xl font-semibold mb-2">Actividades</h1>
+              <p className="text-gray-400 text-sm">Gestiona tus llamadas, reuniones, tareas y calendario</p>
             </div>
             <div className="text-right">
               <div className="bg-[#00b894] text-white px-3 py-1 rounded-full text-sm font-medium">
