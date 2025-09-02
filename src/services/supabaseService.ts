@@ -103,7 +103,7 @@ export interface Canal {
   id?: number;
   usuario_id: number;
   espacio_id: number;
-  tipo: 'whatsapp' | 'whatsappQr' | 'whatsappApi' | 'email' | 'instagram' | 'messenger' | 'telegram' | 'telegramBot' | 'webChat';
+  tipo: 'whatsapp' | 'whatsappApi' | 'email' | 'instagram' | 'messenger' | 'telegram' | 'telegramBot' | 'webChat';
   descripcion: string;
   configuracion?: Record<string, any>;
   activo?: boolean;

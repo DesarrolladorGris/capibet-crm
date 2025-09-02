@@ -1,36 +1,49 @@
 'use client';
 
-import { Canal } from '@/services/supabaseService';
+import { Sesion, Canal } from '@/services/supabaseService';
 
-interface ConfirmDeleteCanalModalProps {
+interface ConfirmDeleteSesionModalProps {
   isOpen: boolean;
+  sesion: Sesion | null;
   canal: Canal | null;
   onConfirm: () => void;
   onCancel: () => void;
   isLoading: boolean;
 }
 
-export default function ConfirmDeleteCanalModal({
+export default function ConfirmDeleteSesionModal({
   isOpen,
+  sesion,
   canal,
   onConfirm,
   onCancel,
   isLoading
-}: ConfirmDeleteCanalModalProps) {
-  if (!isOpen || !canal) return null;
+}: ConfirmDeleteSesionModalProps) {
+  if (!isOpen || !sesion) return null;
 
-  const getCanalIcon = (tipo: Canal['tipo']) => {
+  const getSesionIcon = (estado: Sesion['estado']) => {
+    const iconMap = {
+      activo: '🟢',
+      desconectado: '🔴',
+      expirado: '🟡',
+    };
+    return iconMap[estado] || '🔴';
+  };
+
+  const getCanalIcon = (canal: Canal | null) => {
+    if (!canal) return '📱';
+    
     const iconMap = {
       whatsapp: '📱',
-      whatsapp_api: '📱',
+      whatsappApi: '📱',
       instagram: '📷',
       messenger: '💬',
       telegram: '✈️',
-      telegram_bot: '🤖',
-      web_chat: '💬',
+      telegramBot: '🤖',
+      webChat: '💬',
       email: '✉️',
     };
-    return iconMap[tipo] || '📱';
+    return iconMap[canal.tipo] || '📱';
   };
 
   return (
@@ -42,19 +55,25 @@ export default function ConfirmDeleteCanalModal({
             <span className="text-red-600 text-xl">⚠️</span>
           </div>
           <div>
-            <h3 className="text-white text-lg font-medium">Eliminar Canal</h3>
+            <h3 className="text-white text-lg font-medium">Eliminar Sesión</h3>
             <p className="text-gray-400 text-sm">Esta acción no se puede deshacer</p>
           </div>
         </div>
 
-        {/* Canal Info */}
+        {/* Sesión Info */}
         <div className="bg-[#1a1d23] rounded-lg p-4 mb-6">
           <div className="flex items-center space-x-3">
-            <span className="text-2xl">{getCanalIcon(canal.tipo)}</span>
-            <div>
-              <div className="text-white font-medium">{canal.descripcion}</div>
+            <div className="flex items-center space-x-2">
+              <span className="text-2xl">{getCanalIcon(canal)}</span>
+              <span className="text-lg">{getSesionIcon(sesion.estado)}</span>
+            </div>
+            <div className="flex-1">
+              <div className="text-white font-medium">{sesion.nombre}</div>
               <div className="text-gray-400 text-sm">
-                {canal.tipo} • ID: {canal.id}
+                {canal?.descripcion || 'Canal desconocido'} • Estado: {sesion.estado}
+              </div>
+              <div className="text-gray-500 text-xs">
+                ID: {sesion.id}
               </div>
             </div>
           </div>
@@ -66,11 +85,11 @@ export default function ConfirmDeleteCanalModal({
             <span className="text-red-400 text-lg mt-0.5">⚠️</span>
             <div>
               <p className="text-red-400 text-sm font-medium mb-1">
-                ¿Estás seguro de que deseas eliminar este canal?
+                ¿Estás seguro de que deseas eliminar esta sesión?
               </p>
               <p className="text-red-300 text-xs">
-                • Se perderán todas las configuraciones del canal<br/>
-                • Las sesiones asociadas podrían verse afectadas<br/>
+                • Se perderán todas las configuraciones de la sesión<br/>
+                • Las conversaciones asociadas podrían verse afectadas<br/>
                 • Esta acción es permanente e irreversible
               </p>
             </div>
@@ -97,7 +116,7 @@ export default function ConfirmDeleteCanalModal({
                 Eliminando...
               </>
             ) : (
-              'Eliminar Canal'
+              'Eliminar Sesión'
             )}
           </button>
         </div>

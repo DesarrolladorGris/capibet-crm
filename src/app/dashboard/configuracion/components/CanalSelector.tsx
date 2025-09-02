@@ -21,14 +21,7 @@ const canalOptions: CanalOption[] = [
     tipo: 'whatsapp',
     description: 'WhatsApp estándar'
   },
-  { 
-    id: 'whatsapp_qr', 
-    nombre: 'Whatsapp QR', 
-    icon: '📱', 
-    color: '#25D366', 
-    tipo: 'whatsapp_qr',
-    description: 'Conecta WhatsApp usando código QR'
-  },
+
   { 
     id: 'whatsapp_api', 
     nombre: 'Whatsapp API', 

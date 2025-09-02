@@ -12,7 +12,7 @@ interface CanalOption {
 
 const canalOptions: CanalOption[] = [
   { id: 'whatsapp', nombre: 'WhatsApp', icon: '📱', color: '#25D366', tipo: 'whatsapp' },
-  { id: 'whatsapp_qr', nombre: 'Whatsapp QR', icon: '📱', color: '#25D366', tipo: 'whatsapp_qr' },
+
   { id: 'whatsapp_api', nombre: 'Whatsapp API', icon: '📱', color: '#25D366', tipo: 'whatsapp_api' },
   { id: 'instagram', nombre: 'Instagram', icon: '📷', color: '#E4405F', tipo: 'instagram' },
   { id: 'messenger', nombre: 'Messenger', icon: '💬', color: '#0084FF', tipo: 'messenger' },

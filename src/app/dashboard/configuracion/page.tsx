@@ -20,12 +20,6 @@ interface TabConfig {
 }
 
 // Componentes temporales
-const PersonalizarTab = () => (
-  <div className="p-6">
-    <h3 className="text-white text-lg font-medium mb-4">Personalizar</h3>
-    <p className="text-gray-400">Configuración de personalización del sistema.</p>
-  </div>
-);
 
 export default function ConfiguracionPage() {
   const [activeTab, setActiveTab] = useState('espacios-trabajo');
@@ -42,7 +36,6 @@ export default function ConfiguracionPage() {
 
   // Configuración de pestañas
   const tabs: TabConfig[] = [
-    { id: 'personalizar', label: 'Personalizar', icon: '⚙️', component: PersonalizarTab },
     { id: 'espacios-trabajo', label: 'Espacios de trabajo', icon: '🏢', count: espaciosCount, component: EspaciosTrabajoTab },
     { id: 'sesiones', label: 'Sesiones', icon: '🔗', count: 0, component: SesionesTab },
     { id: 'etiquetas', label: 'Etiquetas', icon: '🏷️', count: 4, component: EtiquetasTab },

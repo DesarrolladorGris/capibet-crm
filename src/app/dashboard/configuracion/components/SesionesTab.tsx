@@ -16,7 +16,7 @@ interface CanalOption {
 
 const canalOptions: CanalOption[] = [
   { id: 'whatsapp', nombre: 'WhatsApp', icon: '📱', color: '#25D366', tipo: 'whatsapp' },
-  { id: 'whatsappQr', nombre: 'WhatsApp QR', icon: '📱', color: '#25D366', tipo: 'whatsappQr' },
+
   { id: 'whatsappApi', nombre: 'WhatsApp API', icon: '📱', color: '#25D366', tipo: 'whatsappApi' },
   { id: 'email', nombre: 'Email', icon: '✉️', color: '#EA4335', tipo: 'email' },
   { id: 'instagram', nombre: 'Instagram', icon: '📷', color: '#E4405F', tipo: 'instagram' },
@@ -385,13 +385,7 @@ export default function SesionesTab() {
             <p className="text-gray-400 text-sm">Crear, editar y eliminar tus sesiones vinculadas.</p>
           </div>
         </div>
-        <button
-          onClick={() => alert('Funcionalidad en desarrollo. Próximamente disponible.')}
-          className="bg-gray-600 text-gray-300 px-4 py-2 rounded-lg font-medium cursor-not-allowed"
-          disabled
-        >
-          + Añadir sesión (Próximamente)
-        </button>
+
       </div>
 
       {/* Sección de Canales */}
