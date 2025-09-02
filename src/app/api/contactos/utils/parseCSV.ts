@@ -35,7 +35,7 @@ function parseCSV(csvContent: string): ContactoCSV[] {
         correo: getValue('E-mail 1 - Value') || getValue('E-mail 2 - Value') || getValue('E-mail 3 - Value') || '',
         telefono: getValue('Phone 1 - Value') || getValue('Phone 2 - Value') || getValue('Phone 3 - Value'),
         direccion: getValue('Address 1 - Formatted') || getValue('Address 2 - Formatted') || '',
-        cumpleaños: getValue('Birthday') || '',
+        cumpleaños: getValue('Birthday') || null,
         sitio_web: getValue('Website 1 - Value') || getValue('Website 2 - Value') || '',
         notas: getValue('Notes') || '',
         empresa: getValue('Organization Name') || '',

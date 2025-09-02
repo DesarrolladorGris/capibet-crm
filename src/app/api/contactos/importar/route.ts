@@ -58,7 +58,6 @@ export async function POST(request: NextRequest) {
         if (response.ok) {
           resultados.exitosos += batch.length;
         } else {
-          console.log('ERROR EN LA IMPORTACION', response);
           resultados.fallidos += batch.length;
           const errorData = await response.text();
           resultados.errores.push(`Lote ${Math.floor(i/batchSize) + 1}: ${errorData}`);

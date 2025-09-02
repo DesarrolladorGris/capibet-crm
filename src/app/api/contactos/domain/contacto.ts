@@ -9,7 +9,7 @@ export interface IContacto {
     cargo?: string;
     notas?: string;
     direccion?: string;
-    cumpleaños?: string;
+    cumpleaños?: string | null;
     sitio_web?: string;
     etiqueta?: string;
     empresa_id?: number;

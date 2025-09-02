@@ -47,7 +47,10 @@ export function useImportContacts(onSuccess?: () => void): UseImportContactsRetu
         };
         
         input.oncancel = () => {
-          reject(new Error('Selección de archivo cancelada'));
+          setIsImporting(false);
+          setError(null);
+          setSuccessMessage(null);
+          setImportErrors([]);
         };
       });
 
