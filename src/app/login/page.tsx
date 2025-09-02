@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 
 import { useRouter } from 'next/navigation';
-import { supabaseService, LoginCredentials } from '@/services/supabaseService';
 import { useAuth } from '@/contexts/AuthContext';
 
 export default function LoginPage() {

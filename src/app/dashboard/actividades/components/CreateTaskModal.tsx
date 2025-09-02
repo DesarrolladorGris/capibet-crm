@@ -40,7 +40,7 @@ export default function CreateTaskModal({
   initialDate = '',
   initialTime = ''
 }: CreateTaskModalProps) {
-  const { user, hasPermission } = useAuth();
+  const { user } = useAuth();
   const [activeStep, setActiveStep] = useState(1);
   const [taskData, setTaskData] = useState<TaskData>({
     titulo: '',
@@ -144,13 +144,7 @@ export default function CreateTaskModal({
     setTaskData({ ...taskData, etiquetas });
   };
 
-  const getPriorityColor = (priority: string) => {
-    return priorities.find(p => p.value === priority)?.color || 'text-gray-400';
-  };
 
-  const getPriorityBgColor = (priority: string) => {
-    return priorities.find(p => p.value === priority)?.bgColor || 'bg-gray-500';
-  };
 
   if (!isOpen) return null;
 

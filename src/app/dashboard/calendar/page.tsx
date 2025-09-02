@@ -125,15 +125,7 @@ export default function CalendarPage() {
     setShowCreateModal(false);
   };
 
-  const handleUpdateActividad = (id: string, updates: Partial<Actividad>) => {
-    setActividades(prev => prev.map(actividad => 
-      actividad.id === id ? { ...actividad, ...updates } as Actividad : actividad
-    ));
-  };
 
-  const handleDeleteActividad = (id: string) => {
-    setActividades(prev => prev.filter(actividad => actividad.id !== id));
-  };
 
   const handleEditEvento = (evento: Evento) => {
     setEventoSeleccionado(evento);

@@ -1,4 +1,4 @@
-import { supabaseConfig, apiEndpoints } from '../config/supabase';
+import { supabaseConfig } from '../config/supabase';
 
 export interface EmailAccount {
   id: string;
@@ -256,7 +256,7 @@ class EmailService {
       }
 
       // Abrir ventana de autorización
-      const authWindow = window.open(authUrl, 'oauth', 'width=500,height=600');
+      window.open(authUrl, 'oauth', 'width=500,height=600');
       
       // Aquí se implementaría la lógica para manejar el callback de OAuth
       // Por ahora solo simulamos la conexión exitosa

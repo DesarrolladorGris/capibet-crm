@@ -115,15 +115,7 @@ export default function TareasTab() {
     setTareas(tareas.map(t => t.id === id ? { ...t, estado: nuevoEstado } : t));
   };
 
-  const getPrioridadColor = (prioridad: string) => {
-    switch (prioridad) {
-      case 'urgente': return 'text-red-400';
-      case 'alta': return 'text-orange-400';
-      case 'media': return 'text-yellow-400';
-      case 'baja': return 'text-green-400';
-      default: return 'text-gray-400';
-    }
-  };
+
 
   const getPrioridadBgColor = (prioridad: string) => {
     switch (prioridad) {
@@ -163,7 +155,6 @@ export default function TareasTab() {
 
   const tareasPendientes = tareas.filter(t => t.estado === 'pendiente').length;
   const tareasEnProgreso = tareas.filter(t => t.estado === 'en_progreso').length;
-  const tareasCompletadas = tareas.filter(t => t.estado === 'completada').length;
   const tareasUrgentes = tareas.filter(t => t.prioridad === 'urgente').length;
 
   return (

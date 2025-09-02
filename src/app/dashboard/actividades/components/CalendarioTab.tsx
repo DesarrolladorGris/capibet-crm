@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
 import CreateTaskModal from './CreateTaskModal';
 
 interface Evento {
@@ -19,7 +18,6 @@ interface Evento {
 }
 
 export default function CalendarioTab() {
-  const { user, hasPermission } = useAuth();
   const [fechaActual, setFechaActual] = useState(new Date());
   const [vista, setVista] = useState<'dia' | 'semana' | 'mes'>('semana');
   const [eventos, setEventos] = useState<Evento[]>([
@@ -166,14 +164,7 @@ export default function CalendarioTab() {
     return eventos.filter(e => e.fecha === fechaStr);
   };
 
-  const getEventosMes = () => {
-    const mes = fechaActual.getMonth();
-    const año = fechaActual.getFullYear();
-    return eventos.filter(e => {
-      const eventoFecha = new Date(e.fecha);
-      return eventoFecha.getMonth() === mes && eventoFecha.getFullYear() === año;
-    });
-  };
+
 
   const renderVistaDia = () => {
     const eventosHoy = getEventosDia(fechaActual);
@@ -269,7 +260,6 @@ export default function CalendarioTab() {
 
   const renderVistaMes = () => {
     const primerDia = new Date(fechaActual.getFullYear(), fechaActual.getMonth(), 1);
-    const ultimoDia = new Date(fechaActual.getFullYear(), fechaActual.getMonth() + 1, 0);
     const inicioCalendario = new Date(primerDia);
     inicioCalendario.setDate(primerDia.getDate() - primerDia.getDay());
     
