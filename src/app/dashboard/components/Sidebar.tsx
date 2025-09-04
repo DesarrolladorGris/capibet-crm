@@ -14,7 +14,6 @@ const menuItems = [
   { id: 'chats', icon: '💬', label: 'Chats', active: false },
   { id: 'internal-chat', icon: '💭', label: 'Chat Interno', active: false },
   { id: 'emails', icon: '✉️', label: 'Emails', active: false },
-  { id: 'actividades', icon: '📋', label: 'Actividades', active: false },
   { id: 'calendar', icon: '📅', label: 'Calendario', active: false },
   { id: 'contacts', icon: '👥', label: 'Contactos', active: false },
   { id: 'sales', icon: '🛒', label: 'Ventas', active: false },
@@ -31,28 +30,22 @@ export default function Sidebar({ isOpen }: SidebarProps) {
   useEffect(() => {
     if (pathname === '/dashboard') {
       setActiveItem('dashboard');
-    } else if (pathname === '/dashboard/funnels') {
-      setActiveItem('funnels');
-    } else if (pathname === '/dashboard/chats') {
-      setActiveItem('chats');
-    } else if (pathname === '/dashboard/internal-chat') {
-      setActiveItem('internal-chat');
-    } else if (pathname === '/dashboard/emails') {
-      setActiveItem('emails');
-    } else if (pathname === '/dashboard/actividades') {
-      setActiveItem('actividades');
-    } else if (pathname === '/dashboard/calendar') {
-      setActiveItem('calendar');
-    } else if (pathname === '/dashboard/contacts') {
+    } else if (pathname === '/dashboard/contactos') {
       setActiveItem('contacts');
-    } else if (pathname === '/dashboard/sales') {
-      setActiveItem('sales');
-    } else if (pathname === '/dashboard/bulk-sends') {
-      setActiveItem('bulk-sends');
     } else if (pathname === '/dashboard/configuracion') {
       setActiveItem('config');
+    } else if (pathname === '/dashboard/chat-interno') {
+      setActiveItem('internal-chat');
+    } else if (pathname === '/dashboard/embudos') {
+      setActiveItem('funnels');
+    } else if (pathname === '/dashboard/emails') {
+      setActiveItem('emails');
+    } else if (pathname === '/dashboard/calendar') {
+      setActiveItem('calendar');
+    } else if (pathname === '/dashboard/actividades') {
+      setActiveItem('calendar'); // Las actividades usan el mismo icono que calendario
     } else {
-      // Por defecto dashboard para rutas no reconocidas
+      // Por defecto dashboard para otras rutas
       setActiveItem('dashboard');
     }
   }, [pathname]);
@@ -66,37 +59,34 @@ export default function Sidebar({ isOpen }: SidebarProps) {
         router.push('/dashboard');
         break;
       case 'funnels':
-        router.push('/dashboard/funnels');
-        break;
-      case 'chats':
-        router.push('/dashboard/chats');
-        break;
-      case 'internal-chat':
-        router.push('/dashboard/internal-chat');
-        break;
-      case 'emails':
-        router.push('/dashboard/emails');
-        break;
-      case 'actividades':
-        router.push('/dashboard/actividades');
-        break;
-      case 'calendar':
-        router.push('/dashboard/calendar');
+        router.push('/dashboard/embudos');
         break;
       case 'contacts':
-        router.push('/dashboard/contacts');
-        break;
-      case 'sales':
-        router.push('/dashboard/sales');
-        break;
-      case 'bulk-sends':
-        router.push('/dashboard/bulk-sends');
+        router.push('/dashboard/contactos');
         break;
       case 'config':
         router.push('/dashboard/configuracion');
         break;
+      case 'internal-chat':
+        router.push('/dashboard/chat-interno');
+        break;
+      case 'emails':
+        router.push('/dashboard/emails');
+        break;
+      case 'calendar':
+        router.push('/dashboard/calendar');
+        break;
+      case 'chats':
+        router.push('/dashboard/chat-interno'); // Por ahora redirige al chat interno
+        break;
+      case 'sales':
+        router.push('/dashboard'); // Por ahora redirige al dashboard
+        break;
+      case 'bulk-sends':
+        router.push('/dashboard'); // Por ahora redirige al dashboard
+        break;
       default:
-        // Por defecto ir al dashboard
+        // Por defecto dashboard para otros items
         router.push('/dashboard');
         break;
     }

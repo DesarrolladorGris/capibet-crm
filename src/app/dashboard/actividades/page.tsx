@@ -5,7 +5,7 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import DashboardLayout from '../components/DashboardLayout';
 import ActividadesTabs from './components/ActividadesTabs';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function ActividadesPage() {
   const { user, isAuthenticated, isLoading, logout } = useAuth();
@@ -31,9 +31,9 @@ export default function ActividadesPage() {
 
   return (
     <DashboardLayout 
-      userName={user.name}
-      userRole={user.role}
-      agencyName={user.agencyName}
+      userName={user.nombre_usuario}
+      userRole={user.rol}
+      agencyName={user.nombre_agencia}
       onLogout={logout}
     >
       {/* Main Content Area */}
@@ -47,10 +47,10 @@ export default function ActividadesPage() {
             </div>
             <div className="text-right">
               <div className="bg-[#00b894] text-white px-3 py-1 rounded-full text-sm font-medium">
-                {user.role === 'admin' ? '👑 Administrador' : 
-                 user.role === 'supervisor' ? '👔 Supervisor' : '💼 Comercial'}
+                {user.rol === 'admin' ? '👑 Administrador' : 
+                 user.rol === 'supervisor' ? '👔 Supervisor' : '💼 Comercial'}
               </div>
-              <p className="text-gray-400 text-sm mt-1">{user.agencyName}</p>
+              <p className="text-gray-400 text-sm mt-1">{user.nombre_agencia}</p>
             </div>
           </div>
         </div>

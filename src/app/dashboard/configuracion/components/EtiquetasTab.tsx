@@ -1,14 +1,15 @@
 'use client';
+
 import { useState, useEffect } from 'react';
 
+// Tipos para las etiquetas
 interface Etiqueta {
   id?: number;
   nombre: string;
   color: string;
-  descripcion: string;
+  descripcion?: string;
   activa: boolean;
   created_at?: string;
-  updated_at?: string;
 }
 
 interface EtiquetaFormData {
@@ -17,56 +18,39 @@ interface EtiquetaFormData {
   descripcion: string;
 }
 
-const coloresPredefinidos = [
-  '#00b894', '#d63031', '#0984e3', '#fd79a8', '#fdcb6e',
-  '#6c5ce7', '#e17055', '#2d3436', '#00cec9', '#a29bfe'
-];
-
+// Datos de prueba
 const etiquetasPrueba: Etiqueta[] = [
   {
     id: 1,
     nombre: 'Cliente VIP',
     color: '#00b894',
-    descripcion: 'Clientes de alto valor y prioridad máxima',
+    descripcion: 'Clientes de alto valor',
     activa: true,
-    created_at: '2024-12-28T10:00:00Z',
-    updated_at: '2024-12-28T10:00:00Z'
+    created_at: '2024-12-28T10:00:00Z'
   },
   {
     id: 2,
     nombre: 'Urgente',
     color: '#d63031',
-    descripcion: 'Tareas y solicitudes prioritarias',
+    descripcion: 'Tareas prioritarias',
     activa: true,
-    created_at: '2024-12-28T10:00:00Z',
-    updated_at: '2024-12-28T10:00:00Z'
+    created_at: '2024-12-28T10:00:00Z'
   },
   {
     id: 3,
     nombre: 'Nuevo',
     color: '#0984e3',
-    descripcion: 'Elementos y clientes recientes',
+    descripcion: 'Elementos recientes',
     activa: true,
-    created_at: '2024-12-28T10:00:00Z',
-    updated_at: '2024-12-28T10:00:00Z'
+    created_at: '2024-12-28T10:00:00Z'
   },
   {
     id: 4,
     nombre: 'Oferta',
     color: '#fd79a8',
-    descripcion: 'Promociones y ofertas activas',
-    activa: true,
-    created_at: '2024-12-28T10:00:00Z',
-    updated_at: '2024-12-28T10:00:00Z'
-  },
-  {
-    id: 5,
-    nombre: 'Completado',
-    color: '#00b894',
-    descripcion: 'Tareas y procesos finalizados',
+    descripcion: 'Promociones activas',
     activa: false,
-    created_at: '2024-12-28T10:00:00Z',
-    updated_at: '2024-12-28T10:00:00Z'
+    created_at: '2024-12-28T10:00:00Z'
   }
 ];
 
@@ -81,41 +65,51 @@ export default function EtiquetasTab() {
     descripcion: ''
   });
   const [searchTerm, setSearchTerm] = useState('');
-  const [showColorPicker, setShowColorPicker] = useState(false);
-  const [customColor, setCustomColor] = useState('#00b894');
+
+  // Colores predefinidos para las etiquetas
+  const coloresPredefinidos = [
+    '#00b894', '#00cec9', '#0984e3', '#6c5ce7', '#fd79a8',
+    '#fdcb6e', '#e17055', '#d63031', '#2d3436', '#636e72'
+  ];
 
   useEffect(() => {
+    console.log('EtiquetasTab: Componente montado, cargando etiquetas de prueba...');
+    // Usar datos de prueba por ahora
     setEtiquetas(etiquetasPrueba);
     setLoading(false);
-  }, []);
+  }, []); // etiquetasPrueba es una constante, no necesita ser dependencia
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.nombre.trim() || !formData.color.trim()) {
-      alert('Por favor completa todos los campos obligatorios');
+    if (!formData.nombre.trim()) {
+      alert('El nombre de la etiqueta es obligatorio');
       return;
     }
 
     try {
       if (editingEtiqueta) {
-        const updatedEtiquetas = etiquetas.map(etq =>
-          etq.id === editingEtiqueta.id
-            ? { ...etq, ...formData, updated_at: new Date().toISOString() }
-            : etq
+        // Actualizar etiqueta existente
+        const etiquetasActualizadas = etiquetas.map(etiqueta =>
+          etiqueta.id === editingEtiqueta.id
+            ? { ...etiqueta, ...formData }
+            : etiqueta
         );
-        setEtiquetas(updatedEtiquetas);
+        setEtiquetas(etiquetasActualizadas);
+        cerrarModal();
+        alert('Etiqueta actualizada exitosamente');
       } else {
+        // Crear nueva etiqueta
         const nuevaEtiqueta: Etiqueta = {
-          id: Math.max(...etiquetas.map(e => e.id || 0)) + 1,
+          id: Date.now(), // ID temporal
           ...formData,
           activa: true,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
+          created_at: new Date().toISOString()
         };
-        setEtiquetas([nuevaEtiqueta, ...etiquetas]);
+        setEtiquetas([...etiquetas, nuevaEtiqueta]);
+        cerrarModal();
+        alert('Etiqueta creada exitosamente');
       }
-      cerrarModal();
     } catch (error) {
       console.error('Error al guardar etiqueta:', error);
       alert('Error al guardar la etiqueta');
@@ -123,30 +117,27 @@ export default function EtiquetasTab() {
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm('¿Estás seguro de que quieres eliminar esta etiqueta?')) {
-      return;
-    }
-
-    try {
-      const updatedEtiquetas = etiquetas.filter(etq => etq.id !== id);
-      setEtiquetas(updatedEtiquetas);
-    } catch (error) {
-      console.error('Error al eliminar etiqueta:', error);
-      alert('Error al eliminar la etiqueta');
+    if (confirm('¿Estás seguro de que quieres eliminar esta etiqueta?')) {
+      try {
+        const etiquetasFiltradas = etiquetas.filter(etiqueta => etiqueta.id !== id);
+        setEtiquetas(etiquetasFiltradas);
+        alert('Etiqueta eliminada exitosamente');
+      } catch (error) {
+        console.error('Error al eliminar etiqueta:', error);
+        alert('Error al eliminar la etiqueta');
+      }
     }
   };
 
   const handleToggleStatus = async (etiqueta: Etiqueta) => {
     try {
-      const updatedEtiquetas = etiquetas.map(etq =>
-        etq.id === etiqueta.id
-          ? { ...etq, activa: !etq.activa, updated_at: new Date().toISOString() }
-          : etq
+      const etiquetasActualizadas = etiquetas.map(e =>
+        e.id === etiqueta.id ? { ...e, activa: !e.activa } : e
       );
-      setEtiquetas(updatedEtiquetas);
+      setEtiquetas(etiquetasActualizadas);
     } catch (error) {
       console.error('Error al cambiar estado:', error);
-      alert('Error al cambiar el estado');
+      alert('Error al cambiar el estado de la etiqueta');
     }
   };
 
@@ -156,7 +147,7 @@ export default function EtiquetasTab() {
       setFormData({
         nombre: etiqueta.nombre,
         color: etiqueta.color,
-        descripcion: etiqueta.descripcion
+        descripcion: etiqueta.descripcion || ''
       });
     } else {
       setEditingEtiqueta(null);
@@ -177,290 +168,215 @@ export default function EtiquetasTab() {
       color: '#00b894',
       descripcion: ''
     });
-    setShowColorPicker(false);
-  };
-
-  const seleccionarColor = (color: string) => {
-    setFormData({ ...formData, color });
-    setCustomColor(color);
-    setShowColorPicker(false);
   };
 
   const etiquetasFiltradas = etiquetas.filter(etiqueta =>
     etiqueta.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    etiqueta.descripcion.toLowerCase().includes(searchTerm.toLowerCase())
+    etiqueta.descripcion?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center p-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-        <span className="ml-2 text-gray-600">Cargando etiquetas...</span>
+      <div className="p-6">
+        <div className="flex items-center justify-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#00b894]"></div>
+          <span className="ml-3 text-gray-400">Cargando etiquetas...</span>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="p-6">
+      {/* Header */}
+      <div className="flex justify-between items-center mb-6">
         <div>
-          <h3 className="text-lg font-semibold text-gray-900">Gestión de Etiquetas</h3>
-          <p className="text-sm text-gray-600">
-            Organiza y categoriza elementos con etiquetas personalizables
-          </p>
+          <h3 className="text-white text-xl font-semibold mb-2">Gestión de Etiquetas</h3>
+          <p className="text-gray-400">Organiza y categoriza tu contenido con etiquetas personalizadas</p>
+          <p className="text-gray-500 text-sm mt-1">Total de etiquetas: {etiquetas.length}</p>
+          <p className="text-yellow-400 text-xs mt-1">⚠️ Modo de prueba - Datos locales</p>
         </div>
         <button
           onClick={() => abrirModal()}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2"
+          className="bg-[#00b894] hover:bg-[#00a085] text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center space-x-2"
         >
           <span>🏷️</span>
           <span>Nueva Etiqueta</span>
         </button>
       </div>
 
-      <div className="relative">
-        <input
-          type="text"
-          placeholder="Buscar etiquetas por nombre o descripción..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-        />
-        <div className="absolute right-3 top-2.5 text-gray-400">🔍</div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white p-4 rounded-lg border border-gray-200">
-          <div className="text-2xl font-bold text-blue-600">{etiquetas.length}</div>
-          <div className="text-sm text-gray-600">Total</div>
-        </div>
-        <div className="bg-white p-4 rounded-lg border border-gray-200">
-          <div className="text-2xl font-bold text-green-600">
-            {etiquetas.filter(e => e.activa).length}
-          </div>
-          <div className="text-sm text-gray-600">Activas</div>
-        </div>
-        <div className="bg-white p-4 rounded-lg border border-gray-200">
-          <div className="text-2xl font-bold text-gray-600">
-            {etiquetas.filter(e => !e.activa).length}
-          </div>
-          <div className="text-sm text-gray-600">Inactivas</div>
-        </div>
-        <div className="bg-white p-4 rounded-lg border border-gray-200">
-          <div className="text-2xl font-bold text-purple-600">
-            {new Set(etiquetas.map(e => e.color)).size}
-          </div>
-          <div className="text-sm text-gray-600">Colores únicos</div>
+      {/* Barra de búsqueda */}
+      <div className="mb-6">
+        <div className="relative">
+          <input
+            type="text"
+            placeholder="Buscar etiquetas..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full bg-[#2a2d35] border border-[#3a3d45] rounded-lg px-4 py-3 pl-10 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#00b894] focus:border-transparent"
+          />
+          <span className="absolute left-3 top-3 text-gray-400">🔍</span>
         </div>
       </div>
 
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+      {/* Lista de etiquetas */}
+      <div className="grid gap-4">
         {etiquetasFiltradas.length === 0 ? (
-          <div className="p-8 text-center text-gray-500">
-            {searchTerm ? (
-              <div>
-                <div className="text-4xl mb-4">🔍</div>
-                <p>No se encontraron etiquetas para &quot;{searchTerm}&quot;</p>
-                <button
-                  onClick={() => setSearchTerm('')}
-                  className="text-blue-600 hover:underline mt-2"
-                >
-                  Limpiar búsqueda
-                </button>
-              </div>
-            ) : (
-              <div>
-                <div className="text-4xl mb-4">🏷️</div>
-                <p>No hay etiquetas configuradas</p>
-                <button
-                  onClick={() => abrirModal()}
-                  className="text-blue-600 hover:underline mt-2"
-                >
-                  Crear la primera etiqueta
-                </button>
-              </div>
-            )}
+          <div className="text-center py-12">
+            <span className="text-4xl mb-4 block">🏷️</span>
+            <p className="text-gray-400 text-lg mb-2">
+              {searchTerm ? 'No se encontraron etiquetas' : 'No hay etiquetas creadas'}
+            </p>
+            <p className="text-gray-500">
+              {searchTerm ? 'Intenta con otros términos de búsqueda' : 'Crea tu primera etiqueta para empezar'}
+            </p>
           </div>
         ) : (
-          <div className="divide-y divide-gray-200">
-            {etiquetasFiltradas.map((etiqueta) => (
-              <div key={etiqueta.id} className="p-6 hover:bg-gray-50">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-3 mb-2">
-                      <div 
-                        className="w-4 h-4 rounded-full border-2 border-gray-200"
-                        style={{ backgroundColor: etiqueta.color }}
-                      ></div>
-                      <h4 className="text-lg font-medium text-gray-900">
-                        {etiqueta.nombre}
-                      </h4>
-                      <span className={`px-2 py-1 text-xs rounded-full ${
-                        etiqueta.activa 
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-gray-100 text-gray-800'
-                      }`}>
-                        {etiqueta.activa ? 'Activa' : 'Inactiva'}
-                      </span>
-                    </div>
-                    <p className="text-gray-600 text-sm mb-3">
-                      {etiqueta.descripcion || 'Sin descripción'}
-                    </p>
-                    <div className="flex items-center space-x-4 text-xs text-gray-400">
-                      <span>Creada: {new Date(etiqueta.created_at || '').toLocaleDateString()}</span>
-                      {etiqueta.updated_at && (
-                        <span>Actualizada: {new Date(etiqueta.updated_at).toLocaleDateString()}</span>
+          etiquetasFiltradas.map((etiqueta) => (
+            <div
+              key={etiqueta.id}
+              className={`bg-[#2a2d35] border border-[#3a3d45] rounded-lg p-4 transition-all hover:border-[#00b894] ${
+                !etiqueta.activa ? 'opacity-60' : ''
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <div
+                    className="w-4 h-4 rounded-full border-2 border-white"
+                    style={{ backgroundColor: etiqueta.color }}
+                  ></div>
+                  <div>
+                    <h4 className={`text-white font-medium ${!etiqueta.activa ? 'line-through' : ''}`}>
+                      {etiqueta.nombre}
+                    </h4>
+                    {etiqueta.descripcion && (
+                      <p className="text-gray-400 text-sm mt-1">{etiqueta.descripcion}</p>
+                    )}
+                    <div className="flex items-center space-x-4 mt-2 text-xs text-gray-500">
+                      <span>Color: {etiqueta.color}</span>
+                      {etiqueta.created_at && (
+                        <span>Creada: {new Date(etiqueta.created_at).toLocaleDateString('es-ES')}</span>
                       )}
                     </div>
                   </div>
-                  <div className="flex items-center space-x-2 ml-4">
-                    <button
-                      onClick={() => handleToggleStatus(etiqueta)}
-                      className={`p-2 rounded-lg ${
-                        etiqueta.activa
-                          ? 'text-green-600 hover:bg-green-100'
-                          : 'text-gray-600 hover:bg-gray-100'
-                      }`}
-                      title={etiqueta.activa ? 'Desactivar' : 'Activar'}
-                    >
-                      {etiqueta.activa ? '✅' : '⭕'}
-                    </button>
-                    <button
-                      onClick={() => abrirModal(etiqueta)}
-                      className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg"
-                      title="Editar"
-                    >
-                      ✏️
-                    </button>
-                    <button
-                      onClick={() => handleDelete(etiqueta.id!)}
-                      className="p-2 text-red-600 hover:bg-red-100 rounded-lg"
-                      title="Eliminar"
-                    >
-                      🗑️
-                    </button>
-                  </div>
+                </div>
+                
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={() => handleToggleStatus(etiqueta)}
+                    className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
+                      etiqueta.activa
+                        ? 'bg-green-600 hover:bg-green-700 text-white'
+                        : 'bg-gray-600 hover:bg-gray-700 text-white'
+                    }`}
+                  >
+                    {etiqueta.activa ? 'Activa' : 'Inactiva'}
+                  </button>
+                  
+                  <button
+                    onClick={() => abrirModal(etiqueta)}
+                    className="bg-[#0984e3] hover:bg-[#0873c4] text-white px-3 py-1 rounded text-xs font-medium transition-colors"
+                  >
+                    ✏️ Editar
+                  </button>
+                  
+                  <button
+                    onClick={() => handleDelete(etiqueta.id!)}
+                    className="bg-[#d63031] hover:bg-[#c0392b] text-white px-3 py-1 rounded text-xs font-medium transition-colors"
+                  >
+                    🗑️ Eliminar
+                  </button>
                 </div>
               </div>
-            ))}
-          </div>
+            </div>
+          ))
         )}
       </div>
 
+      {/* Modal para crear/editar etiqueta */}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-semibold text-gray-900">
+          <div className="bg-[#2a2d35] border border-[#3a3d45] rounded-lg p-6 w-full max-w-md mx-4">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-white text-lg font-semibold">
                 {editingEtiqueta ? 'Editar Etiqueta' : 'Nueva Etiqueta'}
               </h3>
               <button
                 onClick={cerrarModal}
-                className="text-gray-400 hover:text-gray-600 text-2xl"
+                className="text-gray-400 hover:text-white text-xl"
               >
-                ×
+                ✕
               </button>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Nombre */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Nombre *
+                <label className="block text-white text-sm font-medium mb-2">
+                  Nombre de la etiqueta *
                 </label>
                 <input
                   type="text"
                   value={formData.nombre}
                   onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Ej: Cliente VIP, Urgente..."
+                  className="w-full bg-[#1a1d23] border border-[#3a3d45] rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#00b894] focus:border-transparent"
+                  placeholder="Ej: Cliente VIP, Urgente, etc."
                   required
                 />
               </div>
 
+              {/* Color */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Color *
+                <label className="block text-white text-sm font-medium mb-2">
+                  Color de la etiqueta
                 </label>
-                <div className="flex space-x-2">
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-2">
-                      <div 
-                        className="w-8 h-8 rounded-lg border-2 border-gray-200 cursor-pointer"
-                        style={{ backgroundColor: formData.color }}
-                        onClick={() => setShowColorPicker(!showColorPicker)}
-                      ></div>
-                      <input
-                        type="text"
-                        value={formData.color}
-                        onChange={(e) => setFormData({ ...formData, color: e.target.value })}
-                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="#000000"
-                        required
-                      />
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setShowColorPicker(!showColorPicker)}
-                    className="px-3 py-2 text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50"
-                  >
-                    🎨
-                  </button>
+                <div className="flex space-x-2 mb-2">
+                  {coloresPredefinidos.map((color) => (
+                    <button
+                      key={color}
+                      type="button"
+                      onClick={() => setFormData({ ...formData, color })}
+                      className={`w-8 h-8 rounded-full border-2 transition-all ${
+                        formData.color === color ? 'border-white scale-110' : 'border-gray-600'
+                      }`}
+                      style={{ backgroundColor: color }}
+                    ></button>
+                  ))}
                 </div>
-                
-                {showColorPicker && (
-                  <div className="mt-3">
-                    <div className="grid grid-cols-6 gap-2">
-                      {coloresPredefinidos.map((color) => (
-                        <button
-                          key={color}
-                          type="button"
-                          onClick={() => seleccionarColor(color)}
-                          className="w-8 h-8 rounded-lg border-2 border-gray-200 hover:border-gray-400 transition-colors"
-                          style={{ backgroundColor: color }}
-                          title={color}
-                        ></button>
-                      ))}
-                    </div>
-                    <div className="mt-2">
-                      <input
-                        type="color"
-                        value={customColor}
-                        onChange={(e) => {
-                          setCustomColor(e.target.value);
-                          setFormData({ ...formData, color: e.target.value });
-                        }}
-                        className="w-full h-10 border border-gray-300 rounded-lg cursor-pointer"
-                      />
-                    </div>
-                  </div>
-                )}
+                <input
+                  type="color"
+                  value={formData.color}
+                  onChange={(e) => setFormData({ ...formData, color: e.target.value })}
+                  className="w-full h-10 bg-[#1a1d23] border border-[#3a3d45] rounded-lg cursor-pointer"
+                />
               </div>
 
+              {/* Descripción */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Descripción
+                <label className="block text-white text-sm font-medium mb-2">
+                  Descripción (opcional)
                 </label>
                 <textarea
                   value={formData.descripcion}
                   onChange={(e) => setFormData({ ...formData, descripcion: e.target.value })}
-                  rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full bg-[#1a1d23] border border-[#3a3d45] rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#00b894] focus:border-transparent"
                   placeholder="Describe el propósito de esta etiqueta..."
+                  rows={3}
                 />
               </div>
 
-              <div className="flex justify-end space-x-3 pt-4">
+              {/* Botones */}
+              <div className="flex space-x-3 pt-4">
                 <button
                   type="button"
                   onClick={cerrarModal}
-                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+                  className="flex-1 bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  className="flex-1 bg-[#00b894] hover:bg-[#00a085] text-white px-4 py-2 rounded-lg font-medium transition-colors"
                 >
                   {editingEtiqueta ? 'Actualizar' : 'Crear'}
                 </button>
@@ -469,19 +385,6 @@ export default function EtiquetasTab() {
           </div>
         </div>
       )}
-
-      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-        <div className="flex">
-          <div className="text-yellow-400 mr-3">⚠️</div>
-          <div>
-            <h4 className="text-sm font-medium text-yellow-800">Modo Prueba</h4>
-            <p className="text-sm text-yellow-700 mt-1">
-              Este módulo está funcionando con datos de ejemplo. Para conectar a la base de datos real, 
-              ejecuta el SQL en Supabase y activa la conexión en el código.
-            </p>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }

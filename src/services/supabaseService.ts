@@ -1,7 +1,14 @@
 import { supabaseConfig, apiEndpoints } from '@/config/supabase';
 
-// Tipos para el usuario
+// Tipos para autenticación
+export interface LoginCredentials {
+  correo_electronico: string;
+  contrasena: string;
+}
+
+// Tipos para usuarios
 export interface UsuarioData {
+  id?: number;
   nombre_agencia: string;
   tipo_empresa: string;
   nombre_usuario: string;
@@ -13,13 +20,8 @@ export interface UsuarioData {
   activo?: boolean;
 }
 
-export interface LoginCredentials {
-  correo_electronico: string;
-  contrasena: string;
-}
-
 export interface UsuarioResponse {
-  id?: number;
+  id: number;
   nombre_agencia: string;
   tipo_empresa: string;
   nombre_usuario: string;
@@ -30,6 +32,45 @@ export interface UsuarioResponse {
   activo: boolean; // true = activo, false = desactivado
   fecha_alta?: string;
   created_at?: string;
+}
+
+// Tipos para contactos
+export interface ContactData {
+  id?: number;
+  nombre: string;
+  apellido?: string;
+  nombre_completo?: string;
+  correo: string;
+  telefono: string;
+  empresa?: string;
+  cargo?: string;
+  notas?: string;
+  direccion?: string;
+  cumpleaños?: string;
+  sitio_web?: string;
+  etiqueta?: string;
+  empresa_id?: number;
+  creado_por: number;
+}
+
+export interface ContactResponse {
+  id: number;
+  nombre: string;
+  apellido: string | null;
+  nombre_completo: string | null;
+  correo: string;
+  telefono: string;
+  empresa: string | null;
+  cargo: string | null;
+  notas: string | null;
+  direccion: string | null;
+  cumpleaños: string | null;
+  sitio_web: string | null;
+  etiqueta: string | null;
+  creado_por: number;
+  creado_en: string;
+  actualizado_en: string;
+  empresa_id: number | null;
 }
 
 export interface ApiResponse<T = unknown> {
@@ -63,7 +104,45 @@ export interface RespuestaRapidaFormData {
   categoria: string;
 }
 
-class SupabaseService {
+// Tipos para espacios de trabajo
+export interface EspacioTrabajoData {
+  nombre: string;
+  creado_por: number;
+}
+
+export interface EspacioTrabajoResponse {
+  id: number;
+  nombre: string;
+  creado_por: number;
+  creado_en: string;
+  actualizado_en: string;
+}
+
+// Tipos para embudos
+export interface EmbUpdoData {
+  nombre: string;
+  descripcion?: string;
+  creado_por: number;
+  espacio_id: number;
+  orden?: number;
+}
+
+export interface EmbUpdoResponse {
+  id: number;
+  nombre: string;
+  descripcion: string | null;
+  creado_por: number;
+  creado_en: string;
+  actualizado_en: string;
+  espacio_id: number;
+  orden: number;
+}
+
+export interface EspacioConEmbudos extends EspacioTrabajoResponse {
+  embudos: EmbUpdoResponse[];
+}
+
+export class SupabaseService {
   private getHeaders() {
     return {
       'Content-Type': 'application/json',
@@ -110,6 +189,8 @@ class SupabaseService {
     return url;
   }
 
+  // ===== MÉTODOS PARA USUARIOS =====
+
   async createUsuario(userData: UsuarioData): Promise<ApiResponse> {
     try {
       // Preparar los datos con valores por defecto
@@ -149,106 +230,12 @@ class SupabaseService {
       };
 
     } catch (error) {
-      console.error('Error creating usuario:', error);
+      console.error('Error creating user:', error);
       
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Error desconocido',
-        details: error instanceof Error ? error.message : String(error)
-      };
-    }
-  }
-
-  async checkEmailExists(email: string): Promise<ApiResponse<boolean>> {
-    try {
-      const filters = { correo_electronico: email };
-      const url = this.buildFilterUrl(filters, 'correo_electronico');
-      
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: this.getHeaders()
-      });
-
-      if (!response.ok) {
-        return {
-          success: false,
-          error: 'Error al verificar el email'
-        };
-      }
-
-      const data = await this.handleResponse(response);
-      
-      return {
-        success: true,
-        data: Array.isArray(data) ? data.length > 0 : false
-      };
-
-    } catch (error) {
-      console.error('Error checking email:', error);
-      
-      return {
-        success: false,
-        error: 'Error al verificar el email',
-        details: error instanceof Error ? error.message : String(error)
-      };
-    }
-  }
-
-  async loginUsuario(credentials: LoginCredentials): Promise<ApiResponse<UsuarioResponse>> {
-    try {
-      // Construir la URL con filtros usando la sintaxis de PostgREST (eq. = equal)
-      const filters = {
-        correo_electronico: credentials.correo_electronico,
-        contrasena: credentials.contrasena
-      };
-      
-      const url = this.buildFilterUrl(filters);
-
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: this.getHeaders()
-      });
-
-      if (!response.ok) {
-        return {
-          success: false,
-          error: 'Error en el servidor al intentar iniciar sesión'
-        };
-      }
-
-      const data = await this.handleResponse(response);
-
-      // Si la respuesta es un array y tiene elementos, login exitoso
-      if (Array.isArray(data) && data.length > 0) {
-        const usuario = data[0] as UsuarioResponse;
-        
-        // Verificar que el usuario esté activo
-        if (usuario.activo !== true) {
-          return {
-            success: false,
-            error: 'Tu cuenta está desactivada. Contacta al administrador.'
-          };
-        }
-
-        return {
-          success: true,
-          data: usuario
-        };
-      } else {
-        // Si no hay datos o el array está vacío, credenciales incorrectas
-        return {
-          success: false,
-          error: 'Email o contraseña incorrectos'
-        };
-      }
-
-    } catch (error) {
-      console.error('Error during login:', error);
-      
-      return {
-        success: false,
-        error: 'Error de conexión. Verifica tu internet e inténtalo de nuevo.',
-        details: error instanceof Error ? error.message : String(error)
+        error: 'Error de conexión al crear usuario',
+        details: error instanceof Error ? error.message : 'Error desconocido'
       };
     }
   }
@@ -280,37 +267,49 @@ class SupabaseService {
       return {
         success: false,
         error: 'Error de conexión al obtener usuarios',
-        details: error instanceof Error ? error.message : String(error)
+        details: error instanceof Error ? error.message : 'Error desconocido'
       };
     }
   }
 
-  /**
-   * Actualiza un usuario existente
-   */
-  async updateUsuario(id: number, userData: Partial<UsuarioData>): Promise<ApiResponse<Record<string, unknown>>> {
+  async getUsuarioById(id: number): Promise<ApiResponse<UsuarioResponse>> {
     try {
-      // Construir el payload solo con los campos que se van a actualizar
-      const updatePayload: Partial<UsuarioData> = {
-        nombre_agencia: userData.nombre_agencia,
-        tipo_empresa: userData.tipo_empresa,
-        nombre_usuario: userData.nombre_usuario,
-        correo_electronico: userData.correo_electronico,
-        telefono: userData.telefono,
-        codigo_pais: userData.codigo_pais,
-        rol: userData.rol,
-        activo: userData.activo !== undefined ? userData.activo : true
-      };
+      const response = await fetch(`${apiEndpoints.usuarios}?id=eq.${id}`, {
+        method: 'GET',
+        headers: this.getHeaders()
+      });
 
-      // Solo incluir contraseña si se proporcionó una nueva
-      if (userData.contrasena && userData.contrasena.trim() !== '') {
-        updatePayload.contrasena = userData.contrasena;
+      if (!response.ok) {
+        return {
+          success: false,
+          error: 'Error al obtener el usuario'
+        };
       }
 
+      const data = await this.handleResponse(response);
+      
+      return {
+        success: true,
+        data: Array.isArray(data) ? data[0] : null
+      };
+
+    } catch (error) {
+      console.error('Error fetching user:', error);
+      
+      return {
+        success: false,
+        error: 'Error de conexión al obtener usuario',
+        details: error instanceof Error ? error.message : 'Error desconocido'
+      };
+    }
+  }
+
+  async updateUsuario(id: number, userData: Partial<UsuarioData>): Promise<ApiResponse> {
+    try {
       const response = await fetch(`${apiEndpoints.usuarios}?id=eq.${id}`, {
         method: 'PATCH',
         headers: this.getHeaders(),
-        body: JSON.stringify(updatePayload),
+        body: JSON.stringify(userData),
       });
 
       if (!response.ok) {
@@ -326,7 +325,7 @@ class SupabaseService {
       
       return {
         success: true,
-        data: data || { message: 'Usuario actualizado exitosamente' }
+        data: data as unknown as UsuarioResponse
       };
     } catch (error) {
       return {
@@ -336,19 +335,221 @@ class SupabaseService {
     }
   }
 
-  /**
-   * Activa o desactiva un usuario
-   */
+  async deleteUsuario(id: number): Promise<ApiResponse> {
+    try {
+      const response = await fetch(`${apiEndpoints.usuarios}?id=eq.${id}`, {
+        method: 'DELETE',
+        headers: this.getHeaders()
+      });
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        return {
+          success: false,
+          error: `Error del servidor: ${response.status} ${response.statusText}`,
+          details: errorData
+        };
+      }
+
+      await this.handleResponse(response);
+      
+      return {
+        success: true,
+        data: undefined
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Error al eliminar usuario'
+      };
+    }
+  }
+
   async toggleUsuarioStatus(id: number, activo: boolean): Promise<ApiResponse<Record<string, unknown>>> {
     try {
-      const updatePayload = {
-        activo: activo
-      };
-
       const response = await fetch(`${apiEndpoints.usuarios}?id=eq.${id}`, {
         method: 'PATCH',
         headers: this.getHeaders(),
-        body: JSON.stringify(updatePayload),
+        body: JSON.stringify({ activo }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+
+      return { success: true };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Error al cambiar estado del usuario'
+      };
+    }
+  }
+
+  /**
+   * Verifica si un email ya existe en el sistema
+   */
+  async checkEmailExists(email: string): Promise<ApiResponse<boolean>> {
+    try {
+      const response = await fetch(`${apiEndpoints.usuarios}?correo_electronico=eq.${encodeURIComponent(email)}`, {
+        method: 'GET',
+        headers: this.getHeaders()
+      });
+
+      if (!response.ok) {
+        return {
+          success: false,
+          error: 'Error al verificar el email'
+        };
+      }
+
+      const data = await this.handleResponse(response);
+      const exists = Array.isArray(data) && data.length > 0;
+      
+      return {
+        success: true,
+        data: exists
+      };
+
+    } catch (error) {
+      console.error('Error checking email:', error);
+      
+      return {
+        success: false,
+        error: 'Error de conexión al verificar email',
+        details: error instanceof Error ? error.message : 'Error desconocido'
+      };
+    }
+  }
+
+  /**
+   * Realiza el login de un usuario
+   */
+  async loginUsuario(credentials: LoginCredentials): Promise<ApiResponse<UsuarioData>> {
+    try {
+      const response = await fetch(`${apiEndpoints.usuarios}?correo_electronico=eq.${encodeURIComponent(credentials.correo_electronico)}&contrasena=eq.${encodeURIComponent(credentials.contrasena)}`, {
+        method: 'GET',
+        headers: this.getHeaders()
+      });
+
+      if (!response.ok) {
+        return {
+          success: false,
+          error: 'Error en las credenciales'
+        };
+      }
+
+      const data = await this.handleResponse(response);
+      
+      if (Array.isArray(data) && data.length > 0) {
+        const usuario = data[0] as UsuarioData;
+        return {
+          success: true,
+          data: usuario
+        };
+      } else {
+        return {
+          success: false,
+          error: 'Credenciales incorrectas'
+        };
+      }
+
+    } catch (error) {
+      console.error('Error in login:', error);
+      
+      return {
+        success: false,
+        error: 'Error de conexión al iniciar sesión',
+        details: error instanceof Error ? error.message : 'Error desconocido'
+      };
+    }
+  }
+
+  // ===== MÉTODOS PARA CONTACTOS =====
+
+  /**
+   * Obtiene todos los contactos
+   */
+  async getAllContactos(): Promise<ApiResponse<ContactResponse[]>> {
+    try {
+      const response = await fetch(apiEndpoints.contactos, {
+        method: 'GET',
+        headers: this.getHeaders()
+      });
+
+      if (!response.ok) {
+        return {
+          success: false,
+          error: 'Error al obtener los contactos'
+        };
+      }
+
+      const data = await this.handleResponse(response);
+      
+      return {
+        success: true,
+        data: Array.isArray(data) ? data : []
+      };
+
+    } catch (error) {
+      console.error('Error fetching contacts:', error);
+      
+      return {
+        success: false,
+        error: 'Error de conexión al obtener contactos',
+        details: error instanceof Error ? error.message : 'Error desconocido'
+      };
+    }
+  }
+
+  /**
+   * Crea un nuevo contacto
+   */
+  async createContacto(contactData: ContactData): Promise<ApiResponse<ContactResponse>> {
+    try {
+      const response = await fetch(apiEndpoints.contactos, {
+        method: 'POST',
+        headers: this.getHeaders(),
+        body: JSON.stringify(contactData)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        
+        return {
+          success: false,
+          error: `Error del servidor: ${response.status} ${response.statusText}`,
+          details: errorData
+        };
+      }
+
+      const data = await this.handleResponse(response);
+      
+      return {
+        success: true,
+        data: data as unknown as ContactResponse
+      };
+
+    } catch (error) {
+      console.error('Error creating contact:', error);
+      
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Error desconocido',
+        details: error instanceof Error ? error.message : 'Error desconocido'
+      };
+    }
+  }
+
+  /**
+   * Actualiza un contacto existente
+   */
+  async updateContacto(id: number, contactData: Partial<ContactData>): Promise<ApiResponse<ContactResponse>> {
+    try {
+      const response = await fetch(`${apiEndpoints.contactos}?id=eq.${id}`, {
+        method: 'PATCH',
+        headers: this.getHeaders(),
+        body: JSON.stringify(contactData),
       });
 
       if (!response.ok) {
@@ -364,17 +565,429 @@ class SupabaseService {
       
       return {
         success: true,
-        data: data || { message: `Usuario ${activo ? 'activado' : 'desactivado'} exitosamente` }
+        data: data as unknown as ContactResponse
       };
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Error al cambiar estado del usuario'
+        error: error instanceof Error ? error.message : 'Error al actualizar contacto'
       };
     }
   }
 
-  // Métodos para Respuestas Rápidas
+  /**
+   * Elimina un contacto
+   */
+  async deleteContacto(id: number): Promise<ApiResponse<void>> {
+    try {
+      const response = await fetch(`${apiEndpoints.contactos}?id=eq.${id}`, {
+        method: 'DELETE',
+        headers: this.getHeaders()
+      });
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        return {
+          success: false,
+          error: `Error del servidor: ${response.status} ${response.statusText}`,
+          details: errorData
+        };
+      }
+
+      await this.handleResponse(response);
+      
+      return {
+        success: true,
+        data: undefined
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Error al eliminar contacto'
+      };
+    }
+  }
+
+  // ===== MÉTODOS PARA ESPACIOS DE TRABAJO =====
+
+  /**
+   * Obtiene todos los espacios de trabajo
+   */
+  async getAllEspaciosTrabajo(): Promise<ApiResponse<EspacioTrabajoResponse[]>> {
+    try {
+      const response = await fetch(apiEndpoints.espacios_de_trabajo, {
+        method: 'GET',
+        headers: this.getHeaders()
+      });
+
+      if (!response.ok) {
+        return {
+          success: false,
+          error: 'Error al obtener los espacios de trabajo'
+        };
+      }
+
+      const data = await this.handleResponse(response);
+      
+      return {
+        success: true,
+        data: Array.isArray(data) ? data : []
+      };
+
+    } catch (error) {
+      console.error('Error fetching espacios de trabajo:', error);
+      
+      return {
+        success: false,
+        error: 'Error de conexión al obtener espacios de trabajo',
+        details: error instanceof Error ? error.message : 'Error desconocido'
+      };
+    }
+  }
+
+  /**
+   * Crea un nuevo espacio de trabajo
+   */
+  async createEspacioTrabajo(espacioData: EspacioTrabajoData): Promise<ApiResponse<EspacioTrabajoResponse>> {
+    try {
+      const response = await fetch(apiEndpoints.espacios_de_trabajo, {
+        method: 'POST',
+        headers: this.getHeaders(),
+        body: JSON.stringify(espacioData)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        
+        return {
+          success: false,
+          error: `Error del servidor: ${response.status} ${response.statusText}`,
+          details: errorData
+        };
+      }
+
+      const data = await this.handleResponse(response);
+      
+      return {
+        success: true,
+        data: data as unknown as EspacioTrabajoResponse
+      };
+
+    } catch (error) {
+      console.error('Error creating espacio de trabajo:', error);
+      
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Error desconocido',
+        details: error instanceof Error ? error.message : 'Error desconocido'
+      };
+    }
+  }
+
+  /**
+   * Actualiza un espacio de trabajo existente
+   */
+  async updateEspacioTrabajo(id: number, espacioData: Partial<EspacioTrabajoData>): Promise<ApiResponse<EspacioTrabajoResponse>> {
+    try {
+      const response = await fetch(`${apiEndpoints.espacios_de_trabajo}?id=eq.${id}`, {
+        method: 'PATCH',
+        headers: this.getHeaders(),
+        body: JSON.stringify(espacioData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        return {
+          success: false,
+          error: `Error del servidor: ${response.status} ${response.statusText}`,
+          details: errorData
+        };
+      }
+
+      const data = await this.handleResponse(response);
+      
+      return {
+        success: true,
+        data: data as unknown as EspacioTrabajoResponse
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Error al actualizar espacio de trabajo'
+      };
+    }
+  }
+
+  /**
+   * Elimina un espacio de trabajo
+   */
+  async deleteEspacioTrabajo(id: number): Promise<ApiResponse<void>> {
+    try {
+      const response = await fetch(`${apiEndpoints.espacios_de_trabajo}?id=eq.${id}`, {
+        method: 'DELETE',
+        headers: this.getHeaders()
+      });
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        return {
+          success: false,
+          error: `Error del servidor: ${response.status} ${response.statusText}`,
+          details: errorData
+        };
+      }
+
+      await this.handleResponse(response);
+      
+      return {
+        success: true,
+        data: undefined
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Error al eliminar espacio de trabajo'
+      };
+    }
+  }
+
+  // ===== MÉTODOS PARA EMBUDOS =====
+
+  /**
+   * Obtiene todos los embudos
+   */
+  async getAllEmbudos(): Promise<ApiResponse<EmbUpdoResponse[]>> {
+    try {
+      const response = await fetch(apiEndpoints.embudos, {
+        method: 'GET',
+        headers: this.getHeaders()
+      });
+
+      if (!response.ok) {
+        return {
+          success: false,
+          error: 'Error al obtener los embudos'
+        };
+      }
+
+      const data = await this.handleResponse(response);
+      
+      return {
+        success: true,
+        data: Array.isArray(data) ? data : []
+      };
+
+    } catch (error) {
+      console.error('Error fetching embudos:', error);
+      
+      return {
+        success: false,
+        error: 'Error de conexión al obtener embudos',
+        details: error instanceof Error ? error.message : 'Error desconocido'
+      };
+    }
+  }
+
+  /**
+   * Obtiene embudos por espacio de trabajo
+   */
+  async getEmbudosByEspacio(espacioId: number): Promise<ApiResponse<EmbUpdoResponse[]>> {
+    try {
+      const response = await fetch(`${apiEndpoints.embudos}?espacio_id=eq.${espacioId}`, {
+        method: 'GET',
+        headers: this.getHeaders()
+      });
+
+      if (!response.ok) {
+        return {
+          success: false,
+          error: 'Error al obtener los embudos del espacio'
+        };
+      }
+
+      const data = await this.handleResponse(response);
+      
+      return {
+        success: true,
+        data: Array.isArray(data) ? data : []
+      };
+
+    } catch (error) {
+      console.error('Error fetching embudos by espacio:', error);
+      
+      return {
+        success: false,
+        error: 'Error de conexión al obtener embudos del espacio',
+        details: error instanceof Error ? error.message : 'Error desconocido'
+      };
+    }
+  }
+
+  /**
+   * Crea un nuevo embudo
+   */
+  async createEmbudo(embudoData: EmbUpdoData): Promise<ApiResponse<EmbUpdoResponse>> {
+    try {
+      console.log('Creando embudo:', embudoData);
+
+      const response = await fetch(apiEndpoints.embudos, {
+        method: 'POST',
+        headers: this.getHeaders(),
+        body: JSON.stringify(embudoData)
+      });
+
+      if (!response.ok) {
+        console.error('Error response:', response.status, response.statusText);
+        return {
+          success: false,
+          error: `Error al crear embudo: ${response.status} ${response.statusText}`
+        };
+      }
+
+      const data = await this.handleResponse(response);
+      console.log('Embudo creado exitosamente:', data);
+
+      return {
+        success: true,
+        data: data as unknown as EmbUpdoResponse
+      };
+
+    } catch (error) {
+      console.error('Error creating embudo:', error);
+      
+      return {
+        success: false,
+        error: 'Error de conexión al crear embudo',
+        details: error instanceof Error ? error.message : 'Error desconocido'
+      };
+    }
+  }
+
+  /**
+   * Actualiza un embudo existente
+   */
+  async updateEmbudo(id: number, embudoData: Partial<EmbUpdoData>): Promise<ApiResponse<EmbUpdoResponse>> {
+    try {
+      console.log('Actualizando embudo:', id, embudoData);
+
+      const response = await fetch(`${apiEndpoints.embudos}?id=eq.${id}`, {
+        method: 'PATCH',
+        headers: this.getHeaders(),
+        body: JSON.stringify(embudoData)
+      });
+
+      if (!response.ok) {
+        console.error('Error response:', response.status, response.statusText);
+        return {
+          success: false,
+          error: `Error al actualizar embudo: ${response.status} ${response.statusText}`
+        };
+      }
+
+      const data = await this.handleResponse(response);
+      console.log('Embudo actualizado exitosamente:', data);
+
+      return {
+        success: true,
+        data: data as unknown as EmbUpdoResponse
+      };
+
+    } catch (error) {
+      console.error('Error updating embudo:', error);
+      
+      return {
+        success: false,
+        error: 'Error de conexión al actualizar embudo',
+        details: error instanceof Error ? error.message : 'Error desconocido'
+      };
+    }
+  }
+
+  /**
+   * Elimina un embudo existente
+   */
+  async deleteEmbudo(id: number): Promise<ApiResponse<void>> {
+    try {
+      console.log('Eliminando embudo:', id);
+
+      const response = await fetch(`${apiEndpoints.embudos}?id=eq.${id}`, {
+        method: 'DELETE',
+        headers: this.getHeaders()
+      });
+
+      if (!response.ok) {
+        console.error('Error response:', response.status, response.statusText);
+        return {
+          success: false,
+          error: `Error al eliminar embudo: ${response.status} ${response.statusText}`
+        };
+      }
+
+      await this.handleResponse(response);
+      console.log('Embudo eliminado exitosamente');
+
+      return {
+        success: true,
+        data: undefined
+      };
+
+    } catch (error) {
+      console.error('Error deleting embudo:', error);
+      
+      return {
+        success: false,
+        error: 'Error de conexión al eliminar embudo',
+        details: error instanceof Error ? error.message : 'Error desconocido'
+      };
+    }
+  }
+
+  /**
+   * Actualiza el orden de múltiples embudos
+   */
+  async updateEmbudosOrder(embudosConOrden: Array<{id: number, orden: number}>): Promise<ApiResponse<void>> {
+    try {
+      console.log('Actualizando orden de embudos:', embudosConOrden);
+
+      // Hacer múltiples PATCH requests para actualizar el orden
+      const updatePromises = embudosConOrden.map(async ({ id, orden }) => {
+        const response = await fetch(`${apiEndpoints.embudos}?id=eq.${id}`, {
+          method: 'PATCH',
+          headers: this.getHeaders(),
+          body: JSON.stringify({ orden })
+        });
+
+        if (!response.ok) {
+          throw new Error(`Error updating embudo ${id}: ${response.status} ${response.statusText}`);
+        }
+
+        return this.handleResponse(response);
+      });
+
+      await Promise.all(updatePromises);
+      console.log('Orden de embudos actualizado exitosamente');
+
+      return {
+        success: true,
+        data: undefined
+      };
+
+    } catch (error) {
+      console.error('Error updating embudos order:', error);
+      
+      return {
+        success: false,
+        error: 'Error de conexión al actualizar orden de embudos',
+        details: error instanceof Error ? error.message : 'Error desconocido'
+      };
+    }
+  }
+
+  // ===== MÉTODOS PARA RESPUESTAS RÁPIDAS =====
+
+  /**
+   * Obtiene todas las respuestas rápidas
+   */
   async getAllRespuestasRapidas(): Promise<ApiResponse<RespuestaRapida[]>> {
     try {
       const response = await fetch(`${apiEndpoints.respuestasRapidas}?order=created_at.desc`, {
@@ -393,6 +1006,9 @@ class SupabaseService {
     }
   }
 
+  /**
+   * Obtiene una respuesta rápida por ID
+   */
   async getRespuestaRapidaById(id: number): Promise<ApiResponse<RespuestaRapida>> {
     try {
       const response = await fetch(`${apiEndpoints.respuestasRapidas}?id=eq.${id}`, {
@@ -411,6 +1027,9 @@ class SupabaseService {
     }
   }
 
+  /**
+   * Crea una nueva respuesta rápida
+   */
   async createRespuestaRapida(data: RespuestaRapidaFormData): Promise<ApiResponse> {
     try {
       const response = await fetch(apiEndpoints.respuestasRapidas, {
@@ -433,6 +1052,9 @@ class SupabaseService {
     }
   }
 
+  /**
+   * Actualiza una respuesta rápida existente
+   */
   async updateRespuestaRapida(id: number, data: Partial<RespuestaRapida>): Promise<ApiResponse> {
     try {
       const response = await fetch(`${apiEndpoints.respuestasRapidas}?id=eq.${id}`, {
@@ -452,6 +1074,9 @@ class SupabaseService {
     }
   }
 
+  /**
+   * Elimina una respuesta rápida
+   */
   async deleteRespuestaRapida(id: number): Promise<ApiResponse> {
     try {
       const response = await fetch(`${apiEndpoints.respuestasRapidas}?id=eq.${id}`, {
@@ -467,6 +1092,31 @@ class SupabaseService {
     } catch (error) {
       console.error('Error al eliminar respuesta rápida:', error);
       return { success: false, error: error instanceof Error ? error.message : 'Error desconocido' };
+    }
+  }
+
+  /**
+   * Cambia el estado activo/inactivo de una respuesta rápida
+   */
+  async toggleRespuestaRapidaStatus(id: number, activa: boolean): Promise<ApiResponse<Record<string, unknown>>> {
+    try {
+      const response = await fetch(`${apiEndpoints.respuestasRapidas}?id=eq.${id}`, {
+        method: 'PATCH',
+        headers: this.getHeaders(),
+        body: JSON.stringify({ activa }),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+      
+      return { success: true };
+    } catch (error) {
+      console.error('Error al cambiar estado de respuesta rápida:', error);
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Error al cambiar estado de respuesta rápida'
+      };
     }
   }
 }

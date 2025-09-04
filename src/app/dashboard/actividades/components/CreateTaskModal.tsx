@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 import TeamMemberSelector from './TeamMemberSelector';
 
 interface CreateTaskModalProps {

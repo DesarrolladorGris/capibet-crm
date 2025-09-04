@@ -4,10 +4,9 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/contexts/AuthContext';
+import { supabaseService, LoginCredentials } from '@/services/supabaseService';
 
 export default function LoginPage() {
-  const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -47,61 +46,44 @@ export default function LoginPage() {
     
     setIsLoading(true);
     
-    // Sistema de login temporal para desarrollo frontend
-    const users = [
-      {
-        email: 'admin@capibet.com',
-        password: '123456',
-        user: {
-          id: 'admin-1',
-          email: 'admin@capibet.com',
-          name: 'Administrador',
-          role: 'admin' as const,
-          agencyName: 'CAPIBET Casino',
-          isActive: true
-        }
-      },
-      {
-        email: 'supervisor@capibet.com',
-        password: '123456',
-        user: {
-          id: 'supervisor-1',
-          email: 'supervisor@capibet.com',
-          name: 'María García',
-          role: 'supervisor' as const,
-          agencyName: 'CAPIBET Casino',
-          isActive: true
-        }
-      },
-      {
-        email: 'comercial@capibet.com',
-        password: '123456',
-        user: {
-          id: 'comercial-1',
-          email: 'comercial@capibet.com',
-          name: 'Juan Pérez',
-          role: 'comercial' as const,
-          agencyName: 'CAPIBET Casino',
-          isActive: true
-        }
-      }
-    ];
-    
-    // Buscar usuario
-    const foundUser = users.find(u => u.email === email && u.password === password);
-    
-    if (foundUser) {
-      // Login exitoso
-      login(foundUser.user);
-      console.log('Login exitoso:', foundUser.user);
+    try {
+      const credentials: LoginCredentials = {
+        correo_electronico: email,
+        contrasena: password
+      };
       
-      // Redireccionar al dashboard
-      router.push('/dashboard');
-    } else {
-      setError('Email o contraseña incorrectos');
+      const result = await supabaseService.loginUsuario(credentials);
+      
+      if (result.success && result.data) {
+        // Login exitoso - guardar datos de sesión
+        const userData = result.data;
+        
+        // Guardar información de sesión en localStorage
+        localStorage.setItem('isLoggedIn', 'true');
+        localStorage.setItem('userEmail', userData.correo_electronico);
+        localStorage.setItem('userName', userData.nombre_usuario);
+        localStorage.setItem('userRole', userData.rol || '');
+        localStorage.setItem('userId', userData.id?.toString() || '');
+        localStorage.setItem('agencyName', userData.nombre_agencia || '');
+        
+        // Opcional: guardar toda la información del usuario
+        localStorage.setItem('userData', JSON.stringify(userData));
+        
+        console.log('Login exitoso:', userData);
+        
+        // Redireccionar al dashboard
+        router.push('/dashboard');
+        
+      } else {
+        setError(result.error || 'Email o contraseña incorrectos');
+      }
+      
+    } catch (error) {
+      console.error('Login error:', error);
+      setError('Error de conexión. Verifica tu internet e inténtalo de nuevo.');
+    } finally {
+      setIsLoading(false);
     }
-    
-    setIsLoading(false);
   };
 
   return (

@@ -6,7 +6,7 @@ import { StarIcon as StarIconSolid } from '@heroicons/react/24/solid';
 import EmailAccountManager from './components/EmailAccountManager';
 import EmailComposer from './components/EmailComposer';
 import DashboardLayout from '../components/DashboardLayout';
-import { useAuth } from '../../../contexts/AuthContext';
+import { useAuth } from '../../../hooks/useAuth';
 
 interface Email {
   id: string;
@@ -171,9 +171,9 @@ export default function EmailsPage() {
 
   return (
     <DashboardLayout 
-      userName={user.name}
-      userRole={user.role}
-      agencyName={user.agencyName}
+      userName={user.nombre_usuario}
+      userRole={user.rol}
+      agencyName={user.nombre_agencia}
       onLogout={logout}
     >
       {/* Main Content Area - Sistema de Emails */}
