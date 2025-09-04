@@ -15,5 +15,6 @@ export const apiEndpoints = {
   espacios_de_trabajo: `${supabaseConfig.restUrl}/espacios_de_trabajo`,
   embudos: `${supabaseConfig.restUrl}/embudos`,
   canales: `${supabaseConfig.restUrl}/canales`,
-  sesiones: `${supabaseConfig.restUrl}/sesiones`
+  sesiones: `${supabaseConfig.restUrl}/sesiones`,
+  mensajes: `${supabaseConfig.restUrl}/mensajes`
 };
