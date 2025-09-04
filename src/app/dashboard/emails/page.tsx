@@ -5,7 +5,6 @@ import { PlusIcon, StarIcon, MagnifyingGlassIcon, FunnelIcon, ArrowPathIcon } fr
 import { StarIcon as StarIconSolid } from '@heroicons/react/24/solid';
 import EmailAccountManager from './components/EmailAccountManager';
 import EmailComposer from './components/EmailComposer';
-import DashboardLayout from '../components/DashboardLayout';
 import { useAuth } from '../../../hooks/useAuth';
 
 interface Email {
@@ -170,13 +169,7 @@ export default function EmailsPage() {
   }
 
   return (
-    <DashboardLayout 
-      userName={user.nombre_usuario}
-      userRole={user.rol}
-      agencyName={user.nombre_agencia}
-      onLogout={logout}
-    >
-      {/* Main Content Area - Sistema de Emails */}
+    <>
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
         <div className="p-4 border-b border-[#3a3d45] bg-[#2a2d35]">
@@ -469,7 +462,6 @@ export default function EmailsPage() {
         </div>
       </div>
 
-      {/* Modal de gestión de cuentas */}
       {showAccountSelector && (
         <EmailAccountManager
           accounts={accounts}
@@ -478,7 +470,6 @@ export default function EmailsPage() {
         />
       )}
 
-      {/* Modal de composición de email */}
       {isComposing && (
         <EmailComposer
           isOpen={isComposing}
@@ -495,6 +486,7 @@ export default function EmailsPage() {
           onSend={handleSendEmail}
         />
       )}
-    </DashboardLayout>
+    </>
   );
 }
+

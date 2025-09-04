@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import DashboardLayout from '../components/DashboardLayout';
 import { useAuth } from '@/hooks/useAuth';
 
 // Interfaces
@@ -159,13 +158,7 @@ export default function CalendarPage() {
   }
 
   return (
-    <DashboardLayout 
-      userName={user.nombre_usuario}
-      userRole={user.rol}
-      agencyName={user.nombre_agencia}
-      onLogout={handleLogout}
-    >
-      <div className="flex-1 p-6">
+    <div className="flex-1 p-6">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-white text-2xl font-semibold mb-2">Calendario Principal</h1>
@@ -305,7 +298,6 @@ export default function CalendarPage() {
           />
         )}
       </div>
-    </DashboardLayout>
   );
 }
 

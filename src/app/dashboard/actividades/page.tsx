@@ -3,7 +3,6 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import DashboardLayout from '../components/DashboardLayout';
 import ActividadesTabs from './components/ActividadesTabs';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -30,14 +29,7 @@ export default function ActividadesPage() {
   }
 
   return (
-    <DashboardLayout 
-      userName={user.nombre_usuario}
-      userRole={user.rol}
-      agencyName={user.nombre_agencia}
-      onLogout={logout}
-    >
-      {/* Main Content Area */}
-      <div className="flex-1 p-4 overflow-hidden">
+    <div className="flex-1 p-4 overflow-hidden">
         {/* Header */}
         <div className="mb-5">
           <div className="flex items-center justify-between">
@@ -58,6 +50,6 @@ export default function ActividadesPage() {
         {/* Actividades Tabs */}
         <ActividadesTabs />
       </div>
-    </DashboardLayout>
+    </div>
   );
 }
