@@ -297,7 +297,6 @@ export default function CalendarPage() {
             teamMembers={teamMembers}
           />
         )}
-      </div>
   );
 }
 
