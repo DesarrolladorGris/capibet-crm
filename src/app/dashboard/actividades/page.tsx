@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect } from 'react';
@@ -50,6 +49,5 @@ export default function ActividadesPage() {
         {/* Actividades Tabs */}
         <ActividadesTabs />
       </div>
-    </div>
   );
 }

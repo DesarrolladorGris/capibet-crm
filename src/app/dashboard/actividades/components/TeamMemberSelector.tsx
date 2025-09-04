@@ -24,7 +24,7 @@ export default function TeamMemberSelector({
   multiple = true,
   placeholder = "Seleccionar miembros del equipo"
 }: TeamMemberSelectorProps) {
-  const { user, hasPermission } = useAuth();
+  const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -41,15 +41,15 @@ export default function TeamMemberSelector({
   // Filtrar miembros según permisos del usuario
   const availableMembers = teamMembers.filter(member => {
     // Admin puede ver y asignar a todos
-    if (user?.role === 'admin') return true;
-    
+    if (user?.rol === 'admin') return true;
+
     // Supervisor puede ver y asignar a comerciales
-    if (user?.role === 'supervisor') {
-      return member.role === 'comercial' || member.id === user.id;
+    if (user?.rol === 'supervisor') {
+      return member.role === 'comercial' || member.id === user.id.toString();
     }
     
     // Comercial solo puede verse a sí mismo
-    return member.id === user?.id;
+    return member.id === user?.id.toString();
   });
 
   const filteredMembers = availableMembers.filter(member =>
@@ -167,7 +167,7 @@ export default function TeamMemberSelector({
           </div>
 
           {/* Información de permisos */}
-          {!hasPermission('assign_tasks') && user?.role === 'comercial' && (
+          {user?.rol === 'comercial' && (
             <div className="px-3 py-2 bg-yellow-500 bg-opacity-20 border-t border-[#3a3d45]">
               <p className="text-yellow-400 text-xs">
                 Solo puedes asignarte tareas a ti mismo

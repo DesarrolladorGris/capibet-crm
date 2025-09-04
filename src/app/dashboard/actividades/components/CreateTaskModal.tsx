@@ -51,7 +51,7 @@ export default function CreateTaskModal({
     prioridad: 'media',
     categoria: '',
     etiquetas: [''],
-    asignados: user ? [user.id] : [],
+    asignados: user ? [user.id.toString()] : [],
     fechaLimite: '',
     recordatorio: ''
   });
@@ -119,7 +119,7 @@ export default function CreateTaskModal({
         prioridad: 'media',
         categoria: '',
         etiquetas: [''],
-        asignados: user ? [user.id] : [],
+        asignados: user ? [user.id.toString()] : [],
         fechaLimite: '',
         recordatorio: ''
       });
@@ -310,7 +310,7 @@ export default function CreateTaskModal({
                   <div className="space-y-2">
                     {taskData.asignados.map(memberId => {
                       // Aquí deberías obtener la información del miembro desde el contexto
-                      const memberName = memberId === user?.id ? user.name : `Miembro ${memberId}`;
+                      const memberName = memberId === user?.id.toString() ? user.nombre_usuario : `Miembro ${memberId}`;
                       return (
                         <div key={memberId} className="flex items-center justify-between bg-[#2a2d35] p-2 rounded">
                           <span className="text-white text-sm">{memberName}</span>
