@@ -44,6 +44,8 @@ export default function Sidebar({ isOpen }: SidebarProps) {
       setActiveItem('calendar');
     } else if (pathname === '/dashboard/actividades') {
       setActiveItem('calendar'); // Las actividades usan el mismo icono que calendario
+    } else if (pathname === '/dashboard/ventas') {
+      setActiveItem('sales');
     } else {
       // Por defecto dashboard para otras rutas
       setActiveItem('dashboard');
@@ -80,7 +82,7 @@ export default function Sidebar({ isOpen }: SidebarProps) {
         router.push('/dashboard/chat-interno'); // Por ahora redirige al chat interno
         break;
       case 'sales':
-        router.push('/dashboard'); // Por ahora redirige al dashboard
+        router.push('/dashboard/ventas');
         break;
       case 'bulk-sends':
         router.push('/dashboard'); // Por ahora redirige al dashboard
