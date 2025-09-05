@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { supabaseService, Canal, SesionResponse, CanalData } from '@/services/supabaseService';
+import { supabaseService, Canal, SesionResponse, CanalData, UsuarioResponse, EspacioTrabajoResponse } from '@/services/supabaseService';
 import CanalSelector from './CanalSelector';
 import SesionesList from './SesionesList';
 import ConfirmDeleteCanalModal from './ConfirmDeleteCanalModal';
@@ -56,8 +56,8 @@ export default function SesionesTab() {
     imap_port: '',
     estado: 'activo' as 'activo' | 'desconectado' | 'expirado',
   });
-  const [usuarios, setUsuarios] = useState<any[]>([]);
-  const [espaciosTrabajo, setEspaciosTrabajo] = useState<any[]>([]);
+  const [usuarios, setUsuarios] = useState<UsuarioResponse[]>([]);
+  const [espaciosTrabajo, setEspaciosTrabajo] = useState<EspacioTrabajoResponse[]>([]);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [canalToDelete, setCanalToDelete] = useState<Canal | null>(null);
   const [canalSesiones, setCanalSesiones] = useState<Record<number, SesionResponse[]>>({});
@@ -91,7 +91,7 @@ export default function SesionesTab() {
         
         // Agrupar sesiones por canal
         const sesionesGrouped: Record<number, SesionResponse[]> = {};
-        (result.data || []).forEach((sesion: any) => {
+        (result.data || []).forEach((sesion: SesionResponse) => {
           if (sesion.canal_id) {
             if (!sesionesGrouped[sesion.canal_id]) {
               sesionesGrouped[sesion.canal_id] = [];
@@ -408,7 +408,7 @@ export default function SesionesTab() {
           />
           <div className="text-center mt-4">
             <p className="text-gray-400 text-sm mb-3">
-              Haz clic en "Añadir canal" para configurar cualquiera de estos tipos
+              Haz clic en &quot;Añadir canal&quot; para configurar cualquiera de estos tipos
             </p>
           </div>
         </div>

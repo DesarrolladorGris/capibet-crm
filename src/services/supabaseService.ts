@@ -105,7 +105,7 @@ export interface Canal {
   espacio_id: number;
   tipo: 'whatsapp' | 'whatsappApi' | 'email' | 'instagram' | 'messenger' | 'telegram' | 'telegramBot' | 'webChat';
   descripcion: string;
-  configuracion?: Record<string, any>;
+  configuracion?: Record<string, unknown>;
   activo?: boolean;
   creado_en?: string;
   actualizado_en?: string;
@@ -116,7 +116,7 @@ export interface CanalData {
   espacio_id: number;
   tipo: Canal['tipo'];
   descripcion: string;
-  configuracion?: Record<string, any>;
+  configuracion?: Record<string, unknown>;
   activo?: boolean;
 }
 
@@ -1071,8 +1071,7 @@ export class SupabaseService {
       console.log('Orden de embudos actualizado exitosamente');
 
       return {
-        success: true,
-        data: 'Orden actualizado correctamente'
+        success: true
       };
 
     } catch (error) {

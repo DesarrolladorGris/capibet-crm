@@ -27,7 +27,7 @@ const canalOptions: CanalOption[] = [
     nombre: 'Whatsapp API', 
     icon: '📱', 
     color: '#25D366', 
-    tipo: 'whatsapp_api',
+    tipo: 'whatsappApi',
     description: 'Conecta WhatsApp usando API oficial'
   },
   { 
@@ -59,7 +59,7 @@ const canalOptions: CanalOption[] = [
     nombre: 'Telegram Bot', 
     icon: '🤖', 
     color: '#0088CC', 
-    tipo: 'telegram_bot',
+    tipo: 'telegramBot',
     description: 'Conecta Telegram Bot API'
   },
   { 
@@ -67,7 +67,7 @@ const canalOptions: CanalOption[] = [
     nombre: 'Web Chat', 
     icon: '💬', 
     color: '#00b894', 
-    tipo: 'web_chat',
+    tipo: 'webChat',
     description: 'Chat integrado en tu sitio web'
   },
   { 

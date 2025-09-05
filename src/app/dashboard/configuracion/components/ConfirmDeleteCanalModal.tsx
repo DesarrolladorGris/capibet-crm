@@ -22,12 +22,12 @@ export default function ConfirmDeleteCanalModal({
   const getCanalIcon = (tipo: Canal['tipo']) => {
     const iconMap = {
       whatsapp: '📱',
-      whatsapp_api: '📱',
+      whatsappApi: '📱',
       instagram: '📷',
       messenger: '💬',
       telegram: '✈️',
-      telegram_bot: '🤖',
-      web_chat: '💬',
+      telegramBot: '🤖',
+      webChat: '💬',
       email: '✉️',
     };
     return iconMap[tipo] || '📱';
