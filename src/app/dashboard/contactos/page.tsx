@@ -9,6 +9,8 @@ import ConfirmarEliminarModal from './components/ConfirmarEliminarModal';
 import ConfirmarEliminacionMasivaModal from './components/ConfirmarEliminacionMasivaModal';
 import { supabaseService, ContactResponse, ContactData } from '@/services/supabaseService';
 import { isUserAuthenticated, getCurrentUserId } from '@/utils/auth';
+import { useExportContacts } from '@/hooks/useExportContacts';
+import { useImportContacts } from '@/hooks/useImportContacts';
 
 export default function ContactosPage() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -16,6 +18,8 @@ export default function ContactosPage() {
   const [contacts, setContacts] = useState<ContactResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showError, setShowError] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -44,6 +48,42 @@ export default function ContactosPage() {
       setLoading(false);
     }
   };
+
+  const { isExporting, error: exportError, exportContacts } = useExportContacts();
+  const { isImporting, error: importError, successMessage, importErrors, importContacts } = useImportContacts(fetchContacts);
+
+  const closeError = () => {
+    setShowError(false);
+    setError(null);
+  };
+
+  const closeSuccess = () => {
+    setShowSuccess(false);
+  };
+
+  // Cierre automatico del modal de errores despues de 30 segundos
+  useEffect(() => {
+    if (error || exportError || importError) {
+      setShowError(true);
+      const timer = setTimeout(() => {
+        setShowError(false);
+      }, 30000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [error, exportError, importError]);
+
+  // Cierre automatico del modal de éxito despues de 30 segundos
+  useEffect(() => {
+    if (successMessage) {
+      setShowSuccess(true);
+      const timer = setTimeout(() => {
+        setShowSuccess(false);
+      }, 30000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [successMessage]);
 
   // Función para agregar nuevo contacto
   const handleAddContact = async (contactData: ContactData) => {
@@ -207,6 +247,8 @@ export default function ContactosPage() {
     await fetchContacts(); // Recargar contactos
   };
 
+
+
   const handleSelectAll = () => {
     if (selectedContacts.length === contacts.length) {
       setSelectedContacts([]);
@@ -288,18 +330,26 @@ export default function ContactosPage() {
           {/* Right Section */}
           <div className="flex items-center space-x-4">
             {/* Action Buttons */}
-            <button className="flex items-center space-x-2 bg-[#00b894] hover:bg-[#00a085] text-white px-4 py-2 rounded text-sm font-medium transition-colors">
+            <button 
+              onClick={importContacts}
+              disabled={isImporting}
+              className="flex items-center space-x-2 bg-[#00b894] hover:bg-[#00a085] disabled:bg-gray-500 disabled:cursor-not-allowed text-white px-4 py-2 rounded text-sm font-medium transition-colors"
+            >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
               </svg>
-              <span>Importar</span>
+              <span>{isImporting ? 'Importando...' : 'Importar'}</span>
             </button>
 
-            <button className="flex items-center space-x-2 bg-[#00b894] hover:bg-[#00a085] text-white px-4 py-2 rounded text-sm font-medium transition-colors">
+            <button 
+              onClick={exportContacts}
+              disabled={isExporting}
+              className="flex items-center space-x-2 bg-[#00b894] hover:bg-[#00a085] disabled:bg-gray-500 disabled:cursor-not-allowed text-white px-4 py-2 rounded text-sm font-medium transition-colors"
+            >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
               </svg>
-              <span>Exportar</span>
+              <span>{isExporting ? 'Exportando...' : 'Exportar'}</span>
             </button>
 
             {/* Botón Agregar Contacto */}
@@ -337,12 +387,57 @@ export default function ContactosPage() {
         </div>
       </div>
 
-             {/* Main Content */}
+        {/* Main Content */}
        <div className={`flex-1 bg-[#1a1d23] p-6 ${selectedContacts.length > 0 ? 'mb-24' : ''}`}>
         {/* Error Message */}
-        {error && (
-          <div className="mb-4 p-4 bg-red-600 text-white rounded-lg">
-            {error}
+        {showError && (error || exportError || importError) && (
+          <div className="mb-4 p-4 bg-red-600 text-white rounded-lg relative">
+            <div className="flex justify-between items-start">
+              <div className="flex-1 pr-4">
+                <div className="font-medium mb-2">{error || exportError || importError}</div>
+                {importErrors.length > 0 && (
+                  <div className="mt-2">
+                    <div className="text-sm font-medium mb-1">Errores encontrados:</div>
+                    <ul className="text-sm space-y-1">
+                      {importErrors.map((error, index) => (
+                        <li key={index} className="bg-red-700 p-2 rounded text-xs">
+                          {error}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+              <button
+                onClick={closeError}
+                className="text-white hover:text-gray-200 transition-colors duration-200 flex-shrink-0"
+                aria-label="Cerrar mensaje de error"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Success Message */}
+        {showSuccess && successMessage && (
+          <div className="mb-4 p-4 bg-green-600 text-white rounded-lg relative">
+            <div className="flex justify-between items-start">
+              <div className="flex-1 pr-4">
+                {successMessage}
+              </div>
+              <button
+                onClick={closeSuccess}
+                className="text-white hover:text-gray-200 transition-colors duration-200 flex-shrink-0"
+                aria-label="Cerrar mensaje de éxito"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
           </div>
         )}
 

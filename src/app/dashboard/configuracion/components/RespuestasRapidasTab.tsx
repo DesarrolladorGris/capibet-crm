@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { SupabaseService } from '@/services/supabaseService';
 
 // Interfaces
@@ -84,7 +84,7 @@ export default function RespuestasRapidasTab() {
 
   const supabaseService = new SupabaseService();
 
-  const cargarRespuestas = async () => {
+  const cargarRespuestas = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -109,11 +109,11 @@ export default function RespuestasRapidasTab() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     cargarRespuestas();
-  }, []);
+  }, [cargarRespuestas]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
