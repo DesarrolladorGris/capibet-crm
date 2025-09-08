@@ -52,7 +52,6 @@ export default function ConfiguracionPage() {
       return;
     }
     
-    // Cargar datos del usuario
     const email = localStorage.getItem('userEmail');
     setUserEmail(email || '');
     setUserName(localStorage.getItem('userName') || '');
@@ -115,7 +114,6 @@ export default function ConfiguracionPage() {
   // Función de logout ya no es necesaria aquí
   // El logout se maneja a través del Header component
 
-  if (!userEmail) {
     return (
       <div className="min-h-screen bg-[#1a1d23] flex items-center justify-center">
         <div className="text-white">Cargando...</div>

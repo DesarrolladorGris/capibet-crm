@@ -62,9 +62,9 @@ export default function LoginPage() {
         localStorage.setItem('isLoggedIn', 'true');
         localStorage.setItem('userEmail', userData.correo_electronico);
         localStorage.setItem('userName', userData.nombre_usuario);
-        localStorage.setItem('userRole', userData.rol || '');
+        localStorage.setItem('userRole', userData.rol);
         localStorage.setItem('userId', userData.id?.toString() || '');
-        localStorage.setItem('agencyName', userData.nombre_agencia || '');
+        localStorage.setItem('agencyName', userData.nombre_agencia);
         
         // Opcional: guardar toda la información del usuario
         localStorage.setItem('userData', JSON.stringify(userData));
