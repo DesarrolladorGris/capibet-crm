@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { supabaseService, EspacioConEmbudos, EspacioTrabajoResponse, EmbUpdoResponse, MensajeResponse } from '@/services/supabaseService';
 import NuevoEmbudoModal from '@/app/dashboard/configuracion/components/NuevoEmbudoModal';
 import EditarEmbudoModal from '@/app/dashboard/configuracion/components/EditarEmbudoModal';
@@ -10,18 +10,12 @@ import DetallesMensajeModal from './components/DetallesMensajeModal';
 import {
   DndContext,
   closestCenter,
-  KeyboardSensor,
   PointerSensor,
   useSensor,
   useSensors,
   DragEndEvent,
+  DragStartEvent,
 } from '@dnd-kit/core';
-import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  rectSortingStrategy,
-} from '@dnd-kit/sortable';
 // import {
 //   useSortable,
 // } from '@dnd-kit/sortable';
@@ -45,11 +39,15 @@ export default function EmbudosPage() {
   const [selectedEmbudoForDelete, setSelectedEmbudoForDelete] = useState<EmbUpdoResponse | null>(null);
   const [selectedMensaje, setSelectedMensaje] = useState<MensajeResponse | null>(null);
 
+  // Estados para drag & drop
+  const [activeId, setActiveId] = useState<string | null>(null);
+
   // Configuración de sensores para drag & drop
   const sensors = useSensors(
-    useSensor(PointerSensor),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 3, // Distancia mínima para activar drag
+      },
     })
   );
 
@@ -179,59 +177,112 @@ export default function EmbudosPage() {
     setSelectedMensaje(null);
   };
 
+  const handleMensajeMoved = async (mensajeId: number, nuevoEmbudoId: number) => {
+    console.log('🚀 Iniciando movimiento de mensaje:', mensajeId, 'al embudo:', nuevoEmbudoId);
+    
+    try {
+      // 1. Llamar al servicio para persistir el cambio en la base de datos
+      const result = await supabaseService.moveMensajeToEmbudo(mensajeId, nuevoEmbudoId);
+      
+      if (result.success) {
+        console.log('✅ Mensaje movido exitosamente en la base de datos');
+        
+        // 2. Actualizar el estado local para feedback inmediato
+        setMensajes(prevMensajes => 
+          prevMensajes.map(mensaje => 
+            mensaje.id === mensajeId 
+              ? { ...mensaje, embudo_id: nuevoEmbudoId }
+              : mensaje
+          )
+        );
+        
+        // 3. Recargar datos para asegurar consistencia (opcional, ya que el estado local está actualizado)
+        // loadEspaciosYEmbudos();
+      } else {
+        console.error('❌ Error al mover mensaje:', result.error);
+        // Aquí podrías mostrar una notificación de error al usuario
+      }
+    } catch (error) {
+      console.error('❌ Error inesperado al mover mensaje:', error);
+      // Aquí podrías mostrar una notificación de error al usuario
+    }
+  };
+
+  // Manejar el inicio del drag
+  const handleDragStart = (event: DragStartEvent) => {
+    console.log('🚀 Drag started:', event.active.id);
+    setActiveId(String(event.active.id));
+  };
+
   // Manejar el final del drag & drop
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
+    console.log('🎯 Drag ended:', { active: active.id, over: over?.id });
+    setActiveId(null);
 
-    if (active.id !== over?.id && selectedEspacio) {
-      // Encontrar el espacio actual en la lista
-      const espacioActual = espaciosConEmbudos.find(e => e.id === selectedEspacio.id);
-      if (!espacioActual) return;
-
-      const embudos = [...espacioActual.embudos];
-      const oldIndex = embudos.findIndex(embudo => embudo.id === active.id);
-      const newIndex = embudos.findIndex(embudo => embudo.id === over?.id);
-
-      if (oldIndex !== -1 && newIndex !== -1) {
-        // Reordenar el array
-        const newEmbudos = arrayMove(embudos, oldIndex, newIndex);
-        
-        // Actualizar el estado local inmediatamente para feedback visual
-        setEspaciosConEmbudos(prevEspacios => 
-          prevEspacios.map(espacio => 
-            espacio.id === selectedEspacio.id 
-              ? { ...espacio, embudos: newEmbudos }
-              : espacio
-          )
-        );
-
-        // Persistir el nuevo orden en la base de datos
-        const embudosConOrden = newEmbudos.map((embudo, index) => ({
-          id: embudo.id,
-          orden: index
-        }));
-
-        supabaseService.updateEmbudosOrder(embudosConOrden)
-          .then(result => {
-            if (result.success) {
-              console.log('Orden persistido exitosamente en la base de datos');
-            } else {
-              console.error('Error al persistir orden:', result.error);
-            }
-          })
-          .catch(err => {
-            console.error('Error al actualizar orden:', err);
-          });
-
-        console.log('Nuevo orden de embudos:', newEmbudos.map((e, i) => ({ id: e.id, nombre: e.nombre, newIndex: i })));
-      }
+    if (!over || !over.id) {
+      console.log('❌ No over target or no over.id');
+      return;
     }
+
+    const activeIdStr = String(active.id);
+    const overIdStr = String(over.id);
+    
+    console.log('📝 Processing:', { activeIdStr, overIdStr });
+
+    // Verificar si es un mensaje siendo arrastrado
+    if (activeIdStr.startsWith('mensaje-')) {
+      console.log('✅ Es un mensaje siendo arrastrado');
+      const mensajeId = parseInt(activeIdStr.replace('mensaje-', ''));
+      
+      // Verificar si se está soltando sobre un embudo
+      if (overIdStr.startsWith('embudo-drop-')) {
+        console.log('✅ Se está soltando sobre un embudo');
+        const nuevoEmbudoId = parseInt(overIdStr.replace('embudo-drop-', ''));
+        
+        // Encontrar el mensaje actual
+        const mensajeActual = mensajes.find(m => m.id === mensajeId);
+        if (!mensajeActual) {
+          console.log('❌ Mensaje no encontrado');
+          return;
+        }
+        
+        if (mensajeActual.embudo_id === nuevoEmbudoId) {
+          console.log('❌ Es el mismo embudo, no hacer nada');
+          return;
+        }
+
+        console.log('🚀 Moviendo mensaje:', mensajeId, 'al embudo:', nuevoEmbudoId);
+        // Mover el mensaje
+        handleMensajeMoved(mensajeId, nuevoEmbudoId);
+        return;
+      } else {
+        console.log('❌ No se está soltando sobre un embudo válido');
+      }
+    } else {
+      console.log('❌ No es un mensaje siendo arrastrado');
+    }
+
+    // Solo manejar mensajes, no hay reordenamiento de embudos
   };
 
   // Obtener embudos del espacio seleccionado
   const embudosDelEspacio = selectedEspacio 
     ? espaciosConEmbudos.find(e => e.id === selectedEspacio.id)?.embudos || []
     : [];
+
+  // Debug: Log de mensajes y embudos
+  React.useEffect(() => {
+    if (mensajes.length > 0 || embudosDelEspacio.length > 0) {
+      console.log('🔍 Debug info:', {
+        mensajes: mensajes.length,
+        embudos: embudosDelEspacio.length,
+        mensajeIds: mensajes.map(m => `mensaje-${m.id}`),
+        embudoIds: embudosDelEspacio.map(e => `embudo-drop-${e.id}`),
+        selectedEspacio: selectedEspacio?.id
+      });
+    }
+  }, [mensajes.length, embudosDelEspacio.length, selectedEspacio?.id]);
 
   if (isLoading) {
     return (
@@ -335,27 +386,24 @@ export default function EmbudosPage() {
                 <DndContext
                   sensors={sensors}
                   collisionDetection={closestCenter}
+                  onDragStart={handleDragStart}
                   onDragEnd={handleDragEnd}
                 >
-                  <SortableContext
-                    items={embudosDelEspacio.map(embudo => embudo.id)}
-                    strategy={rectSortingStrategy}
-                  >
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                      {embudosDelEspacio.map((embudo, index) => (
-                        <div key={embudo.id}>
-                          <DraggableEmbudo
-                            embudo={embudo}
-                            index={index}
-                            mensajes={getMensajesByEmbudo(embudo.id)}
-                            onEdit={handleEditEmbudo}
-                            onDelete={handleDeleteEmbudo}
-                            onMensajeClick={handleMensajeClick}
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  </SortableContext>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {embudosDelEspacio.map((embudo, index) => (
+                      <div key={embudo.id}>
+                        <DraggableEmbudo
+                          embudo={embudo}
+                          index={index}
+                          mensajes={getMensajesByEmbudo(embudo.id)}
+                          onEdit={handleEditEmbudo}
+                          onDelete={handleDeleteEmbudo}
+                          onMensajeClick={handleMensajeClick}
+                          onMensajeMoved={handleMensajeMoved}
+                        />
+                      </div>
+                    ))}
+                  </div>
                 </DndContext>
               ) : (
                 <div className="text-center py-16">

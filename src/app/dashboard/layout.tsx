@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
+import { performLogout, isUserAuthenticated } from '@/utils/auth';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -18,29 +19,23 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const router = useRouter();
 
   useEffect(() => {
-    const isLoggedIn = localStorage.getItem('isLoggedIn');
-    const email = localStorage.getItem('userEmail');
-    
-    if (!isLoggedIn || !email) {
+    // Verificar autenticación usando la utilidad centralizada
+    if (!isUserAuthenticated()) {
       router.push('/login');
       return;
     }
     
-    setUserEmail(email);
+    // Cargar datos de usuario
+    const email = localStorage.getItem('userEmail');
+    setUserEmail(email || '');
     setUserName(localStorage.getItem('userName') || '');
     setUserRole(localStorage.getItem('userRole') || '');
     setAgencyName(localStorage.getItem('agencyName') || '');
   }, [router]);
 
   const handleLogout = () => {
-    localStorage.removeItem('isLoggedIn');
-    localStorage.removeItem('userEmail');
-    localStorage.removeItem('userName');
-    localStorage.removeItem('userRole');
-    localStorage.removeItem('userId');
-    localStorage.removeItem('agencyName');
-    localStorage.removeItem('userData');
-    router.push('/login');
+    // Usar la función centralizada y segura de logout
+    performLogout();
   };
 
   if (!userEmail) {
