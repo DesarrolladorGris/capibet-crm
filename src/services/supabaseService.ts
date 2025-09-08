@@ -1,4 +1,5 @@
 import { supabaseConfig, apiEndpoints } from '@/config/supabase';
+import { getCurrentUserId } from '@/utils/auth';
 
 // Tipos para autenticación
 export interface LoginCredentials {
@@ -18,6 +19,7 @@ export interface UsuarioData {
   contrasena: string;
   rol?: string;
   activo?: boolean;
+  creado_por?: number; // ID del usuario que creó este usuario
 }
 
 export interface UsuarioResponse {
@@ -32,6 +34,7 @@ export interface UsuarioResponse {
   activo: boolean; // true = activo, false = desactivado
   fecha_alta?: string;
   created_at?: string;
+  creado_por: number; // ID del usuario que creó este usuario
 }
 
 // Tipos para contactos
@@ -96,6 +99,7 @@ export interface RespuestaRapida {
   categoria: string;
   activa: boolean;
   created_at?: string;
+  creado_por?: number; // ID del usuario que creó esta respuesta rápida
 }
 
 // Tipos para sesiones y canales
@@ -109,6 +113,7 @@ export interface Canal {
   activo?: boolean;
   creado_en?: string;
   actualizado_en?: string;
+  creado_por?: number; // ID del usuario que creó este canal
 }
 
 export interface CanalData {
@@ -118,6 +123,7 @@ export interface CanalData {
   descripcion: string;
   configuracion?: Record<string, unknown>;
   activo?: boolean;
+  creado_por?: number; // ID del usuario que creó este canal
 }
 
 export interface Sesion {
@@ -137,6 +143,7 @@ export interface Sesion {
   estado: 'activo' | 'desconectado' | 'expirado';
   creado_en?: string;
   actualizado_en?: string;
+  creado_por?: number; // ID del usuario que creó esta sesión
 }
 
 export interface SesionData {
@@ -153,6 +160,7 @@ export interface SesionData {
   imap_host?: string | null;
   imap_port?: number | null;
   estado: 'activo' | 'desconectado' | 'expirado';
+  creado_por?: number; // ID del usuario que creó esta sesión
 }
 
 export interface SesionResponse {
@@ -172,6 +180,7 @@ export interface SesionResponse {
   estado: 'activo' | 'desconectado' | 'expirado';
   creado_en: string;
   actualizado_en: string;
+  creado_por: number; // ID del usuario que creó esta sesión
 }
 
 export interface RespuestaRapidaFormData {
@@ -254,6 +263,13 @@ export class SupabaseService {
     };
   }
 
+  /**
+   * Obtiene el ID del usuario actualmente logueado
+   */
+  private getCurrentUserId(): number | null {
+    return getCurrentUserId();
+  }
+
   private async handleResponse(response: Response): Promise<Record<string, unknown> | null> {
     // Manejar respuesta JSON de forma segura
     let data = null;
@@ -294,8 +310,20 @@ export class SupabaseService {
 
   // ===== MÉTODOS PARA USUARIOS =====
 
+  /**
+   * Crea un nuevo usuario
+   */
   async createUsuario(userData: UsuarioData): Promise<ApiResponse> {
     try {
+      // Obtener el ID del usuario logueado como creador
+      const currentUserId = this.getCurrentUserId();
+      if (!currentUserId) {
+        return {
+          success: false,
+          error: 'Usuario no autenticado'
+        };
+      }
+
       // Preparar los datos con valores por defecto
       const dataToSend = {
         nombre_agencia: userData.nombre_agencia,
@@ -306,7 +334,8 @@ export class SupabaseService {
         codigo_pais: userData.codigo_pais,
         contrasena: userData.contrasena,
         rol: userData.rol || 'Operador',
-        activo: userData.activo !== undefined ? userData.activo : true
+        activo: userData.activo !== undefined ? userData.activo : true,
+        creado_por: currentUserId // Asignar el creador
       };
 
       const response = await fetch(apiEndpoints.usuarios, {
@@ -343,9 +372,22 @@ export class SupabaseService {
     }
   }
 
+  /**
+   * Obtiene todos los usuarios creados por el usuario logueado
+   */
   async getAllUsuarios(): Promise<ApiResponse<UsuarioResponse[]>> {
     try {
-      const response = await fetch(apiEndpoints.usuarios, {
+      // Obtener el ID del usuario logueado
+      const userId = this.getCurrentUserId();
+      if (!userId) {
+        return {
+          success: false,
+          error: 'Usuario no autenticado'
+        };
+      }
+
+      // Filtrar usuarios por creado_por (usuarios creados por el usuario logueado)
+      const response = await fetch(`${apiEndpoints.usuarios}?creado_por=eq.${userId}`, {
         method: 'GET',
         headers: this.getHeaders()
       });
@@ -407,9 +449,22 @@ export class SupabaseService {
     }
   }
 
+  /**
+   * Actualiza un usuario existente (solo los creados por el usuario logueado)
+   */
   async updateUsuario(id: number, userData: Partial<UsuarioData>): Promise<ApiResponse> {
     try {
-      const response = await fetch(`${apiEndpoints.usuarios}?id=eq.${id}`, {
+      // Obtener el ID del usuario logueado
+      const currentUserId = this.getCurrentUserId();
+      if (!currentUserId) {
+        return {
+          success: false,
+          error: 'Usuario no autenticado'
+        };
+      }
+
+      // Actualizar solo si el usuario fue creado por el usuario logueado
+      const response = await fetch(`${apiEndpoints.usuarios}?id=eq.${id}&creado_por=eq.${currentUserId}`, {
         method: 'PATCH',
         headers: this.getHeaders(),
         body: JSON.stringify(userData),
@@ -438,9 +493,22 @@ export class SupabaseService {
     }
   }
 
+  /**
+   * Elimina un usuario (solo los creados por el usuario logueado)
+   */
   async deleteUsuario(id: number): Promise<ApiResponse> {
     try {
-      const response = await fetch(`${apiEndpoints.usuarios}?id=eq.${id}`, {
+      // Obtener el ID del usuario logueado
+      const currentUserId = this.getCurrentUserId();
+      if (!currentUserId) {
+        return {
+          success: false,
+          error: 'Usuario no autenticado'
+        };
+      }
+
+      // Eliminar solo si el usuario fue creado por el usuario logueado
+      const response = await fetch(`${apiEndpoints.usuarios}?id=eq.${id}&creado_por=eq.${currentUserId}`, {
         method: 'DELETE',
         headers: this.getHeaders()
       });
@@ -468,9 +536,22 @@ export class SupabaseService {
     }
   }
 
+  /**
+   * Cambia el estado activo/inactivo de un usuario (solo los creados por el usuario logueado)
+   */
   async toggleUsuarioStatus(id: number, activo: boolean): Promise<ApiResponse<Record<string, unknown>>> {
     try {
-      const response = await fetch(`${apiEndpoints.usuarios}?id=eq.${id}`, {
+      // Obtener el ID del usuario logueado
+      const currentUserId = this.getCurrentUserId();
+      if (!currentUserId) {
+        return {
+          success: false,
+          error: 'Usuario no autenticado'
+        };
+      }
+
+      // Cambiar estado solo si el usuario fue creado por el usuario logueado
+      const response = await fetch(`${apiEndpoints.usuarios}?id=eq.${id}&creado_por=eq.${currentUserId}`, {
         method: 'PATCH',
         headers: this.getHeaders(),
         body: JSON.stringify({ activo }),
@@ -485,6 +566,52 @@ export class SupabaseService {
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Error al cambiar estado del usuario'
+      };
+    }
+  }
+
+  /**
+   * Obtiene el conteo de usuarios creados por el usuario logueado
+   */
+  async getUsersCount(): Promise<ApiResponse<number>> {
+    try {
+      // Obtener el ID del usuario logueado
+      const userId = this.getCurrentUserId();
+      if (!userId) {
+        return {
+          success: false,
+          error: 'Usuario no autenticado'
+        };
+      }
+
+      // Contar usuarios creados por el usuario logueado
+      const response = await fetch(`${apiEndpoints.usuarios}?creado_por=eq.${userId}&select=id`, {
+        method: 'GET',
+        headers: this.getHeaders()
+      });
+
+      if (!response.ok) {
+        return {
+          success: false,
+          error: 'Error al obtener el conteo de usuarios'
+        };
+      }
+
+      const data = await this.handleResponse(response);
+      const count = Array.isArray(data) ? data.length : 0;
+      
+      return {
+        success: true,
+        data: count
+      };
+
+    } catch (error) {
+      console.error('Error counting users:', error);
+      
+      return {
+        success: false,
+        error: 'Error de conexión al contar usuarios',
+        details: error instanceof Error ? error.message : 'Error desconocido'
       };
     }
   }
@@ -571,11 +698,21 @@ export class SupabaseService {
   // ===== MÉTODOS PARA CONTACTOS =====
 
   /**
-   * Obtiene todos los contactos
+   * Obtiene todos los contactos del usuario logueado
    */
   async getAllContactos(): Promise<ApiResponse<ContactResponse[]>> {
     try {
-      const response = await fetch(apiEndpoints.contactos, {
+      // Obtener el ID del usuario logueado
+      const userId = this.getCurrentUserId();
+      if (!userId) {
+        return {
+          success: false,
+          error: 'Usuario no autenticado'
+        };
+      }
+
+      // Filtrar contactos por creado_por (usuario logueado)
+      const response = await fetch(`${apiEndpoints.contactos}?creado_por=eq.${userId}`, {
         method: 'GET',
         headers: this.getHeaders()
       });
@@ -645,11 +782,21 @@ export class SupabaseService {
   }
 
   /**
-   * Actualiza un contacto existente
+   * Actualiza un contacto existente (solo del usuario logueado)
    */
   async updateContacto(id: number, contactData: Partial<ContactData>): Promise<ApiResponse<ContactResponse>> {
     try {
-      const response = await fetch(`${apiEndpoints.contactos}?id=eq.${id}`, {
+      // Obtener el ID del usuario logueado
+      const userId = this.getCurrentUserId();
+      if (!userId) {
+        return {
+          success: false,
+          error: 'Usuario no autenticado'
+        };
+      }
+
+      // Actualizar solo si el contacto pertenece al usuario logueado
+      const response = await fetch(`${apiEndpoints.contactos}?id=eq.${id}&creado_por=eq.${userId}`, {
         method: 'PATCH',
         headers: this.getHeaders(),
         body: JSON.stringify(contactData),
@@ -679,11 +826,21 @@ export class SupabaseService {
   }
 
   /**
-   * Elimina un contacto
+   * Elimina un contacto (solo del usuario logueado)
    */
   async deleteContacto(id: number): Promise<ApiResponse<void>> {
     try {
-      const response = await fetch(`${apiEndpoints.contactos}?id=eq.${id}`, {
+      // Obtener el ID del usuario logueado
+      const userId = this.getCurrentUserId();
+      if (!userId) {
+        return {
+          success: false,
+          error: 'Usuario no autenticado'
+        };
+      }
+
+      // Eliminar solo si el contacto pertenece al usuario logueado
+      const response = await fetch(`${apiEndpoints.contactos}?id=eq.${id}&creado_por=eq.${userId}`, {
         method: 'DELETE',
         headers: this.getHeaders()
       });
@@ -711,14 +868,70 @@ export class SupabaseService {
     }
   }
 
+  /**
+   * Obtiene el conteo de contactos del usuario logueado
+   */
+  async getContactosCount(): Promise<ApiResponse<number>> {
+    try {
+      // Obtener el ID del usuario logueado
+      const userId = this.getCurrentUserId();
+      if (!userId) {
+        return {
+          success: false,
+          error: 'Usuario no autenticado'
+        };
+      }
+
+      // Contar contactos del usuario logueado
+      const response = await fetch(`${apiEndpoints.contactos}?creado_por=eq.${userId}&select=id`, {
+        method: 'GET',
+        headers: this.getHeaders()
+      });
+
+      if (!response.ok) {
+        return {
+          success: false,
+          error: 'Error al obtener el conteo de contactos'
+        };
+      }
+
+      const data = await this.handleResponse(response);
+      const count = Array.isArray(data) ? data.length : 0;
+      
+      return {
+        success: true,
+        data: count
+      };
+
+    } catch (error) {
+      console.error('Error counting contacts:', error);
+      
+      return {
+        success: false,
+        error: 'Error de conexión al contar contactos',
+        details: error instanceof Error ? error.message : 'Error desconocido'
+      };
+    }
+  }
+
   // ===== MÉTODOS PARA ESPACIOS DE TRABAJO =====
 
   /**
-   * Obtiene todos los espacios de trabajo
+   * Obtiene todos los espacios de trabajo del usuario logueado
    */
   async getAllEspaciosTrabajo(): Promise<ApiResponse<EspacioTrabajoResponse[]>> {
     try {
-      const response = await fetch(apiEndpoints.espacios_de_trabajo, {
+      // Obtener el ID del usuario logueado
+      const userId = this.getCurrentUserId();
+      if (!userId) {
+        return {
+          success: false,
+          error: 'Usuario no autenticado'
+        };
+      }
+
+      // Filtrar espacios de trabajo por creado_por (usuario logueado)
+      const response = await fetch(`${apiEndpoints.espacios_de_trabajo}?creado_por=eq.${userId}`, {
         method: 'GET',
         headers: this.getHeaders()
       });
@@ -788,11 +1001,21 @@ export class SupabaseService {
   }
 
   /**
-   * Actualiza un espacio de trabajo existente
+   * Actualiza un espacio de trabajo existente (solo del usuario logueado)
    */
   async updateEspacioTrabajo(id: number, espacioData: Partial<EspacioTrabajoData>): Promise<ApiResponse<EspacioTrabajoResponse>> {
     try {
-      const response = await fetch(`${apiEndpoints.espacios_de_trabajo}?id=eq.${id}`, {
+      // Obtener el ID del usuario logueado
+      const userId = this.getCurrentUserId();
+      if (!userId) {
+        return {
+          success: false,
+          error: 'Usuario no autenticado'
+        };
+      }
+
+      // Actualizar solo si el espacio pertenece al usuario logueado
+      const response = await fetch(`${apiEndpoints.espacios_de_trabajo}?id=eq.${id}&creado_por=eq.${userId}`, {
         method: 'PATCH',
         headers: this.getHeaders(),
         body: JSON.stringify(espacioData),
@@ -822,11 +1045,21 @@ export class SupabaseService {
   }
 
   /**
-   * Elimina un espacio de trabajo
+   * Elimina un espacio de trabajo (solo del usuario logueado)
    */
   async deleteEspacioTrabajo(id: number): Promise<ApiResponse<void>> {
     try {
-      const response = await fetch(`${apiEndpoints.espacios_de_trabajo}?id=eq.${id}`, {
+      // Obtener el ID del usuario logueado
+      const userId = this.getCurrentUserId();
+      if (!userId) {
+        return {
+          success: false,
+          error: 'Usuario no autenticado'
+        };
+      }
+
+      // Eliminar solo si el espacio pertenece al usuario logueado
+      const response = await fetch(`${apiEndpoints.espacios_de_trabajo}?id=eq.${id}&creado_por=eq.${userId}`, {
         method: 'DELETE',
         headers: this.getHeaders()
       });
@@ -850,6 +1083,52 @@ export class SupabaseService {
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Error al eliminar espacio de trabajo'
+      };
+    }
+  }
+
+  /**
+   * Obtiene el conteo de espacios de trabajo del usuario logueado
+   */
+  async getEspaciosTrabajoCount(): Promise<ApiResponse<number>> {
+    try {
+      // Obtener el ID del usuario logueado
+      const userId = this.getCurrentUserId();
+      if (!userId) {
+        return {
+          success: false,
+          error: 'Usuario no autenticado'
+        };
+      }
+
+      // Contar espacios de trabajo del usuario logueado
+      const response = await fetch(`${apiEndpoints.espacios_de_trabajo}?creado_por=eq.${userId}&select=id`, {
+        method: 'GET',
+        headers: this.getHeaders()
+      });
+
+      if (!response.ok) {
+        return {
+          success: false,
+          error: 'Error al obtener el conteo de espacios de trabajo'
+        };
+      }
+
+      const data = await this.handleResponse(response);
+      const count = Array.isArray(data) ? data.length : 0;
+      
+      return {
+        success: true,
+        data: count
+      };
+
+    } catch (error) {
+      console.error('Error counting espacios de trabajo:', error);
+      
+      return {
+        success: false,
+        error: 'Error de conexión al contar espacios de trabajo',
+        details: error instanceof Error ? error.message : 'Error desconocido'
       };
     }
   }
@@ -1088,11 +1367,21 @@ export class SupabaseService {
   // ===== MÉTODOS PARA RESPUESTAS RÁPIDAS =====
 
   /**
-   * Obtiene todas las respuestas rápidas
+   * Obtiene todas las respuestas rápidas del usuario logueado
    */
   async getAllRespuestasRapidas(): Promise<ApiResponse<RespuestaRapida[]>> {
     try {
-      const response = await fetch(`${apiEndpoints.respuestasRapidas}?order=created_at.desc`, {
+      // Obtener el ID del usuario logueado
+      const userId = this.getCurrentUserId();
+      if (!userId) {
+        return {
+          success: false,
+          error: 'Usuario no autenticado'
+        };
+      }
+
+      // Filtrar respuestas rápidas por creado_por (usuario logueado)
+      const response = await fetch(`${apiEndpoints.respuestasRapidas}?creado_por=eq.${userId}&order=created_at.desc`, {
         headers: this.getHeaders(),
       });
       
@@ -1109,11 +1398,21 @@ export class SupabaseService {
   }
 
   /**
-   * Obtiene una respuesta rápida por ID
+   * Obtiene una respuesta rápida por ID (solo del usuario logueado)
    */
   async getRespuestaRapidaById(id: number): Promise<ApiResponse<RespuestaRapida>> {
     try {
-      const response = await fetch(`${apiEndpoints.respuestasRapidas}?id=eq.${id}`, {
+      // Obtener el ID del usuario logueado
+      const userId = this.getCurrentUserId();
+      if (!userId) {
+        return {
+          success: false,
+          error: 'Usuario no autenticado'
+        };
+      }
+
+      // Obtener solo si pertenece al usuario logueado
+      const response = await fetch(`${apiEndpoints.respuestasRapidas}?id=eq.${id}&creado_por=eq.${userId}`, {
         headers: this.getHeaders(),
       });
       
@@ -1134,12 +1433,22 @@ export class SupabaseService {
    */
   async createRespuestaRapida(data: RespuestaRapidaFormData): Promise<ApiResponse> {
     try {
+      // Obtener el ID del usuario logueado como creador
+      const userId = this.getCurrentUserId();
+      if (!userId) {
+        return {
+          success: false,
+          error: 'Usuario no autenticado'
+        };
+      }
+
       const response = await fetch(apiEndpoints.respuestasRapidas, {
         method: 'POST',
         headers: this.getHeaders(),
         body: JSON.stringify({
           ...data,
-          activa: true
+          activa: true,
+          creado_por: userId // Asignar el creador
         }),
       });
       
@@ -1155,11 +1464,21 @@ export class SupabaseService {
   }
 
   /**
-   * Actualiza una respuesta rápida existente
+   * Actualiza una respuesta rápida existente (solo del usuario logueado)
    */
   async updateRespuestaRapida(id: number, data: Partial<RespuestaRapida>): Promise<ApiResponse> {
     try {
-      const response = await fetch(`${apiEndpoints.respuestasRapidas}?id=eq.${id}`, {
+      // Obtener el ID del usuario logueado
+      const userId = this.getCurrentUserId();
+      if (!userId) {
+        return {
+          success: false,
+          error: 'Usuario no autenticado'
+        };
+      }
+
+      // Actualizar solo si pertenece al usuario logueado
+      const response = await fetch(`${apiEndpoints.respuestasRapidas}?id=eq.${id}&creado_por=eq.${userId}`, {
         method: 'PATCH',
         headers: this.getHeaders(),
         body: JSON.stringify(data),
@@ -1177,11 +1496,21 @@ export class SupabaseService {
   }
 
   /**
-   * Elimina una respuesta rápida
+   * Elimina una respuesta rápida (solo del usuario logueado)
    */
   async deleteRespuestaRapida(id: number): Promise<ApiResponse> {
     try {
-      const response = await fetch(`${apiEndpoints.respuestasRapidas}?id=eq.${id}`, {
+      // Obtener el ID del usuario logueado
+      const userId = this.getCurrentUserId();
+      if (!userId) {
+        return {
+          success: false,
+          error: 'Usuario no autenticado'
+        };
+      }
+
+      // Eliminar solo si pertenece al usuario logueado
+      const response = await fetch(`${apiEndpoints.respuestasRapidas}?id=eq.${id}&creado_por=eq.${userId}`, {
         method: 'DELETE',
         headers: this.getHeaders(),
       });
@@ -1198,11 +1527,21 @@ export class SupabaseService {
   }
 
   /**
-   * Cambia el estado activo/inactivo de una respuesta rápida
+   * Cambia el estado activo/inactivo de una respuesta rápida (solo del usuario logueado)
    */
   async toggleRespuestaRapidaStatus(id: number, activa: boolean): Promise<ApiResponse<Record<string, unknown>>> {
     try {
-      const response = await fetch(`${apiEndpoints.respuestasRapidas}?id=eq.${id}`, {
+      // Obtener el ID del usuario logueado
+      const userId = this.getCurrentUserId();
+      if (!userId) {
+        return {
+          success: false,
+          error: 'Usuario no autenticado'
+        };
+      }
+
+      // Cambiar estado solo si pertenece al usuario logueado
+      const response = await fetch(`${apiEndpoints.respuestasRapidas}?id=eq.${id}&creado_por=eq.${userId}`, {
         method: 'PATCH',
         headers: this.getHeaders(),
         body: JSON.stringify({ activa }),
@@ -1222,14 +1561,70 @@ export class SupabaseService {
     }
   }
 
+  /**
+   * Obtiene el conteo de respuestas rápidas del usuario logueado
+   */
+  async getRespuestasRapidasCount(): Promise<ApiResponse<number>> {
+    try {
+      // Obtener el ID del usuario logueado
+      const userId = this.getCurrentUserId();
+      if (!userId) {
+        return {
+          success: false,
+          error: 'Usuario no autenticado'
+        };
+      }
+
+      // Contar respuestas rápidas del usuario logueado
+      const response = await fetch(`${apiEndpoints.respuestasRapidas}?creado_por=eq.${userId}&select=id`, {
+        method: 'GET',
+        headers: this.getHeaders()
+      });
+
+      if (!response.ok) {
+        return {
+          success: false,
+          error: 'Error al obtener el conteo de respuestas rápidas'
+        };
+      }
+
+      const data = await this.handleResponse(response);
+      const count = Array.isArray(data) ? data.length : 0;
+      
+      return {
+        success: true,
+        data: count
+      };
+
+    } catch (error) {
+      console.error('Error counting respuestas rápidas:', error);
+      
+      return {
+        success: false,
+        error: 'Error de conexión al contar respuestas rápidas',
+        details: error instanceof Error ? error.message : 'Error desconocido'
+      };
+    }
+  }
+
   // ==================== MÉTODOS PARA CANALES ====================
 
   /**
-   * Obtiene todos los canales
+   * Obtiene todos los canales del usuario logueado
    */
   async getAllCanales(): Promise<ApiResponse<Canal[]>> {
     try {
-      const response = await fetch(apiEndpoints.canales, {
+      // Obtener el ID del usuario logueado
+      const userId = this.getCurrentUserId();
+      if (!userId) {
+        return {
+          success: false,
+          error: 'Usuario no autenticado'
+        };
+      }
+
+      // Filtrar canales por creado_por (usuario logueado)
+      const response = await fetch(`${apiEndpoints.canales}?creado_por=eq.${userId}`, {
         method: 'GET',
         headers: this.getHeaders(),
       });
@@ -1246,7 +1641,7 @@ export class SupabaseService {
       const data = await response.json();
       
       // Log para debugging
-      console.log('Canales obtenidos:', data);
+      console.log('Canales obtenidos (filtrados por usuario):', data);
       
       return { success: true, data };
     } catch (error) {
@@ -1264,12 +1659,22 @@ export class SupabaseService {
    */
   async createCanal(canalData: CanalData): Promise<ApiResponse<Canal>> {
     try {
+      // Obtener el ID del usuario logueado como creador
+      const currentUserId = this.getCurrentUserId();
+      if (!currentUserId) {
+        return {
+          success: false,
+          error: 'Usuario no autenticado'
+        };
+      }
+
       // Preparar los datos con valores por defecto
       const dataToSend = {
         usuario_id: canalData.usuario_id,
         espacio_id: canalData.espacio_id,
         tipo: canalData.tipo,
-        descripcion: canalData.descripcion
+        descripcion: canalData.descripcion,
+        creado_por: currentUserId // Asignar el creador
       };
 
       // Log detallado para debugging
@@ -1339,11 +1744,21 @@ export class SupabaseService {
   }
 
   /**
-   * Actualiza un canal existente
+   * Actualiza un canal existente (solo del usuario logueado)
    */
   async updateCanal(id: number, data: Partial<Canal>): Promise<ApiResponse<Canal>> {
     try {
-      const response = await fetch(`${apiEndpoints.canales}?id=eq.${id}`, {
+      // Obtener el ID del usuario logueado
+      const userId = this.getCurrentUserId();
+      if (!userId) {
+        return {
+          success: false,
+          error: 'Usuario no autenticado'
+        };
+      }
+
+      // Actualizar solo si pertenece al usuario logueado
+      const response = await fetch(`${apiEndpoints.canales}?id=eq.${id}&creado_por=eq.${userId}`, {
         method: 'PATCH',
         headers: this.getHeaders(),
         body: JSON.stringify(data),
@@ -1362,11 +1777,21 @@ export class SupabaseService {
   }
 
   /**
-   * Elimina un canal
+   * Elimina un canal (solo del usuario logueado)
    */
   async deleteCanal(id: number): Promise<ApiResponse<void>> {
     try {
-      const response = await fetch(`${apiEndpoints.canales}?id=eq.${id}`, {
+      // Obtener el ID del usuario logueado
+      const userId = this.getCurrentUserId();
+      if (!userId) {
+        return {
+          success: false,
+          error: 'Usuario no autenticado'
+        };
+      }
+
+      // Eliminar solo si pertenece al usuario logueado
+      const response = await fetch(`${apiEndpoints.canales}?id=eq.${id}&creado_por=eq.${userId}`, {
         method: 'DELETE',
         headers: this.getHeaders(),
       });
@@ -1394,41 +1819,96 @@ export class SupabaseService {
     }
   }
 
+  /**
+   * Obtiene el conteo de canales del usuario logueado
+   */
+  async getCanalesCount(): Promise<ApiResponse<number>> {
+    try {
+      // Obtener el ID del usuario logueado
+      const userId = this.getCurrentUserId();
+      if (!userId) {
+        return {
+          success: false,
+          error: 'Usuario no autenticado'
+        };
+      }
+
+      // Contar canales del usuario logueado
+      const response = await fetch(`${apiEndpoints.canales}?creado_por=eq.${userId}&select=id`, {
+        method: 'GET',
+        headers: this.getHeaders()
+      });
+
+      if (!response.ok) {
+        return {
+          success: false,
+          error: 'Error al obtener el conteo de canales'
+        };
+      }
+
+      const data = await this.handleResponse(response);
+      const count = Array.isArray(data) ? data.length : 0;
+      
+      return {
+        success: true,
+        data: count
+      };
+
+    } catch (error) {
+      console.error('Error counting canales:', error);
+      
+      return {
+        success: false,
+        error: 'Error de conexión al contar canales',
+        details: error instanceof Error ? error.message : 'Error desconocido'
+      };
+    }
+  }
+
   // ==================== MÉTODOS PARA SESIONES ====================
 
   /**
-   * Obtiene todas las sesiones (simplificado para evitar errores de relaciones)
+   * Obtiene todas las sesiones del usuario logueado
    */
   async getAllSesiones(): Promise<ApiResponse<SesionResponse[]>> {
     try {
-      // Primero intentamos con una consulta simple
-      const response = await fetch(apiEndpoints.sesiones, {
+      // Obtener el ID del usuario logueado
+      const userId = this.getCurrentUserId();
+      if (!userId) {
+        return {
+          success: false,
+          error: 'Usuario no autenticado'
+        };
+      }
+
+      // Filtrar sesiones por creado_por (usuario logueado)
+      const response = await fetch(`${apiEndpoints.sesiones}?creado_por=eq.${userId}`, {
         method: 'GET',
         headers: this.getHeaders(),
       });
       
       if (!response.ok) {
         const errorData = await response.text();
-        console.warn('Endpoint de sesiones no disponible:', errorData);
-        // Retornamos una lista vacía en lugar de fallar
-        return { success: true, data: [] };
+        console.warn('Error al obtener sesiones:', errorData);
+        return {
+          success: false,
+          error: `Error del servidor: ${response.status} ${response.statusText}`,
+          details: errorData
+        };
       }
       
       const data = await response.json();
       
       // Log para debugging
-      console.log('Sesiones obtenidas:', data);
+      console.log('Sesiones obtenidas (filtradas por usuario):', data);
       
-      // Como las sesiones pueden no tener la estructura completa esperada,
-      // devolvemos los datos tal como vienen o una lista vacía
       return { success: true, data: Array.isArray(data) ? data : [] };
     } catch (error) {
       console.error('Error al obtener sesiones:', error);
-      // En caso de error, retornamos lista vacía para no romper la interfaz
       return { 
-        success: true, 
-        data: [],
-        error: 'Endpoint de sesiones no disponible'
+        success: false, 
+        error: 'Error de conexión al obtener sesiones',
+        details: error instanceof Error ? error.message : 'Error desconocido'
       };
     }
   }
@@ -1438,6 +1918,15 @@ export class SupabaseService {
    */
   async createSesion(sesionData: SesionData): Promise<ApiResponse<Sesion>> {
     try {
+      // Obtener el ID del usuario logueado como creador
+      const currentUserId = this.getCurrentUserId();
+      if (!currentUserId) {
+        return {
+          success: false,
+          error: 'Usuario no autenticado'
+        };
+      }
+
       // Log para debugging
       console.log('Datos recibidos para crear sesión:', sesionData);
       
@@ -1454,7 +1943,8 @@ export class SupabaseService {
         smtp_port: sesionData.smtp_port,
         imap_host: sesionData.imap_host,
         imap_port: sesionData.imap_port,
-        estado: sesionData.estado
+        estado: sesionData.estado,
+        creado_por: currentUserId // Asignar el creador
       };
 
       console.log('Datos a enviar:', dataToSend);
@@ -1519,11 +2009,21 @@ export class SupabaseService {
   }
 
   /**
-   * Obtiene las sesiones de un canal específico
+   * Obtiene las sesiones de un canal específico (solo del usuario logueado)
    */
   async getSesionesByCanal(canalId: number): Promise<ApiResponse<SesionResponse[]>> {
     try {
-      const response = await fetch(`${apiEndpoints.sesiones}?canal_id=eq.${canalId}`, {
+      // Obtener el ID del usuario logueado
+      const userId = this.getCurrentUserId();
+      if (!userId) {
+        return {
+          success: false,
+          error: 'Usuario no autenticado'
+        };
+      }
+
+      // Filtrar por canal Y por creado_por (usuario logueado)
+      const response = await fetch(`${apiEndpoints.sesiones}?canal_id=eq.${canalId}&creado_por=eq.${userId}`, {
         method: 'GET',
         headers: this.getHeaders(),
       });
@@ -1551,11 +2051,21 @@ export class SupabaseService {
   }
 
   /**
-   * Actualiza una sesión existente
+   * Actualiza una sesión existente (solo del usuario logueado)
    */
   async updateSesion(id: number, data: Partial<Sesion>): Promise<ApiResponse<Sesion>> {
     try {
-      const response = await fetch(`${apiEndpoints.sesiones}?id=eq.${id}`, {
+      // Obtener el ID del usuario logueado
+      const userId = this.getCurrentUserId();
+      if (!userId) {
+        return {
+          success: false,
+          error: 'Usuario no autenticado'
+        };
+      }
+
+      // Actualizar solo si pertenece al usuario logueado
+      const response = await fetch(`${apiEndpoints.sesiones}?id=eq.${id}&creado_por=eq.${userId}`, {
         method: 'PATCH',
         headers: this.getHeaders(),
         body: JSON.stringify(data),
@@ -1574,11 +2084,21 @@ export class SupabaseService {
   }
 
   /**
-   * Elimina una sesión
+   * Elimina una sesión (solo del usuario logueado)
    */
   async deleteSesion(id: number): Promise<ApiResponse<void>> {
     try {
-      const response = await fetch(`${apiEndpoints.sesiones}?id=eq.${id}`, {
+      // Obtener el ID del usuario logueado
+      const userId = this.getCurrentUserId();
+      if (!userId) {
+        return {
+          success: false,
+          error: 'Usuario no autenticado'
+        };
+      }
+
+      // Eliminar solo si pertenece al usuario logueado
+      const response = await fetch(`${apiEndpoints.sesiones}?id=eq.${id}&creado_por=eq.${userId}`, {
         method: 'DELETE',
         headers: this.getHeaders(),
       });
@@ -1591,6 +2111,52 @@ export class SupabaseService {
     } catch (error) {
       console.error('Error al eliminar sesión:', error);
       return { success: false, error: error instanceof Error ? error.message : 'Error al eliminar sesión' };
+    }
+  }
+
+  /**
+   * Obtiene el conteo de sesiones del usuario logueado
+   */
+  async getSesionesCount(): Promise<ApiResponse<number>> {
+    try {
+      // Obtener el ID del usuario logueado
+      const userId = this.getCurrentUserId();
+      if (!userId) {
+        return {
+          success: false,
+          error: 'Usuario no autenticado'
+        };
+      }
+
+      // Contar sesiones del usuario logueado
+      const response = await fetch(`${apiEndpoints.sesiones}?creado_por=eq.${userId}&select=id`, {
+        method: 'GET',
+        headers: this.getHeaders()
+      });
+
+      if (!response.ok) {
+        return {
+          success: false,
+          error: 'Error al obtener el conteo de sesiones'
+        };
+      }
+
+      const data = await this.handleResponse(response);
+      const count = Array.isArray(data) ? data.length : 0;
+      
+      return {
+        success: true,
+        data: count
+      };
+
+    } catch (error) {
+      console.error('Error counting sesiones:', error);
+      
+      return {
+        success: false,
+        error: 'Error de conexión al contar sesiones',
+        details: error instanceof Error ? error.message : 'Error desconocido'
+      };
     }
   }
 
@@ -1703,6 +2269,73 @@ export class SupabaseService {
       return { 
         success: false, 
         error: 'Error de conexión al obtener mensajes',
+        details: error instanceof Error ? error.message : 'Error desconocido'
+      };
+    }
+  }
+
+  /**
+   * Actualiza un mensaje existente
+   */
+  async updateMensaje(id: number, mensajeData: Partial<MensajeData>): Promise<ApiResponse<MensajeResponse>> {
+    try {
+      console.log('Actualizando mensaje:', id, mensajeData);
+
+      const response = await fetch(`${apiEndpoints.mensajes}?id=eq.${id}`, {
+        method: 'PATCH',
+        headers: this.getHeaders(),
+        body: JSON.stringify(mensajeData)
+      });
+
+      console.log('Response status:', response.status);
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error('Error response body:', errorData);
+        return {
+          success: false,
+          error: `Error del servidor: ${response.status} ${response.statusText}`,
+          details: errorData
+        };
+      }
+
+      const data = await this.handleResponse(response);
+      console.log('Mensaje actualizado exitosamente');
+
+      return {
+        success: true,
+        data: data as unknown as MensajeResponse
+      };
+
+    } catch (error) {
+      console.error('Error al actualizar mensaje:', error);
+      return { 
+        success: false, 
+        error: 'Error de conexión al actualizar mensaje',
+        details: error instanceof Error ? error.message : 'Error desconocido'
+      };
+    }
+  }
+
+  /**
+   * Mueve un mensaje a otro embudo
+   */
+  async moveMensajeToEmbudo(mensajeId: number, nuevoEmbudoId: number): Promise<ApiResponse<MensajeResponse>> {
+    try {
+      console.log('Moviendo mensaje:', mensajeId, 'al embudo:', nuevoEmbudoId);
+
+      const result = await this.updateMensaje(mensajeId, { embudo_id: nuevoEmbudoId });
+      
+      if (result.success) {
+        console.log('Mensaje movido exitosamente');
+      }
+
+      return result;
+    } catch (error) {
+      console.error('Error al mover mensaje:', error);
+      return { 
+        success: false, 
+        error: 'Error de conexión al mover mensaje',
         details: error instanceof Error ? error.message : 'Error desconocido'
       };
     }

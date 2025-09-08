@@ -8,6 +8,7 @@ import EditarContactoModal from './components/EditarContactoModal';
 import ConfirmarEliminarModal from './components/ConfirmarEliminarModal';
 import ConfirmarEliminacionMasivaModal from './components/ConfirmarEliminacionMasivaModal';
 import { supabaseService, ContactResponse, ContactData } from '@/services/supabaseService';
+import { isUserAuthenticated, getCurrentUserId } from '@/utils/auth';
 
 export default function ContactosPage() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -74,28 +75,21 @@ export default function ContactosPage() {
     if (!deletingContact) return;
 
     try {
-      // Llamar al endpoint de eliminación
-      const url = `https://dkrdphnnsgndrqmgdvxp.supabase.co/rest/v1/contactos?id=eq.${deletingContact.id}`;
-      console.log('URL de eliminación individual:', url);
-      const response = await fetch(url, {
-        method: 'DELETE',
-        headers: {
-          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRrcmRwaG5uc2duZHJxbWdkdnhwIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NjIzMTQ0NSwiZXhwIjoyMDcxODA3NDQ1fQ.w9dE4zcpbfH3LUwx-XS-2GtqEo6mr7p2BJIcf77xMdg',
-          'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRrcmRwaG5uc2duZHJxbWdkdnhwIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NjIzMTQ0NSwiZXhwIjoyMDcxODA3NDQ1fQ.w9dE4zcpbfH3LUwx-XS-2GtqEo6mr7p2BJIcf77xMdg'
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('Error al eliminar el contacto');
-      }
-
-      // Recargar contactos
-      await fetchContacts();
-      console.log('Contacto eliminado exitosamente');
+      // Usar el servicio seguro para eliminar
+      const result = await supabaseService.deleteContacto(deletingContact.id);
       
-      // Cerrar modal
-      setShowDeleteModal(false);
-      setDeletingContact(null);
+      if (result.success) {
+        // Recargar contactos
+        await fetchContacts();
+        console.log('Contacto eliminado exitosamente');
+        
+        // Cerrar modal
+        setShowDeleteModal(false);
+        setDeletingContact(null);
+      } else {
+        setError(result.error || 'Error al eliminar el contacto');
+        throw new Error(result.error);
+      }
     } catch (err) {
       console.error('Error al eliminar contacto:', err);
       setError(err instanceof Error ? err.message : 'Error al eliminar contacto');
@@ -127,27 +121,18 @@ export default function ContactosPage() {
       const failedDeletions: number[] = [];
       const successfulDeletions: number[] = [];
       
-      // Eliminar cada contacto seleccionado usando el endpoint directo
+      // Eliminar cada contacto seleccionado usando el servicio seguro
       for (const contactId of selectedContacts) {
-        console.log(`Procesando eliminación del contacto ID: ${contactId} (tipo: ${typeof contactId})`);
+        console.log(`Procesando eliminación del contacto ID: ${contactId}`);
         try {
-          const url = `https://dkrdphnnsgndrqmgdvxp.supabase.co/rest/v1/contactos?id=eq.${contactId}`;
-          console.log('URL de eliminación:', url);
-          const response = await fetch(url, {
-          method: 'DELETE',
-          headers: {
-            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRrcmRwaG5uc2duZHJxbWdkdnhwIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NjIzMTQ0NSwiZXhwIjoyMDcxODA3NDQ1fQ.w9dE4zcpbfH3LUwx-XS-2GtqEo6mr7p2BJIcf77xMdg',
-            'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRrcmRwaG5uc2duZHJxbWdkdnhwIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsInJlZiI6ImRrcmRwaG5uc2duZHJxbWdkdnhwIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NjIzMTQ0NSwiZXhwIjoyMDcxODA3NDQ1fQ.w9dE4zcpbfH3LUwx-XS-2GtqEo6mr7p2BJIcf77xMdg'
+          const result = await supabaseService.deleteContacto(contactId);
+          
+          if (result.success) {
+            successfulDeletions.push(contactId);
+          } else {
+            console.error(`Error al eliminar contacto ${contactId}:`, result.error);
+            failedDeletions.push(contactId);
           }
-        });
-
-        if (response.ok) {
-          successfulDeletions.push(contactId);
-        } else {
-          const errorText = await response.text();
-          console.error(`Error al eliminar contacto ${contactId}:`, response.status, errorText);
-          failedDeletions.push(contactId);
-        }
         } catch (error) {
           console.error(`Error de red al eliminar contacto ${contactId}:`, error);
           failedDeletions.push(contactId);
@@ -160,7 +145,7 @@ export default function ContactosPage() {
         
         if (failedDeletions.length > 0) {
           console.warn(`${failedDeletions.length} contacto(s) no se pudieron eliminar:`, failedDeletions);
-          setError(`Se eliminaron ${successfulDeletions.length} contacto(s), pero ${failedDeletions.length} fallaron. Revisa la consola para más detalles.`);
+          setError(`Se eliminaron ${successfulDeletions.length} contacto(s), pero ${failedDeletions.length} fallaron. Solo puedes eliminar tus propios contactos.`);
         } else {
           // Todos exitosos
           setError(null);
@@ -176,7 +161,7 @@ export default function ContactosPage() {
         setShowBulkDeleteModal(false);
       } else {
         // Si hay fallos, mantener el modal abierto y mostrar error
-        setError(`Error al eliminar algunos contactos. ${successfulDeletions.length} eliminado(s), ${failedDeletions.length} fallido(s).`);
+        setError(`Error al eliminar algunos contactos. ${successfulDeletions.length} eliminado(s), ${failedDeletions.length} fallido(s). Solo puedes eliminar tus propios contactos.`);
       }
     } catch (err) {
       console.error('Error general al eliminar contactos:', err);
@@ -249,17 +234,15 @@ export default function ContactosPage() {
 
   // Cargar datos del usuario y contactos al montar el componente
   useEffect(() => {
-    // Verificar autenticación
-    const isLoggedIn = localStorage.getItem('isLoggedIn');
-    const email = localStorage.getItem('userEmail');
-    
-    if (!isLoggedIn || !email) {
+    // Verificar autenticación usando la utilidad centralizada
+    if (!isUserAuthenticated()) {
       router.push('/login');
       return;
     }
     
-    // Cargar datos del usuario
-    setUserId(parseInt(localStorage.getItem('userId') || '0', 10));
+    // Cargar datos del usuario usando la utilidad centralizada
+    const currentUserId = getCurrentUserId();
+    setUserId(currentUserId || 0);
     
     // Cargar contactos
     fetchContacts();

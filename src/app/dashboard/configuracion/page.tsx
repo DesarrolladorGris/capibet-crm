@@ -9,6 +9,7 @@ import EtiquetasTab from './components/EtiquetasTab';
 import RespuestasRapidasTab from './components/RespuestasRapidasTab';
 import SesionesTab from './components/SesionesTab';
 import { supabaseService } from '@/services/supabaseService';
+import { isUserAuthenticated } from '@/utils/auth';
 
 // Tipos para las pestañas
 interface TabConfig {
@@ -32,6 +33,7 @@ export default function ConfiguracionPage() {
   const [agencyName, setAgencyName] = useState('');
   const [userCount, setUserCount] = useState(0);
   const [espaciosCount, setEspaciosCount] = useState(0);
+  const [respuestasRapidasCount, setRespuestasRapidasCount] = useState(0);
   const router = useRouter();
 
   // Configuración de pestañas
@@ -40,35 +42,35 @@ export default function ConfiguracionPage() {
     { id: 'sesiones', label: 'Sesiones', icon: '🔗', count: 0, component: SesionesTab },
     { id: 'etiquetas', label: 'Etiquetas', icon: '🏷️', count: 4, component: EtiquetasTab },
     { id: 'usuarios', label: 'Usuarios', icon: '👥', count: userCount, component: UsuariosTab },
-    { id: 'respuestas-rapidas', label: 'Respuestas rápidas', icon: '💬', count: 4, component: RespuestasRapidasTab },
+    { id: 'respuestas-rapidas', label: 'Respuestas rápidas', icon: '💬', count: respuestasRapidasCount, component: RespuestasRapidasTab },
   ];
 
   useEffect(() => {
-    // Verificar autenticación
-    const isLoggedIn = localStorage.getItem('isLoggedIn');
-    const email = localStorage.getItem('userEmail');
-    
-    if (!isLoggedIn || !email) {
+    // Verificar autenticación usando la utilidad centralizada
+    if (!isUserAuthenticated()) {
       router.push('/login');
       return;
     }
     
     // Cargar datos del usuario
-    setUserEmail(email);
+    const email = localStorage.getItem('userEmail');
+    setUserEmail(email || '');
     setUserName(localStorage.getItem('userName') || '');
     setUserRole(localStorage.getItem('userRole') || '');
     setAgencyName(localStorage.getItem('agencyName') || '');
     
-    // Cargar conteo de usuarios y espacios de trabajo
+    // Cargar conteo de usuarios, espacios de trabajo y respuestas rápidas
     loadUserCount();
     loadEspaciosCount();
+    loadRespuestasRapidasCount();
   }, [router]);
 
   const loadUserCount = async () => {
     try {
-      const result = await supabaseService.getAllUsuarios();
-      if (result.success && result.data) {
-        setUserCount(result.data.length);
+      // Usar el nuevo método seguro de conteo
+      const result = await supabaseService.getUsersCount();
+      if (result.success && typeof result.data === 'number') {
+        setUserCount(result.data);
       }
     } catch (error) {
       console.error('Error loading user count:', error);
@@ -77,12 +79,25 @@ export default function ConfiguracionPage() {
 
   const loadEspaciosCount = async () => {
     try {
-      const result = await supabaseService.getAllEspaciosTrabajo();
-      if (result.success && result.data) {
-        setEspaciosCount(result.data.length);
+      // Usar el nuevo método seguro de conteo
+      const result = await supabaseService.getEspaciosTrabajoCount();
+      if (result.success && typeof result.data === 'number') {
+        setEspaciosCount(result.data);
       }
     } catch (error) {
       console.error('Error loading espacios count:', error);
+    }
+  };
+
+  const loadRespuestasRapidasCount = async () => {
+    try {
+      // Usar el nuevo método seguro de conteo
+      const result = await supabaseService.getRespuestasRapidasCount();
+      if (result.success && typeof result.data === 'number') {
+        setRespuestasRapidasCount(result.data);
+      }
+    } catch (error) {
+      console.error('Error loading respuestas rápidas count:', error);
     }
   };
 
@@ -92,22 +107,13 @@ export default function ConfiguracionPage() {
       loadUserCount();
     } else if (activeTab === 'espacios-trabajo') {
       loadEspaciosCount();
+    } else if (activeTab === 'respuestas-rapidas') {
+      loadRespuestasRapidasCount();
     }
   }, [activeTab]);
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const handleLogout = () => {
-    // Limpiar todos los datos de sesión
-    localStorage.removeItem('isLoggedIn');
-    localStorage.removeItem('userEmail');
-    localStorage.removeItem('userName');
-    localStorage.removeItem('userRole');
-    localStorage.removeItem('userId');
-    localStorage.removeItem('agencyName');
-    localStorage.removeItem('userData');
-    
-    router.push('/login');
-  };
+  // Función de logout ya no es necesaria aquí
+  // El logout se maneja a través del Header component
 
   if (!userEmail) {
     return (
