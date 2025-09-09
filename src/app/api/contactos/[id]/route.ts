@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseConfig } from '@/config/supabase';
-import { UsuarioData, UsuarioResponse } from '../domain/usuario';
+import { ContactResponse } from '../domain/contacto';
 import { getHeaders, handleResponse } from '../utils';
 
-// GET /api/usuarios/[id] - Obtener usuario por ID
+// GET /api/contactos/[id] - Obtener un contacto específico por ID
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -14,11 +14,11 @@ export async function GET(
     if (!id || isNaN(Number(id))) {
       return NextResponse.json({
         success: false,
-        error: 'ID de usuario inválido'
+        error: 'ID del contacto inválido'
       }, { status: 400 });
     }
 
-    const response = await fetch(`${supabaseConfig.restUrl}/usuarios?id=eq.${id}`, {
+    const response = await fetch(`${supabaseConfig.restUrl}/contactos?id=eq.${id}`, {
       method: 'GET',
       headers: getHeaders()
     });
@@ -26,49 +26,56 @@ export async function GET(
     if (!response.ok) {
       return NextResponse.json({
         success: false,
-        error: 'Error al obtener el usuario'
+        error: 'Error al obtener el contacto'
       }, { status: response.status });
     }
 
     const data = await handleResponse(response);
     
+    // Verificar si se encontró el contacto
+    if (!Array.isArray(data) || data.length === 0) {
+      return NextResponse.json({
+        success: false,
+        error: 'Contacto no encontrado'
+      }, { status: 404 });
+    }
+
     return NextResponse.json({
       success: true,
-      data: Array.isArray(data) ? data[0] : null
+      data: data[0] as ContactResponse
     });
 
   } catch (error) {
-    console.error('Error fetching user:', error);
+    console.error('Error fetching contact:', error);
     
     return NextResponse.json({
       success: false,
-      error: 'Error de conexión al obtener usuario',
+      error: 'Error de conexión al obtener contacto',
       details: error instanceof Error ? error.message : 'Error desconocido'
     }, { status: 500 });
   }
 }
 
-// PATCH /api/usuarios/[id] - Actualizar usuario
+// PATCH /api/contactos/[id] - Actualizar un contacto específico por ID
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await params;
+    const contactData = await request.json();
     
     if (!id || isNaN(Number(id))) {
       return NextResponse.json({
         success: false,
-        error: 'ID de usuario inválido'
+        error: 'ID del contacto inválido'
       }, { status: 400 });
     }
 
-    const userData: Partial<UsuarioData> = await request.json();
-
-    const response = await fetch(`${supabaseConfig.restUrl}/usuarios?id=eq.${id}`, {
+    const response = await fetch(`${supabaseConfig.restUrl}/contactos?id=eq.${id}`, {
       method: 'PATCH',
       headers: getHeaders(),
-      body: JSON.stringify(userData),
+      body: JSON.stringify(contactData),
     });
 
     if (!response.ok) {
@@ -84,18 +91,17 @@ export async function PATCH(
     
     return NextResponse.json({
       success: true,
-      data: data as unknown as UsuarioResponse
+      data: data as unknown as ContactResponse
     });
-
   } catch (error) {
     return NextResponse.json({
       success: false,
-      error: error instanceof Error ? error.message : 'Error al actualizar usuario'
+      error: error instanceof Error ? error.message : 'Error al actualizar contacto'
     }, { status: 500 });
   }
 }
 
-// DELETE /api/usuarios/[id] - Eliminar usuario
+// DELETE /api/contactos/[id] - Eliminar un contacto específico por ID
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -106,11 +112,11 @@ export async function DELETE(
     if (!id || isNaN(Number(id))) {
       return NextResponse.json({
         success: false,
-        error: 'ID de usuario inválido'
+        error: 'ID del contacto inválido'
       }, { status: 400 });
     }
 
-    const response = await fetch(`${supabaseConfig.restUrl}/usuarios?id=eq.${id}`, {
+    const response = await fetch(`${supabaseConfig.restUrl}/contactos?id=eq.${id}`, {
       method: 'DELETE',
       headers: getHeaders()
     });
@@ -130,11 +136,10 @@ export async function DELETE(
       success: true,
       data: undefined
     });
-
   } catch (error) {
     return NextResponse.json({
       success: false,
-      error: error instanceof Error ? error.message : 'Error al eliminar usuario'
+      error: error instanceof Error ? error.message : 'Error al eliminar contacto'
     }, { status: 500 });
   }
 }

@@ -6,10 +6,10 @@ import { getHeaders } from '../../utils';
 // PATCH /api/usuarios/[id]/toggle-status - Cambiar estado del usuario (activo/inactivo)
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = params.id;
+    const { id } = await params;
     
     if (!id || isNaN(Number(id))) {
       return NextResponse.json({
