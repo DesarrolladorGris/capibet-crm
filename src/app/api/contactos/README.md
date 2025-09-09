@@ -6,14 +6,173 @@ Este documento describe las rutas de API disponibles para la gestión de contact
 
 ```
 src/app/api/contactos/
+├── domain/
+│   └── contacto.ts            # Interfaces y tipos de datos
+├── utils/
+│   ├── getHeaders.ts          # Utilidades para headers
+│   ├── handleResponse.ts      # Manejo de respuestas
+│   └── index.ts               # Exportaciones
 ├── importar/
 │   └── route.ts               # POST /api/contactos/importar
 ├── exportar/
 │   └── route.ts               # GET /api/contactos/exportar
+└── route.ts                   # CRUD principal de contactos
 ```
 
 ## Endpoints Disponibles
-### 6. Importar Contactos desde CSV
+
+### 1. Obtener Todos los Contactos
+
+**GET** `/api/contactos`
+
+Obtiene todos los contactos del sistema.
+
+#### Ejemplo de Request:
+```bash
+GET /api/contactos
+```
+
+#### Ejemplo de Response:
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "nombre": "Juan",
+      "apellido": "Pérez",
+      "nombre_completo": "Juan Pérez",
+      "correo": "juan.perez@email.com",
+      "telefono": "+1234567890",
+      "empresa": "Empresa ABC",
+      "cargo": "Gerente",
+      "notas": "Cliente importante",
+      "direccion": "Calle 123, Ciudad",
+      "cumpleaños": "1990-05-15",
+      "sitio_web": "https://empresa.com",
+      "etiqueta": "VIP",
+      "empresa_id": 1,
+      "creado_por": 1,
+      "created_at": "2024-01-15T10:30:00Z",
+      "updated_at": "2024-01-15T10:30:00Z"
+    }
+  ]
+}
+```
+
+### 2. Crear Nuevo Contacto
+
+**POST** `/api/contactos`
+
+Crea un nuevo contacto en el sistema.
+
+#### Ejemplo de Request:
+```json
+{
+  "nombre": "María",
+  "apellido": "García",
+  "correo": "maria.garcia@email.com",
+  "telefono": "+0987654321",
+  "empresa": "Empresa XYZ",
+  "cargo": "Directora",
+  "notas": "Contacto de referencia",
+  "direccion": "Avenida 456, Ciudad",
+  "cumpleaños": "1985-12-20",
+  "sitio_web": "https://empresaxyz.com",
+  "etiqueta": "Cliente",
+  "empresa_id": 2,
+  "creado_por": 1
+}
+```
+
+#### Ejemplo de Response:
+```json
+{
+  "success": true,
+  "data": {
+    "id": 2,
+    "nombre": "María",
+    "apellido": "García",
+    "nombre_completo": "María García",
+    "correo": "maria.garcia@email.com",
+    "telefono": "+0987654321",
+    "empresa": "Empresa XYZ",
+    "cargo": "Directora",
+    "notas": "Contacto de referencia",
+    "direccion": "Avenida 456, Ciudad",
+    "cumpleaños": "1985-12-20",
+    "sitio_web": "https://empresaxyz.com",
+    "etiqueta": "Cliente",
+    "empresa_id": 2,
+    "creado_por": 1,
+    "created_at": "2024-01-15T11:00:00Z",
+    "updated_at": "2024-01-15T11:00:00Z"
+  }
+}
+```
+
+### 3. Actualizar Contacto
+
+**PATCH** `/api/contactos`
+
+Actualiza un contacto existente.
+
+#### Ejemplo de Request:
+```json
+{
+  "id": 2,
+  "nombre": "María Elena",
+  "cargo": "CEO",
+  "notas": "Contacto actualizado - CEO de la empresa"
+}
+```
+
+#### Ejemplo de Response:
+```json
+{
+  "success": true,
+  "data": {
+    "id": 2,
+    "nombre": "María Elena",
+    "apellido": "García",
+    "nombre_completo": "María Elena García",
+    "correo": "maria.garcia@email.com",
+    "telefono": "+0987654321",
+    "empresa": "Empresa XYZ",
+    "cargo": "CEO",
+    "notas": "Contacto actualizado - CEO de la empresa",
+    "direccion": "Avenida 456, Ciudad",
+    "cumpleaños": "1985-12-20",
+    "sitio_web": "https://empresaxyz.com",
+    "etiqueta": "Cliente",
+    "empresa_id": 2,
+    "creado_por": 1,
+    "created_at": "2024-01-15T11:00:00Z",
+    "updated_at": "2024-01-15T11:30:00Z"
+  }
+}
+```
+
+### 4. Eliminar Contacto
+
+**DELETE** `/api/contactos?id={id}`
+
+Elimina un contacto del sistema.
+
+#### Ejemplo de Request:
+```bash
+DELETE /api/contactos?id=2
+```
+
+#### Ejemplo de Response:
+```json
+{
+  "success": true,
+  "data": undefined
+}
+```
+
+### 5. Importar Contactos desde CSV
 
 **POST** `/api/contactos/importar`
 
@@ -47,7 +206,7 @@ El sistema acepta archivos CSV exportados desde Google Contacts con las siguient
 }
 ```
 
-### 7. Exportar Contactos a CSV
+### 6. Exportar Contactos a CSV
 
 **GET** `/api/contactos/exportar`
 
