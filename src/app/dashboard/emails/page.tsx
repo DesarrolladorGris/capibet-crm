@@ -5,8 +5,7 @@ import { PlusIcon, StarIcon, MagnifyingGlassIcon, FunnelIcon, ArrowPathIcon } fr
 import { StarIcon as StarIconSolid } from '@heroicons/react/24/solid';
 import EmailAccountManager from './components/EmailAccountManager';
 import EmailComposer from './components/EmailComposer';
-import DashboardLayout from '../components/DashboardLayout';
-import { useAuth } from '../../../contexts/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 
 interface Email {
   id: string;
@@ -170,14 +169,8 @@ export default function EmailsPage() {
   }
 
   return (
-    <DashboardLayout 
-      userName={user.name}
-      userRole={user.role}
-      agencyName={user.agencyName}
-      onLogout={logout}
-    >
+    <div className="flex-1 flex flex-col overflow-hidden">
       {/* Main Content Area - Sistema de Emails */}
-      <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
         <div className="p-4 border-b border-[#3a3d45] bg-[#2a2d35]">
           <div className="flex items-center justify-between mb-4">
@@ -467,34 +460,33 @@ export default function EmailsPage() {
             )}
           </div>
         </div>
-      </div>
 
-      {/* Modal de gestión de cuentas */}
-      {showAccountSelector && (
-        <EmailAccountManager
-          accounts={accounts}
-          onAccountsChange={setAccounts}
-          onClose={() => setShowAccountSelector(false)}
-        />
-      )}
+        {/* Modal de gestión de cuentas */}
+        {showAccountSelector && (
+          <EmailAccountManager
+            accounts={accounts}
+            onAccountsChange={setAccounts}
+            onClose={() => setShowAccountSelector(false)}
+          />
+        )}
 
-      {/* Modal de composición de email */}
-      {isComposing && (
-        <EmailComposer
-          isOpen={isComposing}
-          onClose={() => {
-            setIsComposing(false);
-            setReplyToEmail(null);
-          }}
-          accounts={accounts}
-          replyTo={replyToEmail ? {
-            to: replyToEmail.from,
-            subject: replyToEmail.subject,
-            content: replyToEmail.preview
-          } : undefined}
-          onSend={handleSendEmail}
-        />
-      )}
-    </DashboardLayout>
+        {/* Modal de composición de email */}
+        {isComposing && (
+          <EmailComposer
+            isOpen={isComposing}
+            onClose={() => {
+              setIsComposing(false);
+              setReplyToEmail(null);
+            }}
+            accounts={accounts}
+            replyTo={replyToEmail ? {
+              to: replyToEmail.from,
+              subject: replyToEmail.subject,
+              content: replyToEmail.preview
+            } : undefined}
+            onSend={handleSendEmail}
+          />
+        )}
+    </div>
   );
 }

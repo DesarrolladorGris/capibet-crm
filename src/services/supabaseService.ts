@@ -1351,7 +1351,7 @@ export class SupabaseService {
 
       return {
         success: true,
-        data: 'Orden actualizado correctamente'
+        data: undefined
       };
 
     } catch (error) {

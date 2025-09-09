@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import DashboardLayout from '../components/DashboardLayout';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 
 // Interfaces
 interface User {
@@ -117,7 +116,7 @@ export default function CalendarPage() {
     const actividad: Actividad = {
       ...nuevaActividad,
       id: Date.now().toString(),
-      creadoPor: user?.name || 'Usuario',
+      creadoPor: user?.nombre_usuario || 'Usuario',
       fechaCreacion: new Date().toISOString()
     } as Actividad;
 
@@ -159,13 +158,7 @@ export default function CalendarPage() {
   }
 
   return (
-    <DashboardLayout 
-      userName={user.name}
-      userRole={user.role}
-      agencyName={user.agencyName}
-      onLogout={handleLogout}
-    >
-      <div className="flex-1 p-6">
+    <div className="flex-1 p-6">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-white text-2xl font-semibold mb-2">Calendario Principal</h1>
@@ -305,7 +298,6 @@ export default function CalendarPage() {
           />
         )}
       </div>
-    </DashboardLayout>
   );
 }
 

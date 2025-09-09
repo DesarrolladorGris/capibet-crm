@@ -20,16 +20,11 @@ interface TabConfig {
   component: React.ComponentType;
 }
 
-// Componentes temporales
-
 export default function ConfiguracionPage() {
   const [activeTab, setActiveTab] = useState('espacios-trabajo');
   const [userEmail, setUserEmail] = useState('');
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [userName, setUserName] = useState('');
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [userRole, setUserRole] = useState('');
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [agencyName, setAgencyName] = useState('');
   const [userCount, setUserCount] = useState(0);
   const [espaciosCount, setEspaciosCount] = useState(0);
@@ -46,90 +41,54 @@ export default function ConfiguracionPage() {
   ];
 
   useEffect(() => {
-    // Verificar autenticación usando la utilidad centralizada
-    if (!isUserAuthenticated()) {
-      router.push('/login');
-      return;
-    }
-    
-    const email = localStorage.getItem('userEmail');
-    setUserEmail(email || '');
-    setUserName(localStorage.getItem('userName') || '');
-    setUserRole(localStorage.getItem('userRole') || '');
-    setAgencyName(localStorage.getItem('agencyName') || '');
-    
-    // Cargar conteo de usuarios, espacios de trabajo y respuestas rápidas
-    loadUserCount();
-    loadEspaciosCount();
-    loadRespuestasRapidasCount();
+    const checkAuth = async () => {
+      const isAuth = await isUserAuthenticated();
+      if (!isAuth) {
+        router.push('/login');
+        return;
+      }
+
+      // Cargar conteos
+      try {
+        const [usersResult, espaciosResult, respuestasResult] = await Promise.all([
+          supabaseService.getAllUsuarios(),
+          supabaseService.getAllEspaciosTrabajo(),
+          supabaseService.getAllRespuestasRapidas()
+        ]);
+
+        if (usersResult.success) {
+          setUserCount(usersResult.data?.length || 0);
+        }
+        if (espaciosResult.success) {
+          setEspaciosCount(espaciosResult.data?.length || 0);
+        }
+        if (respuestasResult.success) {
+          setRespuestasRapidasCount(respuestasResult.data?.length || 0);
+        }
+
+      } catch (error) {
+        console.error('Error loading data:', error);
+      }
+    };
+
+    checkAuth();
   }, [router]);
 
-  const loadUserCount = async () => {
-    try {
-      // Usar el nuevo método seguro de conteo
-      const result = await supabaseService.getUsersCount();
-      if (result.success && typeof result.data === 'number') {
-        setUserCount(result.data);
-      }
-    } catch (error) {
-      console.error('Error loading user count:', error);
-    }
-  };
-
-  const loadEspaciosCount = async () => {
-    try {
-      // Usar el nuevo método seguro de conteo
-      const result = await supabaseService.getEspaciosTrabajoCount();
-      if (result.success && typeof result.data === 'number') {
-        setEspaciosCount(result.data);
-      }
-    } catch (error) {
-      console.error('Error loading espacios count:', error);
-    }
-  };
-
-  const loadRespuestasRapidasCount = async () => {
-    try {
-      // Usar el nuevo método seguro de conteo
-      const result = await supabaseService.getRespuestasRapidasCount();
-      if (result.success && typeof result.data === 'number') {
-        setRespuestasRapidasCount(result.data);
-      }
-    } catch (error) {
-      console.error('Error loading respuestas rápidas count:', error);
-    }
-  };
-
-  // Actualizar contadores cada vez que se activen las pestañas correspondientes
-  useEffect(() => {
-    if (activeTab === 'usuarios') {
-      loadUserCount();
-    } else if (activeTab === 'espacios-trabajo') {
-      loadEspaciosCount();
-    } else if (activeTab === 'respuestas-rapidas') {
-      loadRespuestasRapidasCount();
-    }
-  }, [activeTab]);
-
-  // Función de logout ya no es necesaria aquí
-  // El logout se maneja a través del Header component
-
-    return (
-      <div className="min-h-screen bg-[#1a1d23] flex items-center justify-center">
-        <div className="text-white">Cargando...</div>
-      </div>
-    );
-  }
-
   return (
-    <div className="flex-1 flex flex-col">
-      {/* Header de Configuración */}
-      <div className="bg-[#1a1d23] border-b border-[#3a3d45] px-6 py-4">
+    <div className="flex flex-col h-screen bg-[#1a1d23]">
+      {/* Header */}
+      <div className="bg-[#2a2d35] border-b border-[#3a3d45] px-6 py-4">
         <div className="flex items-center justify-between">
-          {/* Left Section */}
-          <div className="flex items-center space-x-4">
-            {/* Page Title */}
-            <h1 className="text-white font-semibold text-2xl">Configuración</h1>
+          <div>
+            <h1 className="text-white text-xl font-semibold mb-1">Configuración</h1>
+            <p className="text-gray-400 text-sm">Gestiona tu cuenta, usuarios, espacios de trabajo y más</p>
+          </div>
+          <div className="text-right">
+            <div className="text-white text-sm font-medium">{userName || userEmail}</div>
+            <div className="text-gray-400 text-xs">
+              {userRole === 'admin' ? '👑 Administrador' : 
+               userRole === 'manager' ? '👔 Gerente' : '👤 Usuario'} • {agencyName}
+            </div>
           </div>
         </div>
       </div>
