@@ -1,25 +1,21 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { supabaseService, EspacioConEmbudos, EspacioTrabajoResponse, EmbUpdoResponse } from '@/services/supabaseService';
+import React, { useState, useEffect, useCallback } from 'react';
+import { supabaseService, EspacioConEmbudos, EspacioTrabajoResponse, EmbUpdoResponse, MensajeResponse } from '@/services/supabaseService';
 import NuevoEmbudoModal from '@/app/dashboard/configuracion/components/NuevoEmbudoModal';
 import EditarEmbudoModal from '@/app/dashboard/configuracion/components/EditarEmbudoModal';
 import ConfirmarEliminarEmbudoModal from '@/app/dashboard/configuracion/components/ConfirmarEliminarEmbudoModal';
+import NuevoMensajeModal from './components/NuevoMensajeModal';
+import DetallesMensajeModal from './components/DetallesMensajeModal';
 import {
   DndContext,
   closestCenter,
-  KeyboardSensor,
   PointerSensor,
   useSensor,
   useSensors,
   DragEndEvent,
+  DragStartEvent,
 } from '@dnd-kit/core';
-import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  rectSortingStrategy,
-} from '@dnd-kit/sortable';
 // import {
 //   useSortable,
 // } from '@dnd-kit/sortable';
@@ -29,6 +25,7 @@ import DraggableEmbudo from './components/DraggableEmbudo';
 export default function EmbudosPage() {
   const [espaciosConEmbudos, setEspaciosConEmbudos] = useState<EspacioConEmbudos[]>([]);
   const [selectedEspacio, setSelectedEspacio] = useState<EspacioTrabajoResponse | null>(null);
+  const [mensajes, setMensajes] = useState<MensajeResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -36,14 +33,21 @@ export default function EmbudosPage() {
   const [showNuevoEmbudoModal, setShowNuevoEmbudoModal] = useState(false);
   const [showEditarEmbudoModal, setShowEditarEmbudoModal] = useState(false);
   const [showEliminarEmbudoModal, setShowEliminarEmbudoModal] = useState(false);
+  const [showNuevoMensajeModal, setShowNuevoMensajeModal] = useState(false);
+  const [showDetallesMensajeModal, setShowDetallesMensajeModal] = useState(false);
   const [selectedEmbudo, setSelectedEmbudo] = useState<EmbUpdoResponse | null>(null);
   const [selectedEmbudoForDelete, setSelectedEmbudoForDelete] = useState<EmbUpdoResponse | null>(null);
+  const [selectedMensaje, setSelectedMensaje] = useState<MensajeResponse | null>(null);
+
+  // Estados para drag & drop
+  const [activeId, setActiveId] = useState<string | null>(null);
 
   // Configuración de sensores para drag & drop
   const sensors = useSensors(
-    useSensor(PointerSensor),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 3, // Distancia mínima para activar drag
+      },
     })
   );
 
@@ -52,15 +56,20 @@ export default function EmbudosPage() {
     setError('');
     
     try {
-      // Cargar espacios y embudos en paralelo
-      const [espaciosResult, embudosResult] = await Promise.all([
+      // Cargar espacios, embudos y mensajes en paralelo
+      const [espaciosResult, embudosResult, mensajesResult] = await Promise.all([
         supabaseService.getAllEspaciosTrabajo(),
-        supabaseService.getAllEmbudos()
+        supabaseService.getAllEmbudos(),
+        supabaseService.getAllMensajes()
       ]);
       
       if (espaciosResult.success && espaciosResult.data) {
         const espacios = espaciosResult.data;
         const embudos = embudosResult.success ? embudosResult.data || [] : [];
+        const mensajesData = mensajesResult.success ? mensajesResult.data || [] : [];
+        
+        // Guardar los mensajes en el estado
+        setMensajes(mensajesData);
         
         // Asociar embudos a sus espacios correspondientes y ordenarlos
         const espaciosConEmbudos: EspacioConEmbudos[] = espacios.map(espacio => ({
@@ -78,6 +87,7 @@ export default function EmbudosPage() {
         }
         
         console.log('Espacios con embudos cargados:', espaciosConEmbudos);
+        console.log('Mensajes cargados:', mensajesData);
       } else {
         setError(espaciosResult.error || 'Error al cargar espacios de trabajo');
       }
@@ -88,6 +98,11 @@ export default function EmbudosPage() {
       setIsLoading(false);
     }
   }, [selectedEspacio]);
+
+  // Función para obtener mensajes de un embudo específico
+  const getMensajesByEmbudo = useCallback((embudoId: number): MensajeResponse[] => {
+    return mensajes.filter(mensaje => mensaje.embudo_id === embudoId);
+  }, [mensajes]);
 
   useEffect(() => {
     loadEspaciosYEmbudos();
@@ -100,6 +115,12 @@ export default function EmbudosPage() {
   const handleAgregarEmbudo = () => {
     if (selectedEspacio) {
       setShowNuevoEmbudoModal(true);
+    }
+  };
+
+  const handleNuevoMensaje = () => {
+    if (selectedEspacio) {
+      setShowNuevoMensajeModal(true);
     }
   };
 
@@ -130,59 +151,138 @@ export default function EmbudosPage() {
     setSelectedEmbudoForDelete(null);
   };
 
+  const handleMensajeCreated = () => {
+    setShowNuevoMensajeModal(false);
+    console.log('Mensaje creado exitosamente');
+    // Recargar mensajes para mostrar el nuevo mensaje
+    loadEspaciosYEmbudos();
+  };
+
+  const handleMensajeClick = (mensaje: MensajeResponse) => {
+    console.log('handleMensajeClick llamado con mensaje:', mensaje);
+    setSelectedMensaje(mensaje);
+    setShowDetallesMensajeModal(true);
+  };
+
+  const handleCloseDetallesMensaje = () => {
+    setShowDetallesMensajeModal(false);
+    setSelectedMensaje(null);
+  };
+
+  const handleMensajeDeleted = () => {
+    console.log('Mensaje eliminado, recargando datos');
+    // Recargar mensajes para actualizar la vista
+    loadEspaciosYEmbudos();
+    setShowDetallesMensajeModal(false);
+    setSelectedMensaje(null);
+  };
+
+  const handleMensajeMoved = async (mensajeId: number, nuevoEmbudoId: number) => {
+    console.log('🚀 Iniciando movimiento de mensaje:', mensajeId, 'al embudo:', nuevoEmbudoId);
+    
+    try {
+      // 1. Llamar al servicio para persistir el cambio en la base de datos
+      const result = await supabaseService.moveMensajeToEmbudo(mensajeId, nuevoEmbudoId);
+      
+      if (result.success) {
+        console.log('✅ Mensaje movido exitosamente en la base de datos');
+        
+        // 2. Actualizar el estado local para feedback inmediato
+        setMensajes(prevMensajes => 
+          prevMensajes.map(mensaje => 
+            mensaje.id === mensajeId 
+              ? { ...mensaje, embudo_id: nuevoEmbudoId }
+              : mensaje
+          )
+        );
+        
+        // 3. Recargar datos para asegurar consistencia (opcional, ya que el estado local está actualizado)
+        // loadEspaciosYEmbudos();
+      } else {
+        console.error('❌ Error al mover mensaje:', result.error);
+        // Aquí podrías mostrar una notificación de error al usuario
+      }
+    } catch (error) {
+      console.error('❌ Error inesperado al mover mensaje:', error);
+      // Aquí podrías mostrar una notificación de error al usuario
+    }
+  };
+
+  // Manejar el inicio del drag
+  const handleDragStart = (event: DragStartEvent) => {
+    console.log('🚀 Drag started:', event.active.id);
+    setActiveId(String(event.active.id));
+  };
+
   // Manejar el final del drag & drop
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
+    console.log('🎯 Drag ended:', { active: active.id, over: over?.id });
+    setActiveId(null);
 
-    if (active.id !== over?.id && selectedEspacio) {
-      // Encontrar el espacio actual en la lista
-      const espacioActual = espaciosConEmbudos.find(e => e.id === selectedEspacio.id);
-      if (!espacioActual) return;
-
-      const embudos = [...espacioActual.embudos];
-      const oldIndex = embudos.findIndex(embudo => embudo.id === active.id);
-      const newIndex = embudos.findIndex(embudo => embudo.id === over?.id);
-
-      if (oldIndex !== -1 && newIndex !== -1) {
-        // Reordenar el array
-        const newEmbudos = arrayMove(embudos, oldIndex, newIndex);
-        
-        // Actualizar el estado local inmediatamente para feedback visual
-        setEspaciosConEmbudos(prevEspacios => 
-          prevEspacios.map(espacio => 
-            espacio.id === selectedEspacio.id 
-              ? { ...espacio, embudos: newEmbudos }
-              : espacio
-          )
-        );
-
-        // Persistir el nuevo orden en la base de datos
-        const embudosConOrden = newEmbudos.map((embudo, index) => ({
-          id: embudo.id,
-          orden: index
-        }));
-
-        supabaseService.updateEmbudosOrder(embudosConOrden)
-          .then(result => {
-            if (result.success) {
-              console.log('Orden persistido exitosamente en la base de datos');
-            } else {
-              console.error('Error al persistir orden:', result.error);
-            }
-          })
-          .catch(err => {
-            console.error('Error al actualizar orden:', err);
-          });
-
-        console.log('Nuevo orden de embudos:', newEmbudos.map((e, i) => ({ id: e.id, nombre: e.nombre, newIndex: i })));
-      }
+    if (!over || !over.id) {
+      console.log('❌ No over target or no over.id');
+      return;
     }
+
+    const activeIdStr = String(active.id);
+    const overIdStr = String(over.id);
+    
+    console.log('📝 Processing:', { activeIdStr, overIdStr });
+
+    // Verificar si es un mensaje siendo arrastrado
+    if (activeIdStr.startsWith('mensaje-')) {
+      console.log('✅ Es un mensaje siendo arrastrado');
+      const mensajeId = parseInt(activeIdStr.replace('mensaje-', ''));
+      
+      // Verificar si se está soltando sobre un embudo
+      if (overIdStr.startsWith('embudo-drop-')) {
+        console.log('✅ Se está soltando sobre un embudo');
+        const nuevoEmbudoId = parseInt(overIdStr.replace('embudo-drop-', ''));
+        
+        // Encontrar el mensaje actual
+        const mensajeActual = mensajes.find(m => m.id === mensajeId);
+        if (!mensajeActual) {
+          console.log('❌ Mensaje no encontrado');
+          return;
+        }
+        
+        if (mensajeActual.embudo_id === nuevoEmbudoId) {
+          console.log('❌ Es el mismo embudo, no hacer nada');
+          return;
+        }
+
+        console.log('🚀 Moviendo mensaje:', mensajeId, 'al embudo:', nuevoEmbudoId);
+        // Mover el mensaje
+        handleMensajeMoved(mensajeId, nuevoEmbudoId);
+        return;
+      } else {
+        console.log('❌ No se está soltando sobre un embudo válido');
+      }
+    } else {
+      console.log('❌ No es un mensaje siendo arrastrado');
+    }
+
+    // Solo manejar mensajes, no hay reordenamiento de embudos
   };
 
   // Obtener embudos del espacio seleccionado
   const embudosDelEspacio = selectedEspacio 
     ? espaciosConEmbudos.find(e => e.id === selectedEspacio.id)?.embudos || []
     : [];
+
+  // Debug: Log de mensajes y embudos
+  React.useEffect(() => {
+    if (mensajes.length > 0 || embudosDelEspacio.length > 0) {
+      console.log('🔍 Debug info:', {
+        mensajes: mensajes.length,
+        embudos: embudosDelEspacio.length,
+        mensajeIds: mensajes.map(m => `mensaje-${m.id}`),
+        embudoIds: embudosDelEspacio.map(e => `embudo-drop-${e.id}`),
+        selectedEspacio: selectedEspacio?.id
+      });
+    }
+  }, [mensajes.length, embudosDelEspacio.length, selectedEspacio?.id]);
 
   if (isLoading) {
     return (
@@ -203,83 +303,80 @@ export default function EmbudosPage() {
   }
 
   return (
-    <div className="h-full flex">
-      {/* Sidebar izquierdo - Selector de espacios */}
-      <div className="w-80 bg-[#1a1d23] border-r border-[#3a3d45] p-4">
-        <div className="mb-6">
-          <h2 className="text-white text-lg font-semibold mb-2">Espacios de trabajo</h2>
-          <p className="text-gray-400 text-sm">Selecciona un espacio para ver sus embudos</p>
-        </div>
-
-        <div className="space-y-2">
-          {espaciosConEmbudos.map((espacio) => (
-            <button
-              key={espacio.id}
-              onClick={() => handleEspacioSelect(espacio)}
-              className={`w-full text-left p-3 rounded-lg border transition-colors ${
-                selectedEspacio?.id === espacio.id
-                  ? 'bg-[#00b894] border-[#00b894] text-white'
-                  : 'bg-[#2a2d35] border-[#3a3d45] text-gray-300 hover:bg-[#3a3d45] hover:border-[#4a4d55]'
-              }`}
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="font-medium text-sm">
-                    {espacio.nombre}
-                  </div>
-                  <div className="text-xs opacity-75 mt-1">
-                    {espacio.embudos.length} embudo{espacio.embudos.length !== 1 ? 's' : ''}
-                  </div>
-                </div>
-                <div className="text-lg">
-                  ⚙️
-                </div>
+    <div className="flex-1 flex flex-col">
+      {/* Header con selector de espacio */}
+      <div className="bg-[#1a1d23] border-b border-[#3a3d45] px-6 py-4">
+        <div className="flex items-center justify-between">
+          {/* Left Section - Selector de Espacio */}
+          <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-3">
+              <button className="text-gray-400 hover:text-white p-1 rounded">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <div className="relative">
+                <select
+                  value={selectedEspacio?.id || ''}
+                  onChange={(e) => {
+                    const espacioId = parseInt(e.target.value);
+                    const espacio = espaciosConEmbudos.find(e => e.id === espacioId);
+                    if (espacio) {
+                      handleEspacioSelect(espacio);
+                    }
+                  }}
+                  className="bg-[#2a2d35] border border-[#3a3d45] rounded px-3 py-2 text-white text-lg font-semibold focus:outline-none focus:ring-2 focus:ring-[#00b894] focus:border-[#00b894] appearance-none cursor-pointer pr-8"
+                >
+                  <option value="">Seleccionar Espacio</option>
+                  {espaciosConEmbudos.map((espacio) => (
+                    <option key={espacio.id} value={espacio.id}>
+                      {espacio.nombre.toUpperCase()}
+                    </option>
+                  ))}
+                </select>
+                <svg className="w-4 h-4 text-gray-400 absolute right-3 top-3 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
               </div>
-            </button>
-          ))}
-        </div>
-
-        {espaciosConEmbudos.length === 0 && (
-          <div className="text-center py-8">
-            <div className="text-gray-400 text-4xl mb-3">🏢</div>
-            <p className="text-gray-400 text-sm">No hay espacios de trabajo</p>
+            </div>
+            
+            {/* Tabs de navegación */}
+            <div className="flex space-x-4 ml-8">
+              <button className="text-white font-medium px-3 py-1 bg-[#00b894] rounded text-sm">
+                Todos
+              </button>
+              <button className="text-gray-400 hover:text-white font-medium px-3 py-1 hover:bg-[#2a2d35] rounded text-sm">
+                Mis Chats
+              </button>
+            </div>
           </div>
-        )}
+
+          {/* Right Section - Actions */}
+          <div className="flex items-center space-x-4">
+            <button 
+              onClick={handleNuevoMensaje}
+              disabled={!selectedEspacio}
+              className="bg-[#00b894] hover:bg-[#00a085] disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-4 py-2 rounded text-sm font-medium transition-colors"
+            >
+              + Nuevo Mensaje
+            </button>
+          </div>
+        </div>
       </div>
 
-      {/* Contenido principal - Embudos del espacio seleccionado */}
-      <div className="flex-1 bg-[#2a2d35]">
+      {/* Main Content - Embudos */}
+      <div className="flex-1 bg-[#1a1d23]">
         {selectedEspacio ? (
           <div className="h-full">
-            {/* Header del espacio seleccionado */}
-            <div className="bg-[#1a1d23] border-b border-[#3a3d45] p-6">
+            {/* Información del espacio seleccionado */}
+            <div className="px-6 py-4 border-b border-[#3a3d45]">
               <div className="flex items-center justify-between">
                 <div>
-                  <h1 className="text-white text-2xl font-bold flex items-center space-x-3">
-                    <span>⚙️</span>
-                    <span>{selectedEspacio.nombre.toUpperCase()}</span>
-                  </h1>
-                  <p className="text-gray-400 text-sm mt-1">
+                  <p className="text-gray-400 text-sm">
                     {embudosDelEspacio.length} embudo{embudosDelEspacio.length !== 1 ? 's' : ''} • 
                     Creado el {new Date(selectedEspacio.creado_en).toLocaleDateString('es-ES')}
                   </p>
                 </div>
-                                 <div className="flex items-center space-x-3">
-                   <button
-                     onClick={handleAgregarEmbudo}
-                     className="flex items-center space-x-2 bg-[#00b894] hover:bg-[#00a085] text-white px-4 py-2 rounded-lg font-medium transition-colors"
-                   >
-                     <span>+</span>
-                     <span>Nuevo Embudo</span>
-                   </button>
-                   <button
-                     onClick={() => console.log('Agregar nuevo chat')}
-                     className="flex items-center space-x-2 bg-[#3498db] hover:bg-[#2980b9] text-white px-4 py-2 rounded-lg font-medium transition-colors"
-                   >
-                     <span>💬</span>
-                     <span>Nuevo Chat</span>
-                   </button>
-                 </div>
               </div>
             </div>
 
@@ -289,40 +386,24 @@ export default function EmbudosPage() {
                 <DndContext
                   sensors={sensors}
                   collisionDetection={closestCenter}
+                  onDragStart={handleDragStart}
                   onDragEnd={handleDragEnd}
                 >
-                  <SortableContext
-                    items={embudosDelEspacio.map(embudo => embudo.id)}
-                    strategy={rectSortingStrategy}
-                  >
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 h-full">
-                      {embudosDelEspacio.map((embudo, index) => (
-                        <div key={embudo.id} className="h-full">
-                          <DraggableEmbudo
-                            embudo={embudo}
-                            index={index}
-                            onEdit={handleEditEmbudo}
-                            onDelete={handleDeleteEmbudo}
-                          />
-                        </div>
-                      ))}
-
-                      {/* Botón para agregar nuevo embudo */}
-                      <div 
-                        onClick={handleAgregarEmbudo}
-                        className="bg-[#1a1d23] border-2 border-dashed border-[#3a3d45] rounded-lg p-4 flex items-center justify-center hover:border-[#00b894] transition-colors cursor-pointer group h-full min-h-80"
-                      >
-                        <div className="text-center">
-                          <div className="text-[#00b894] text-3xl mb-2 group-hover:scale-110 transition-transform">
-                            +
-                          </div>
-                          <div className="text-gray-400 text-sm">
-                            Agregar Embudo
-                          </div>
-                        </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {embudosDelEspacio.map((embudo, index) => (
+                      <div key={embudo.id}>
+                        <DraggableEmbudo
+                          embudo={embudo}
+                          index={index}
+                          mensajes={getMensajesByEmbudo(embudo.id)}
+                          onEdit={handleEditEmbudo}
+                          onDelete={handleDeleteEmbudo}
+                          onMensajeClick={handleMensajeClick}
+                          onMensajeMoved={handleMensajeMoved}
+                        />
                       </div>
-                    </div>
-                  </SortableContext>
+                    ))}
+                  </div>
                 </DndContext>
               ) : (
                 <div className="text-center py-16">
@@ -347,7 +428,7 @@ export default function EmbudosPage() {
               <div className="text-gray-400 text-6xl mb-4">⚙️</div>
               <h3 className="text-white text-lg font-medium mb-2">Selecciona un espacio de trabajo</h3>
               <p className="text-gray-400 text-sm">
-                Elige un espacio de la lista para ver y gestionar sus embudos.
+                Elige un espacio del selector para ver y gestionar sus embudos.
               </p>
             </div>
           </div>
@@ -383,6 +464,20 @@ export default function EmbudosPage() {
         }}
         onEmbudoDeleted={handleEmbudoDeleted}
         embudo={selectedEmbudoForDelete}
+      />
+
+      <NuevoMensajeModal
+        isOpen={showNuevoMensajeModal}
+        onClose={() => setShowNuevoMensajeModal(false)}
+        onMensajeCreated={handleMensajeCreated}
+        espacioId={selectedEspacio?.id}
+      />
+
+      <DetallesMensajeModal
+        isOpen={showDetallesMensajeModal}
+        onClose={handleCloseDetallesMensaje}
+        mensaje={selectedMensaje}
+        onMensajeDeleted={handleMensajeDeleted}
       />
     </div>
   );

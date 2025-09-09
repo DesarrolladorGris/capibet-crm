@@ -1,4 +1,5 @@
 import { supabaseConfig, apiEndpoints } from '@/config/supabase';
+import { getCurrentUserId } from '@/utils/auth';
 
 // Tipos para autenticación
 export interface LoginCredentials {
@@ -18,6 +19,7 @@ export interface UsuarioData {
   contrasena: string;
   rol?: string;
   activo?: boolean;
+  creado_por?: number; // ID del usuario que creó este usuario
 }
 
 export interface UsuarioResponse {
@@ -32,6 +34,7 @@ export interface UsuarioResponse {
   activo: boolean; // true = activo, false = desactivado
   fecha_alta?: string;
   created_at?: string;
+  creado_por: number; // ID del usuario que creó este usuario
 }
 
 // Tipos para contactos
@@ -96,6 +99,88 @@ export interface RespuestaRapida {
   categoria: string;
   activa: boolean;
   created_at?: string;
+  creado_por?: number; // ID del usuario que creó esta respuesta rápida
+}
+
+// Tipos para sesiones y canales
+export interface Canal {
+  id?: number;
+  usuario_id: number;
+  espacio_id: number;
+  tipo: 'whatsapp' | 'whatsappApi' | 'email' | 'instagram' | 'messenger' | 'telegram' | 'telegramBot' | 'webChat';
+  descripcion: string;
+  configuracion?: Record<string, unknown>;
+  activo?: boolean;
+  creado_en?: string;
+  actualizado_en?: string;
+  creado_por?: number; // ID del usuario que creó este canal
+}
+
+export interface CanalData {
+  usuario_id: number;
+  espacio_id: number;
+  tipo: Canal['tipo'];
+  descripcion: string;
+  configuracion?: Record<string, unknown>;
+  activo?: boolean;
+  creado_por?: number; // ID del usuario que creó este canal
+}
+
+export interface Sesion {
+  id?: number;
+  canal_id: number;
+  usuario_id: number;
+  nombre: string;
+  api_key?: string | null;
+  access_token?: string | null;
+  phone_number?: string | null;
+  email_user?: string | null;
+  email_password?: string | null;
+  smtp_host?: string | null;
+  smtp_port?: number | null;
+  imap_host?: string | null;
+  imap_port?: number | null;
+  estado: 'activo' | 'desconectado' | 'expirado';
+  creado_en?: string;
+  actualizado_en?: string;
+  creado_por?: number; // ID del usuario que creó esta sesión
+}
+
+export interface SesionData {
+  canal_id: number;
+  usuario_id: number;
+  nombre: string;
+  api_key?: string | null;
+  access_token?: string | null;
+  phone_number?: string | null;
+  email_user?: string | null;
+  email_password?: string | null;
+  smtp_host?: string | null;
+  smtp_port?: number | null;
+  imap_host?: string | null;
+  imap_port?: number | null;
+  estado: 'activo' | 'desconectado' | 'expirado';
+  creado_por?: number; // ID del usuario que creó esta sesión
+}
+
+export interface SesionResponse {
+  id: number;
+  canal_id: number;
+  usuario_id: number;
+  nombre: string;
+  api_key?: string | null;
+  access_token?: string | null;
+  phone_number?: string | null;
+  email_user?: string | null;
+  email_password?: string | null;
+  smtp_host?: string | null;
+  smtp_port?: number | null;
+  imap_host?: string | null;
+  imap_port?: number | null;
+  estado: 'activo' | 'desconectado' | 'expirado';
+  creado_en: string;
+  actualizado_en: string;
+  creado_por: number; // ID del usuario que creó esta sesión
 }
 
 export interface RespuestaRapidaFormData {
@@ -142,13 +227,47 @@ export interface EspacioConEmbudos extends EspacioTrabajoResponse {
   embudos: EmbUpdoResponse[];
 }
 
+// Tipos para mensajes
+export interface MensajeData {
+  canal_id: number;
+  remitente_id: number;
+  contenido: string;
+  contacto_id: number;
+  sesion_id: number;
+  destinatario_id: number;
+  embudo_id: number;
+}
+
+export interface MensajeResponse {
+  id: number;
+  canal_id: number;
+  remitente_id: number;
+  contenido: string;
+  contacto_id: number;
+  sesion_id: number;
+  destinatario_id: number;
+  embudo_id: number;
+  creado_en: string;
+  enviado_en?: string;
+  leido?: boolean;
+  tipo?: string;
+  estado?: string;
+}
+
 export class SupabaseService {
   private getHeaders() {
     return {
       'Content-Type': 'application/json',
-      'apikey': supabaseConfig.anonKey,
+      'apikey': supabaseConfig.serviceRoleKey,
       'Authorization': `Bearer ${supabaseConfig.serviceRoleKey}`,
     };
+  }
+
+  /**
+   * Obtiene el ID del usuario actualmente logueado
+   */
+  private getCurrentUserId(): number | null {
+    return getCurrentUserId();
   }
 
   private async handleResponse(response: Response): Promise<Record<string, unknown> | null> {
@@ -191,8 +310,20 @@ export class SupabaseService {
 
   // ===== MÉTODOS PARA USUARIOS =====
 
+  /**
+   * Crea un nuevo usuario
+   */
   async createUsuario(userData: UsuarioData): Promise<ApiResponse> {
     try {
+      // Obtener el ID del usuario logueado como creador
+      const currentUserId = this.getCurrentUserId();
+      if (!currentUserId) {
+        return {
+          success: false,
+          error: 'Usuario no autenticado'
+        };
+      }
+
       // Preparar los datos con valores por defecto
       const dataToSend = {
         nombre_agencia: userData.nombre_agencia,
@@ -203,7 +334,8 @@ export class SupabaseService {
         codigo_pais: userData.codigo_pais,
         contrasena: userData.contrasena,
         rol: userData.rol || 'Operador',
-        activo: userData.activo !== undefined ? userData.activo : true
+        activo: userData.activo !== undefined ? userData.activo : true,
+        creado_por: currentUserId // Asignar el creador
       };
 
       const response = await fetch(apiEndpoints.usuarios, {
@@ -240,9 +372,22 @@ export class SupabaseService {
     }
   }
 
+  /**
+   * Obtiene todos los usuarios creados por el usuario logueado
+   */
   async getAllUsuarios(): Promise<ApiResponse<UsuarioResponse[]>> {
     try {
-      const response = await fetch(apiEndpoints.usuarios, {
+      // Obtener el ID del usuario logueado
+      const userId = this.getCurrentUserId();
+      if (!userId) {
+        return {
+          success: false,
+          error: 'Usuario no autenticado'
+        };
+      }
+
+      // Filtrar usuarios por creado_por (usuarios creados por el usuario logueado)
+      const response = await fetch(`${apiEndpoints.usuarios}?creado_por=eq.${userId}`, {
         method: 'GET',
         headers: this.getHeaders()
       });
@@ -304,9 +449,22 @@ export class SupabaseService {
     }
   }
 
+  /**
+   * Actualiza un usuario existente (solo los creados por el usuario logueado)
+   */
   async updateUsuario(id: number, userData: Partial<UsuarioData>): Promise<ApiResponse> {
     try {
-      const response = await fetch(`${apiEndpoints.usuarios}?id=eq.${id}`, {
+      // Obtener el ID del usuario logueado
+      const currentUserId = this.getCurrentUserId();
+      if (!currentUserId) {
+        return {
+          success: false,
+          error: 'Usuario no autenticado'
+        };
+      }
+
+      // Actualizar solo si el usuario fue creado por el usuario logueado
+      const response = await fetch(`${apiEndpoints.usuarios}?id=eq.${id}&creado_por=eq.${currentUserId}`, {
         method: 'PATCH',
         headers: this.getHeaders(),
         body: JSON.stringify(userData),
@@ -335,9 +493,22 @@ export class SupabaseService {
     }
   }
 
+  /**
+   * Elimina un usuario (solo los creados por el usuario logueado)
+   */
   async deleteUsuario(id: number): Promise<ApiResponse> {
     try {
-      const response = await fetch(`${apiEndpoints.usuarios}?id=eq.${id}`, {
+      // Obtener el ID del usuario logueado
+      const currentUserId = this.getCurrentUserId();
+      if (!currentUserId) {
+        return {
+          success: false,
+          error: 'Usuario no autenticado'
+        };
+      }
+
+      // Eliminar solo si el usuario fue creado por el usuario logueado
+      const response = await fetch(`${apiEndpoints.usuarios}?id=eq.${id}&creado_por=eq.${currentUserId}`, {
         method: 'DELETE',
         headers: this.getHeaders()
       });
@@ -365,9 +536,22 @@ export class SupabaseService {
     }
   }
 
+  /**
+   * Cambia el estado activo/inactivo de un usuario (solo los creados por el usuario logueado)
+   */
   async toggleUsuarioStatus(id: number, activo: boolean): Promise<ApiResponse<Record<string, unknown>>> {
     try {
-      const response = await fetch(`${apiEndpoints.usuarios}?id=eq.${id}`, {
+      // Obtener el ID del usuario logueado
+      const currentUserId = this.getCurrentUserId();
+      if (!currentUserId) {
+        return {
+          success: false,
+          error: 'Usuario no autenticado'
+        };
+      }
+
+      // Cambiar estado solo si el usuario fue creado por el usuario logueado
+      const response = await fetch(`${apiEndpoints.usuarios}?id=eq.${id}&creado_por=eq.${currentUserId}`, {
         method: 'PATCH',
         headers: this.getHeaders(),
         body: JSON.stringify({ activo }),
@@ -382,6 +566,52 @@ export class SupabaseService {
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Error al cambiar estado del usuario'
+      };
+    }
+  }
+
+  /**
+   * Obtiene el conteo de usuarios creados por el usuario logueado
+   */
+  async getUsersCount(): Promise<ApiResponse<number>> {
+    try {
+      // Obtener el ID del usuario logueado
+      const userId = this.getCurrentUserId();
+      if (!userId) {
+        return {
+          success: false,
+          error: 'Usuario no autenticado'
+        };
+      }
+
+      // Contar usuarios creados por el usuario logueado
+      const response = await fetch(`${apiEndpoints.usuarios}?creado_por=eq.${userId}&select=id`, {
+        method: 'GET',
+        headers: this.getHeaders()
+      });
+
+      if (!response.ok) {
+        return {
+          success: false,
+          error: 'Error al obtener el conteo de usuarios'
+        };
+      }
+
+      const data = await this.handleResponse(response);
+      const count = Array.isArray(data) ? data.length : 0;
+      
+      return {
+        success: true,
+        data: count
+      };
+
+    } catch (error) {
+      console.error('Error counting users:', error);
+      
+      return {
+        success: false,
+        error: 'Error de conexión al contar usuarios',
+        details: error instanceof Error ? error.message : 'Error desconocido'
       };
     }
   }
@@ -468,11 +698,21 @@ export class SupabaseService {
   // ===== MÉTODOS PARA CONTACTOS =====
 
   /**
-   * Obtiene todos los contactos
+   * Obtiene todos los contactos del usuario logueado
    */
   async getAllContactos(): Promise<ApiResponse<ContactResponse[]>> {
     try {
-      const response = await fetch(apiEndpoints.contactos, {
+      // Obtener el ID del usuario logueado
+      const userId = this.getCurrentUserId();
+      if (!userId) {
+        return {
+          success: false,
+          error: 'Usuario no autenticado'
+        };
+      }
+
+      // Filtrar contactos por creado_por (usuario logueado)
+      const response = await fetch(`${apiEndpoints.contactos}?creado_por=eq.${userId}`, {
         method: 'GET',
         headers: this.getHeaders()
       });
@@ -542,11 +782,21 @@ export class SupabaseService {
   }
 
   /**
-   * Actualiza un contacto existente
+   * Actualiza un contacto existente (solo del usuario logueado)
    */
   async updateContacto(id: number, contactData: Partial<ContactData>): Promise<ApiResponse<ContactResponse>> {
     try {
-      const response = await fetch(`${apiEndpoints.contactos}?id=eq.${id}`, {
+      // Obtener el ID del usuario logueado
+      const userId = this.getCurrentUserId();
+      if (!userId) {
+        return {
+          success: false,
+          error: 'Usuario no autenticado'
+        };
+      }
+
+      // Actualizar solo si el contacto pertenece al usuario logueado
+      const response = await fetch(`${apiEndpoints.contactos}?id=eq.${id}&creado_por=eq.${userId}`, {
         method: 'PATCH',
         headers: this.getHeaders(),
         body: JSON.stringify(contactData),
@@ -576,11 +826,21 @@ export class SupabaseService {
   }
 
   /**
-   * Elimina un contacto
+   * Elimina un contacto (solo del usuario logueado)
    */
   async deleteContacto(id: number): Promise<ApiResponse<void>> {
     try {
-      const response = await fetch(`${apiEndpoints.contactos}?id=eq.${id}`, {
+      // Obtener el ID del usuario logueado
+      const userId = this.getCurrentUserId();
+      if (!userId) {
+        return {
+          success: false,
+          error: 'Usuario no autenticado'
+        };
+      }
+
+      // Eliminar solo si el contacto pertenece al usuario logueado
+      const response = await fetch(`${apiEndpoints.contactos}?id=eq.${id}&creado_por=eq.${userId}`, {
         method: 'DELETE',
         headers: this.getHeaders()
       });
@@ -608,14 +868,70 @@ export class SupabaseService {
     }
   }
 
+  /**
+   * Obtiene el conteo de contactos del usuario logueado
+   */
+  async getContactosCount(): Promise<ApiResponse<number>> {
+    try {
+      // Obtener el ID del usuario logueado
+      const userId = this.getCurrentUserId();
+      if (!userId) {
+        return {
+          success: false,
+          error: 'Usuario no autenticado'
+        };
+      }
+
+      // Contar contactos del usuario logueado
+      const response = await fetch(`${apiEndpoints.contactos}?creado_por=eq.${userId}&select=id`, {
+        method: 'GET',
+        headers: this.getHeaders()
+      });
+
+      if (!response.ok) {
+        return {
+          success: false,
+          error: 'Error al obtener el conteo de contactos'
+        };
+      }
+
+      const data = await this.handleResponse(response);
+      const count = Array.isArray(data) ? data.length : 0;
+      
+      return {
+        success: true,
+        data: count
+      };
+
+    } catch (error) {
+      console.error('Error counting contacts:', error);
+      
+      return {
+        success: false,
+        error: 'Error de conexión al contar contactos',
+        details: error instanceof Error ? error.message : 'Error desconocido'
+      };
+    }
+  }
+
   // ===== MÉTODOS PARA ESPACIOS DE TRABAJO =====
 
   /**
-   * Obtiene todos los espacios de trabajo
+   * Obtiene todos los espacios de trabajo del usuario logueado
    */
   async getAllEspaciosTrabajo(): Promise<ApiResponse<EspacioTrabajoResponse[]>> {
     try {
-      const response = await fetch(apiEndpoints.espacios_de_trabajo, {
+      // Obtener el ID del usuario logueado
+      const userId = this.getCurrentUserId();
+      if (!userId) {
+        return {
+          success: false,
+          error: 'Usuario no autenticado'
+        };
+      }
+
+      // Filtrar espacios de trabajo por creado_por (usuario logueado)
+      const response = await fetch(`${apiEndpoints.espacios_de_trabajo}?creado_por=eq.${userId}`, {
         method: 'GET',
         headers: this.getHeaders()
       });
@@ -685,11 +1001,21 @@ export class SupabaseService {
   }
 
   /**
-   * Actualiza un espacio de trabajo existente
+   * Actualiza un espacio de trabajo existente (solo del usuario logueado)
    */
   async updateEspacioTrabajo(id: number, espacioData: Partial<EspacioTrabajoData>): Promise<ApiResponse<EspacioTrabajoResponse>> {
     try {
-      const response = await fetch(`${apiEndpoints.espacios_de_trabajo}?id=eq.${id}`, {
+      // Obtener el ID del usuario logueado
+      const userId = this.getCurrentUserId();
+      if (!userId) {
+        return {
+          success: false,
+          error: 'Usuario no autenticado'
+        };
+      }
+
+      // Actualizar solo si el espacio pertenece al usuario logueado
+      const response = await fetch(`${apiEndpoints.espacios_de_trabajo}?id=eq.${id}&creado_por=eq.${userId}`, {
         method: 'PATCH',
         headers: this.getHeaders(),
         body: JSON.stringify(espacioData),
@@ -719,11 +1045,21 @@ export class SupabaseService {
   }
 
   /**
-   * Elimina un espacio de trabajo
+   * Elimina un espacio de trabajo (solo del usuario logueado)
    */
   async deleteEspacioTrabajo(id: number): Promise<ApiResponse<void>> {
     try {
-      const response = await fetch(`${apiEndpoints.espacios_de_trabajo}?id=eq.${id}`, {
+      // Obtener el ID del usuario logueado
+      const userId = this.getCurrentUserId();
+      if (!userId) {
+        return {
+          success: false,
+          error: 'Usuario no autenticado'
+        };
+      }
+
+      // Eliminar solo si el espacio pertenece al usuario logueado
+      const response = await fetch(`${apiEndpoints.espacios_de_trabajo}?id=eq.${id}&creado_por=eq.${userId}`, {
         method: 'DELETE',
         headers: this.getHeaders()
       });
@@ -747,6 +1083,52 @@ export class SupabaseService {
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Error al eliminar espacio de trabajo'
+      };
+    }
+  }
+
+  /**
+   * Obtiene el conteo de espacios de trabajo del usuario logueado
+   */
+  async getEspaciosTrabajoCount(): Promise<ApiResponse<number>> {
+    try {
+      // Obtener el ID del usuario logueado
+      const userId = this.getCurrentUserId();
+      if (!userId) {
+        return {
+          success: false,
+          error: 'Usuario no autenticado'
+        };
+      }
+
+      // Contar espacios de trabajo del usuario logueado
+      const response = await fetch(`${apiEndpoints.espacios_de_trabajo}?creado_por=eq.${userId}&select=id`, {
+        method: 'GET',
+        headers: this.getHeaders()
+      });
+
+      if (!response.ok) {
+        return {
+          success: false,
+          error: 'Error al obtener el conteo de espacios de trabajo'
+        };
+      }
+
+      const data = await this.handleResponse(response);
+      const count = Array.isArray(data) ? data.length : 0;
+      
+      return {
+        success: true,
+        data: count
+      };
+
+    } catch (error) {
+      console.error('Error counting espacios de trabajo:', error);
+      
+      return {
+        success: false,
+        error: 'Error de conexión al contar espacios de trabajo',
+        details: error instanceof Error ? error.message : 'Error desconocido'
       };
     }
   }
@@ -986,11 +1368,21 @@ export class SupabaseService {
   // ===== MÉTODOS PARA RESPUESTAS RÁPIDAS =====
 
   /**
-   * Obtiene todas las respuestas rápidas
+   * Obtiene todas las respuestas rápidas del usuario logueado
    */
   async getAllRespuestasRapidas(): Promise<ApiResponse<RespuestaRapida[]>> {
     try {
-      const response = await fetch(`${apiEndpoints.respuestasRapidas}?order=created_at.desc`, {
+      // Obtener el ID del usuario logueado
+      const userId = this.getCurrentUserId();
+      if (!userId) {
+        return {
+          success: false,
+          error: 'Usuario no autenticado'
+        };
+      }
+
+      // Filtrar respuestas rápidas por creado_por (usuario logueado)
+      const response = await fetch(`${apiEndpoints.respuestasRapidas}?creado_por=eq.${userId}&order=created_at.desc`, {
         headers: this.getHeaders(),
       });
       
@@ -1007,11 +1399,21 @@ export class SupabaseService {
   }
 
   /**
-   * Obtiene una respuesta rápida por ID
+   * Obtiene una respuesta rápida por ID (solo del usuario logueado)
    */
   async getRespuestaRapidaById(id: number): Promise<ApiResponse<RespuestaRapida>> {
     try {
-      const response = await fetch(`${apiEndpoints.respuestasRapidas}?id=eq.${id}`, {
+      // Obtener el ID del usuario logueado
+      const userId = this.getCurrentUserId();
+      if (!userId) {
+        return {
+          success: false,
+          error: 'Usuario no autenticado'
+        };
+      }
+
+      // Obtener solo si pertenece al usuario logueado
+      const response = await fetch(`${apiEndpoints.respuestasRapidas}?id=eq.${id}&creado_por=eq.${userId}`, {
         headers: this.getHeaders(),
       });
       
@@ -1032,12 +1434,22 @@ export class SupabaseService {
    */
   async createRespuestaRapida(data: RespuestaRapidaFormData): Promise<ApiResponse> {
     try {
+      // Obtener el ID del usuario logueado como creador
+      const userId = this.getCurrentUserId();
+      if (!userId) {
+        return {
+          success: false,
+          error: 'Usuario no autenticado'
+        };
+      }
+
       const response = await fetch(apiEndpoints.respuestasRapidas, {
         method: 'POST',
         headers: this.getHeaders(),
         body: JSON.stringify({
           ...data,
-          activa: true
+          activa: true,
+          creado_por: userId // Asignar el creador
         }),
       });
       
@@ -1053,11 +1465,21 @@ export class SupabaseService {
   }
 
   /**
-   * Actualiza una respuesta rápida existente
+   * Actualiza una respuesta rápida existente (solo del usuario logueado)
    */
   async updateRespuestaRapida(id: number, data: Partial<RespuestaRapida>): Promise<ApiResponse> {
     try {
-      const response = await fetch(`${apiEndpoints.respuestasRapidas}?id=eq.${id}`, {
+      // Obtener el ID del usuario logueado
+      const userId = this.getCurrentUserId();
+      if (!userId) {
+        return {
+          success: false,
+          error: 'Usuario no autenticado'
+        };
+      }
+
+      // Actualizar solo si pertenece al usuario logueado
+      const response = await fetch(`${apiEndpoints.respuestasRapidas}?id=eq.${id}&creado_por=eq.${userId}`, {
         method: 'PATCH',
         headers: this.getHeaders(),
         body: JSON.stringify(data),
@@ -1075,11 +1497,21 @@ export class SupabaseService {
   }
 
   /**
-   * Elimina una respuesta rápida
+   * Elimina una respuesta rápida (solo del usuario logueado)
    */
   async deleteRespuestaRapida(id: number): Promise<ApiResponse> {
     try {
-      const response = await fetch(`${apiEndpoints.respuestasRapidas}?id=eq.${id}`, {
+      // Obtener el ID del usuario logueado
+      const userId = this.getCurrentUserId();
+      if (!userId) {
+        return {
+          success: false,
+          error: 'Usuario no autenticado'
+        };
+      }
+
+      // Eliminar solo si pertenece al usuario logueado
+      const response = await fetch(`${apiEndpoints.respuestasRapidas}?id=eq.${id}&creado_por=eq.${userId}`, {
         method: 'DELETE',
         headers: this.getHeaders(),
       });
@@ -1096,11 +1528,21 @@ export class SupabaseService {
   }
 
   /**
-   * Cambia el estado activo/inactivo de una respuesta rápida
+   * Cambia el estado activo/inactivo de una respuesta rápida (solo del usuario logueado)
    */
   async toggleRespuestaRapidaStatus(id: number, activa: boolean): Promise<ApiResponse<Record<string, unknown>>> {
     try {
-      const response = await fetch(`${apiEndpoints.respuestasRapidas}?id=eq.${id}`, {
+      // Obtener el ID del usuario logueado
+      const userId = this.getCurrentUserId();
+      if (!userId) {
+        return {
+          success: false,
+          error: 'Usuario no autenticado'
+        };
+      }
+
+      // Cambiar estado solo si pertenece al usuario logueado
+      const response = await fetch(`${apiEndpoints.respuestasRapidas}?id=eq.${id}&creado_por=eq.${userId}`, {
         method: 'PATCH',
         headers: this.getHeaders(),
         body: JSON.stringify({ activa }),
@@ -1116,6 +1558,823 @@ export class SupabaseService {
       return { 
         success: false, 
         error: error instanceof Error ? error.message : 'Error al cambiar estado de respuesta rápida'
+      };
+    }
+  }
+
+  /**
+   * Obtiene el conteo de respuestas rápidas del usuario logueado
+   */
+  async getRespuestasRapidasCount(): Promise<ApiResponse<number>> {
+    try {
+      // Obtener el ID del usuario logueado
+      const userId = this.getCurrentUserId();
+      if (!userId) {
+        return {
+          success: false,
+          error: 'Usuario no autenticado'
+        };
+      }
+
+      // Contar respuestas rápidas del usuario logueado
+      const response = await fetch(`${apiEndpoints.respuestasRapidas}?creado_por=eq.${userId}&select=id`, {
+        method: 'GET',
+        headers: this.getHeaders()
+      });
+
+      if (!response.ok) {
+        return {
+          success: false,
+          error: 'Error al obtener el conteo de respuestas rápidas'
+        };
+      }
+
+      const data = await this.handleResponse(response);
+      const count = Array.isArray(data) ? data.length : 0;
+      
+      return {
+        success: true,
+        data: count
+      };
+
+    } catch (error) {
+      console.error('Error counting respuestas rápidas:', error);
+      
+      return {
+        success: false,
+        error: 'Error de conexión al contar respuestas rápidas',
+        details: error instanceof Error ? error.message : 'Error desconocido'
+      };
+    }
+  }
+
+  // ==================== MÉTODOS PARA CANALES ====================
+
+  /**
+   * Obtiene todos los canales del usuario logueado
+   */
+  async getAllCanales(): Promise<ApiResponse<Canal[]>> {
+    try {
+      // Obtener el ID del usuario logueado
+      const userId = this.getCurrentUserId();
+      if (!userId) {
+        return {
+          success: false,
+          error: 'Usuario no autenticado'
+        };
+      }
+
+      // Filtrar canales por creado_por (usuario logueado)
+      const response = await fetch(`${apiEndpoints.canales}?creado_por=eq.${userId}`, {
+        method: 'GET',
+        headers: this.getHeaders(),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.text();
+        return {
+          success: false,
+          error: `Error del servidor: ${response.status} ${response.statusText}`,
+          details: errorData
+        };
+      }
+      
+      const data = await response.json();
+      
+      // Log para debugging
+      console.log('Canales obtenidos (filtrados por usuario):', data);
+      
+      return { success: true, data };
+    } catch (error) {
+      console.error('Error al obtener canales:', error);
+      return { 
+        success: false, 
+        error: 'Error de conexión al obtener canales',
+        details: error instanceof Error ? error.message : 'Error desconocido'
+      };
+    }
+  }
+
+  /**
+   * Crea un nuevo canal
+   */
+  async createCanal(canalData: CanalData): Promise<ApiResponse<Canal>> {
+    try {
+      // Obtener el ID del usuario logueado como creador
+      const currentUserId = this.getCurrentUserId();
+      if (!currentUserId) {
+        return {
+          success: false,
+          error: 'Usuario no autenticado'
+        };
+      }
+
+      // Preparar los datos con valores por defecto
+      const dataToSend = {
+        usuario_id: canalData.usuario_id,
+        espacio_id: canalData.espacio_id,
+        tipo: canalData.tipo,
+        descripcion: canalData.descripcion,
+        creado_por: currentUserId // Asignar el creador
+      };
+
+      // Log detallado para debugging
+      console.log('=== DEBUG CREATE CANAL ===');
+      console.log('Datos recibidos:', canalData);
+      console.log('Datos a enviar:', dataToSend);
+      console.log('URL:', apiEndpoints.canales);
+      console.log('Headers:', this.getHeaders());
+
+      const response = await fetch(apiEndpoints.canales, {
+        method: 'POST',
+        headers: this.getHeaders(),
+        body: JSON.stringify(dataToSend),
+      });
+      
+      console.log('Response status:', response.status);
+      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+      
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error('Error response body:', errorData);
+        return {
+          success: false,
+          error: `Error del servidor: ${response.status} ${response.statusText}`,
+          details: errorData
+        };
+      }
+      
+      // Manejar respuesta vacía o JSON inválido
+      let responseData = null;
+      const contentType = response.headers.get('content-type');
+      
+      if (contentType && contentType.includes('application/json')) {
+        try {
+          const responseText = await response.text();
+          console.log('Response text:', responseText);
+          
+          if (responseText.trim()) {
+            responseData = JSON.parse(responseText);
+          } else {
+            console.log('Respuesta vacía del servidor - Canal creado exitosamente');
+            responseData = { success: true, message: 'Canal creado exitosamente' };
+          }
+        } catch (jsonError) {
+          console.error('Error parsing JSON:', jsonError);
+          // Si no se puede parsear el JSON, asumimos que fue exitoso
+          responseData = { success: true, message: 'Canal creado exitosamente' };
+        }
+      } else {
+        // Si no es JSON, asumimos que fue exitoso (respuesta vacía típica de Supabase)
+        console.log('Respuesta no-JSON - Canal creado exitosamente');
+        responseData = { success: true, message: 'Canal creado exitosamente' };
+      }
+      
+      // Log para debugging
+      console.log('Canal creado exitosamente:', responseData);
+      
+      return { success: true, data: responseData };
+    } catch (error) {
+      console.error('Error al crear canal:', error);
+      return { 
+        success: false, 
+        error: 'Error de conexión al crear canal',
+        details: error instanceof Error ? error.message : 'Error desconocido'
+      };
+    }
+  }
+
+  /**
+   * Actualiza un canal existente (solo del usuario logueado)
+   */
+  async updateCanal(id: number, data: Partial<Canal>): Promise<ApiResponse<Canal>> {
+    try {
+      // Obtener el ID del usuario logueado
+      const userId = this.getCurrentUserId();
+      if (!userId) {
+        return {
+          success: false,
+          error: 'Usuario no autenticado'
+        };
+      }
+
+      // Actualizar solo si pertenece al usuario logueado
+      const response = await fetch(`${apiEndpoints.canales}?id=eq.${id}&creado_por=eq.${userId}`, {
+        method: 'PATCH',
+        headers: this.getHeaders(),
+        body: JSON.stringify(data),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+      
+      const result = await response.json();
+      return { success: true, data: result[0] };
+    } catch (error) {
+      console.error('Error al actualizar canal:', error);
+      return { success: false, error: error instanceof Error ? error.message : 'Error al actualizar canal' };
+    }
+  }
+
+  /**
+   * Elimina un canal (solo del usuario logueado)
+   */
+  async deleteCanal(id: number): Promise<ApiResponse<void>> {
+    try {
+      // Obtener el ID del usuario logueado
+      const userId = this.getCurrentUserId();
+      if (!userId) {
+        return {
+          success: false,
+          error: 'Usuario no autenticado'
+        };
+      }
+
+      // Eliminar solo si pertenece al usuario logueado
+      const response = await fetch(`${apiEndpoints.canales}?id=eq.${id}&creado_por=eq.${userId}`, {
+        method: 'DELETE',
+        headers: this.getHeaders(),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.text();
+        return {
+          success: false,
+          error: `Error del servidor: ${response.status} ${response.statusText}`,
+          details: errorData
+        };
+      }
+      
+      // Log para debugging
+      console.log(`Canal ${id} eliminado exitosamente`);
+      
+      return { success: true };
+    } catch (error) {
+      console.error('Error al eliminar canal:', error);
+      return { 
+        success: false, 
+        error: 'Error de conexión al eliminar canal',
+        details: error instanceof Error ? error.message : 'Error desconocido'
+      };
+    }
+  }
+
+  /**
+   * Obtiene el conteo de canales del usuario logueado
+   */
+  async getCanalesCount(): Promise<ApiResponse<number>> {
+    try {
+      // Obtener el ID del usuario logueado
+      const userId = this.getCurrentUserId();
+      if (!userId) {
+        return {
+          success: false,
+          error: 'Usuario no autenticado'
+        };
+      }
+
+      // Contar canales del usuario logueado
+      const response = await fetch(`${apiEndpoints.canales}?creado_por=eq.${userId}&select=id`, {
+        method: 'GET',
+        headers: this.getHeaders()
+      });
+
+      if (!response.ok) {
+        return {
+          success: false,
+          error: 'Error al obtener el conteo de canales'
+        };
+      }
+
+      const data = await this.handleResponse(response);
+      const count = Array.isArray(data) ? data.length : 0;
+      
+      return {
+        success: true,
+        data: count
+      };
+
+    } catch (error) {
+      console.error('Error counting canales:', error);
+      
+      return {
+        success: false,
+        error: 'Error de conexión al contar canales',
+        details: error instanceof Error ? error.message : 'Error desconocido'
+      };
+    }
+  }
+
+  // ==================== MÉTODOS PARA SESIONES ====================
+
+  /**
+   * Obtiene todas las sesiones del usuario logueado
+   */
+  async getAllSesiones(): Promise<ApiResponse<SesionResponse[]>> {
+    try {
+      // Obtener el ID del usuario logueado
+      const userId = this.getCurrentUserId();
+      if (!userId) {
+        return {
+          success: false,
+          error: 'Usuario no autenticado'
+        };
+      }
+
+      // Filtrar sesiones por creado_por (usuario logueado)
+      const response = await fetch(`${apiEndpoints.sesiones}?creado_por=eq.${userId}`, {
+        method: 'GET',
+        headers: this.getHeaders(),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.warn('Error al obtener sesiones:', errorData);
+        return {
+          success: false,
+          error: `Error del servidor: ${response.status} ${response.statusText}`,
+          details: errorData
+        };
+      }
+      
+      const data = await response.json();
+      
+      // Log para debugging
+      console.log('Sesiones obtenidas (filtradas por usuario):', data);
+      
+      return { success: true, data: Array.isArray(data) ? data : [] };
+    } catch (error) {
+      console.error('Error al obtener sesiones:', error);
+      return { 
+        success: false, 
+        error: 'Error de conexión al obtener sesiones',
+        details: error instanceof Error ? error.message : 'Error desconocido'
+      };
+    }
+  }
+
+  /**
+   * Crea una nueva sesión
+   */
+  async createSesion(sesionData: SesionData): Promise<ApiResponse<Sesion>> {
+    try {
+      // Obtener el ID del usuario logueado como creador
+      const currentUserId = this.getCurrentUserId();
+      if (!currentUserId) {
+        return {
+          success: false,
+          error: 'Usuario no autenticado'
+        };
+      }
+
+      // Log para debugging
+      console.log('Datos recibidos para crear sesión:', sesionData);
+      
+      const dataToSend = {
+        canal_id: sesionData.canal_id,
+        usuario_id: sesionData.usuario_id,
+        nombre: sesionData.nombre,
+        api_key: sesionData.api_key,
+        access_token: sesionData.access_token,
+        phone_number: sesionData.phone_number,
+        email_user: sesionData.email_user,
+        email_password: sesionData.email_password,
+        smtp_host: sesionData.smtp_host,
+        smtp_port: sesionData.smtp_port,
+        imap_host: sesionData.imap_host,
+        imap_port: sesionData.imap_port,
+        estado: sesionData.estado,
+        creado_por: currentUserId // Asignar el creador
+      };
+
+      console.log('Datos a enviar:', dataToSend);
+      console.log('URL:', apiEndpoints.sesiones);
+      console.log('Headers:', this.getHeaders());
+
+      const response = await fetch(apiEndpoints.sesiones, {
+        method: 'POST',
+        headers: this.getHeaders(),
+        body: JSON.stringify(dataToSend),
+      });
+
+      console.log('Response status:', response.status);
+      console.log('Response headers:', Object.fromEntries(response.headers));
+      
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error('Error response body:', errorData);
+        return {
+          success: false,
+          error: `Error del servidor: ${response.status} ${response.statusText}`,
+          details: errorData
+        };
+      }
+      
+      // Manejar respuesta vacía o JSON inválido
+      let responseData = null;
+      const contentType = response.headers.get('content-type');
+
+      if (contentType && contentType.includes('application/json')) {
+        try {
+          const responseText = await response.text();
+          console.log('Response text:', responseText);
+          
+          if (responseText.trim()) {
+            responseData = JSON.parse(responseText);
+          } else {
+            console.log('Respuesta vacía pero exitosa');
+            responseData = { success: true };
+          }
+        } catch (parseError) {
+          console.warn('Error al parsear JSON, pero respuesta exitosa:', parseError);
+          responseData = { success: true };
+        }
+      } else {
+        console.log('Respuesta no-JSON pero exitosa');
+        responseData = { success: true };
+      }
+      
+      // Log para debugging
+      console.log('Sesión creada exitosamente:', responseData);
+      
+      return { success: true, data: responseData };
+    } catch (error) {
+      console.error('Error al crear sesión:', error);
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Error al crear sesión',
+        details: error instanceof Error ? error.stack : undefined
+      };
+    }
+  }
+
+  /**
+   * Obtiene las sesiones de un canal específico (solo del usuario logueado)
+   */
+  async getSesionesByCanal(canalId: number): Promise<ApiResponse<SesionResponse[]>> {
+    try {
+      // Obtener el ID del usuario logueado
+      const userId = this.getCurrentUserId();
+      if (!userId) {
+        return {
+          success: false,
+          error: 'Usuario no autenticado'
+        };
+      }
+
+      // Filtrar por canal Y por creado_por (usuario logueado)
+      const response = await fetch(`${apiEndpoints.sesiones}?canal_id=eq.${canalId}&creado_por=eq.${userId}`, {
+        method: 'GET',
+        headers: this.getHeaders(),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error('Error al obtener sesiones del canal:', errorData);
+        return {
+          success: false,
+          error: `Error del servidor: ${response.status} ${response.statusText}`,
+          details: errorData
+        };
+      }
+
+      const result = await response.json();
+      return { success: true, data: result || [] };
+    } catch (error) {
+      console.error('Error al obtener sesiones del canal:', error);
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Error al obtener sesiones del canal',
+        data: []
+      };
+    }
+  }
+
+  /**
+   * Actualiza una sesión existente (solo del usuario logueado)
+   */
+  async updateSesion(id: number, data: Partial<Sesion>): Promise<ApiResponse<Sesion>> {
+    try {
+      // Obtener el ID del usuario logueado
+      const userId = this.getCurrentUserId();
+      if (!userId) {
+        return {
+          success: false,
+          error: 'Usuario no autenticado'
+        };
+      }
+
+      // Actualizar solo si pertenece al usuario logueado
+      const response = await fetch(`${apiEndpoints.sesiones}?id=eq.${id}&creado_por=eq.${userId}`, {
+        method: 'PATCH',
+        headers: this.getHeaders(),
+        body: JSON.stringify(data),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+      
+      const result = await response.json();
+      return { success: true, data: result[0] };
+    } catch (error) {
+      console.error('Error al actualizar sesión:', error);
+      return { success: false, error: error instanceof Error ? error.message : 'Error al actualizar sesión' };
+    }
+  }
+
+  /**
+   * Elimina una sesión (solo del usuario logueado)
+   */
+  async deleteSesion(id: number): Promise<ApiResponse<void>> {
+    try {
+      // Obtener el ID del usuario logueado
+      const userId = this.getCurrentUserId();
+      if (!userId) {
+        return {
+          success: false,
+          error: 'Usuario no autenticado'
+        };
+      }
+
+      // Eliminar solo si pertenece al usuario logueado
+      const response = await fetch(`${apiEndpoints.sesiones}?id=eq.${id}&creado_por=eq.${userId}`, {
+        method: 'DELETE',
+        headers: this.getHeaders(),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+      
+      return { success: true };
+    } catch (error) {
+      console.error('Error al eliminar sesión:', error);
+      return { success: false, error: error instanceof Error ? error.message : 'Error al eliminar sesión' };
+    }
+  }
+
+  /**
+   * Obtiene el conteo de sesiones del usuario logueado
+   */
+  async getSesionesCount(): Promise<ApiResponse<number>> {
+    try {
+      // Obtener el ID del usuario logueado
+      const userId = this.getCurrentUserId();
+      if (!userId) {
+        return {
+          success: false,
+          error: 'Usuario no autenticado'
+        };
+      }
+
+      // Contar sesiones del usuario logueado
+      const response = await fetch(`${apiEndpoints.sesiones}?creado_por=eq.${userId}&select=id`, {
+        method: 'GET',
+        headers: this.getHeaders()
+      });
+
+      if (!response.ok) {
+        return {
+          success: false,
+          error: 'Error al obtener el conteo de sesiones'
+        };
+      }
+
+      const data = await this.handleResponse(response);
+      const count = Array.isArray(data) ? data.length : 0;
+      
+      return {
+        success: true,
+        data: count
+      };
+
+    } catch (error) {
+      console.error('Error counting sesiones:', error);
+      
+      return {
+        success: false,
+        error: 'Error de conexión al contar sesiones',
+        details: error instanceof Error ? error.message : 'Error desconocido'
+      };
+    }
+  }
+
+  // ==================== MÉTODOS PARA MENSAJES ====================
+
+  /**
+   * Crea un nuevo mensaje
+   */
+  async createMensaje(mensajeData: MensajeData): Promise<ApiResponse<MensajeResponse>> {
+    try {
+      console.log('Datos recibidos para crear mensaje:', mensajeData);
+      
+      const dataToSend = {
+        canal_id: mensajeData.canal_id,
+        remitente_id: mensajeData.remitente_id,
+        contenido: mensajeData.contenido,
+        contacto_id: mensajeData.contacto_id,
+        sesion_id: mensajeData.sesion_id,
+        destinatario_id: mensajeData.destinatario_id,
+        embudo_id: mensajeData.embudo_id
+      };
+
+      console.log('Datos a enviar:', dataToSend);
+      console.log('URL:', apiEndpoints.mensajes);
+      console.log('Headers:', this.getHeaders());
+
+      const response = await fetch(apiEndpoints.mensajes, {
+        method: 'POST',
+        headers: this.getHeaders(),
+        body: JSON.stringify(dataToSend),
+      });
+
+      console.log('Response status:', response.status);
+      console.log('Response headers:', Object.fromEntries(response.headers));
+      
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error('Error response body:', errorData);
+        return {
+          success: false,
+          error: `Error del servidor: ${response.status} ${response.statusText}`,
+          details: errorData
+        };
+      }
+      
+      // Manejar respuesta vacía o JSON inválido
+      let responseData = null;
+      const contentType = response.headers.get('content-type');
+
+      if (contentType && contentType.includes('application/json')) {
+        try {
+          const responseText = await response.text();
+          console.log('Response text:', responseText);
+          
+          if (responseText.trim()) {
+            responseData = JSON.parse(responseText);
+          } else {
+            console.log('Respuesta vacía pero exitosa');
+            responseData = { success: true };
+          }
+        } catch (parseError) {
+          console.warn('Error al parsear JSON, pero respuesta exitosa:', parseError);
+          responseData = { success: true };
+        }
+      } else {
+        console.log('Respuesta no-JSON pero exitosa');
+        responseData = { success: true };
+      }
+      
+      // Log para debugging
+      console.log('Mensaje creado exitosamente:', responseData);
+      
+      return { success: true, data: responseData };
+    } catch (error) {
+      console.error('Error al crear mensaje:', error);
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Error al crear mensaje',
+        details: error instanceof Error ? error.stack : undefined
+      };
+    }
+  }
+
+  /**
+   * Obtiene todos los mensajes
+   */
+  async getAllMensajes(): Promise<ApiResponse<MensajeResponse[]>> {
+    try {
+      const response = await fetch(apiEndpoints.mensajes, {
+        method: 'GET',
+        headers: this.getHeaders(),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.text();
+        return {
+          success: false,
+          error: `Error del servidor: ${response.status} ${response.statusText}`,
+          details: errorData
+        };
+      }
+      
+      const data = await response.json();
+      
+      console.log('Mensajes obtenidos:', data);
+      
+      return { success: true, data: Array.isArray(data) ? data : [] };
+    } catch (error) {
+      console.error('Error al obtener mensajes:', error);
+      return { 
+        success: false, 
+        error: 'Error de conexión al obtener mensajes',
+        details: error instanceof Error ? error.message : 'Error desconocido'
+      };
+    }
+  }
+
+  /**
+   * Actualiza un mensaje existente
+   */
+  async updateMensaje(id: number, mensajeData: Partial<MensajeData>): Promise<ApiResponse<MensajeResponse>> {
+    try {
+      console.log('Actualizando mensaje:', id, mensajeData);
+
+      const response = await fetch(`${apiEndpoints.mensajes}?id=eq.${id}`, {
+        method: 'PATCH',
+        headers: this.getHeaders(),
+        body: JSON.stringify(mensajeData)
+      });
+
+      console.log('Response status:', response.status);
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error('Error response body:', errorData);
+        return {
+          success: false,
+          error: `Error del servidor: ${response.status} ${response.statusText}`,
+          details: errorData
+        };
+      }
+
+      const data = await this.handleResponse(response);
+      console.log('Mensaje actualizado exitosamente');
+
+      return {
+        success: true,
+        data: data as unknown as MensajeResponse
+      };
+
+    } catch (error) {
+      console.error('Error al actualizar mensaje:', error);
+      return { 
+        success: false, 
+        error: 'Error de conexión al actualizar mensaje',
+        details: error instanceof Error ? error.message : 'Error desconocido'
+      };
+    }
+  }
+
+  /**
+   * Mueve un mensaje a otro embudo
+   */
+  async moveMensajeToEmbudo(mensajeId: number, nuevoEmbudoId: number): Promise<ApiResponse<MensajeResponse>> {
+    try {
+      console.log('Moviendo mensaje:', mensajeId, 'al embudo:', nuevoEmbudoId);
+
+      const result = await this.updateMensaje(mensajeId, { embudo_id: nuevoEmbudoId });
+      
+      if (result.success) {
+        console.log('Mensaje movido exitosamente');
+      }
+
+      return result;
+    } catch (error) {
+      console.error('Error al mover mensaje:', error);
+      return { 
+        success: false, 
+        error: 'Error de conexión al mover mensaje',
+        details: error instanceof Error ? error.message : 'Error desconocido'
+      };
+    }
+  }
+
+  /**
+   * Elimina un mensaje por ID
+   */
+  async deleteMensaje(id: number): Promise<ApiResponse<void>> {
+    try {
+      console.log('Eliminando mensaje con ID:', id);
+
+      const response = await fetch(`${apiEndpoints.mensajes}?id=eq.${id}`, {
+        method: 'DELETE',
+        headers: this.getHeaders(),
+      });
+
+      console.log('Response status:', response.status);
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error('Error response body:', errorData);
+        return {
+          success: false,
+          error: `Error del servidor: ${response.status} ${response.statusText}`,
+          details: errorData
+        };
+      }
+
+      console.log('Mensaje eliminado exitosamente');
+
+      return { success: true };
+    } catch (error) {
+      console.error('Error al eliminar mensaje:', error);
+      return { 
+        success: false, 
+        error: 'Error de conexión al eliminar mensaje',
+        details: error instanceof Error ? error.message : 'Error desconocido'
       };
     }
   }

@@ -7,7 +7,21 @@ import EditarEspacioModal from './EditarEspacioModal';
 import ConfirmarEliminarEspacioModal from './ConfirmarEliminarEspacioModal';
 import NuevoEmbudoModal from './NuevoEmbudoModal';
 import EditarEmbudoModal from './EditarEmbudoModal';
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
 import ConfirmarEliminarEmbudoModal from './ConfirmarEliminarEmbudoModal';
+import DraggableEmbudo from './DraggableEmbudo';
 
 export default function EspaciosTrabajoTab() {
   const [espaciosConEmbudos, setEspaciosConEmbudos] = useState<EspacioConEmbudos[]>([]);
@@ -23,6 +37,15 @@ export default function EspaciosTrabajoTab() {
   const [selectedEspacioForEmbudo, setSelectedEspacioForEmbudo] = useState<EspacioTrabajoResponse | null>(null);
   const [selectedEmbudo, setSelectedEmbudo] = useState<EmbUpdoResponse | null>(null);
   const [selectedEmbudoForDelete, setSelectedEmbudoForDelete] = useState<EmbUpdoResponse | null>(null);
+  
+  // Sensores para drag & drop
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 3,
+      },
+    })
+  );
 
   // Cargar espacios de trabajo al montar el componente
   useEffect(() => {
@@ -138,6 +161,64 @@ export default function EspaciosTrabajoTab() {
     setSelectedEmbudoForDelete(null);
   };
 
+  // Manejar el final del drag & drop para embudos
+  const handleDragEnd = async (event: DragEndEvent, espacioId: number) => {
+    const { active, over } = event;
+
+    if (!over || active.id === over.id) {
+      return;
+    }
+
+    console.log('🚀 Drag end:', active.id, 'over:', over.id);
+
+    // Encontrar el espacio actual
+    const espacioIndex = espaciosConEmbudos.findIndex(e => e.id === espacioId);
+    if (espacioIndex === -1) return;
+
+    const espacio = espaciosConEmbudos[espacioIndex];
+    const oldIndex = espacio.embudos.findIndex(embudo => embudo.id === active.id);
+    const newIndex = espacio.embudos.findIndex(embudo => embudo.id === over.id);
+
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    // Reordenar localmente para feedback inmediato
+    const newEmbudos = arrayMove(espacio.embudos, oldIndex, newIndex);
+    
+    // Actualizar el estado local
+    const newEspaciosConEmbudos = [...espaciosConEmbudos];
+    newEspaciosConEmbudos[espacioIndex] = {
+      ...espacio,
+      embudos: newEmbudos
+    };
+    setEspaciosConEmbudos(newEspaciosConEmbudos);
+
+    // Preparar datos para el API (asignar nuevos órdenes)
+    const embudosConOrden = newEmbudos.map((embudo, index) => ({
+      id: embudo.id,
+      orden: index + 1
+    }));
+
+    console.log('📡 Actualizando orden en API:', embudosConOrden);
+
+    try {
+      const result = await supabaseService.updateEmbudosOrder(embudosConOrden);
+      
+      if (result.success) {
+        console.log('✅ Orden de embudos actualizado exitosamente');
+        // Recargar para asegurar consistencia
+        loadEspaciosTrabajo();
+      } else {
+        console.error('❌ Error al actualizar orden:', result.error);
+        // Revertir cambios locales en caso de error
+        loadEspaciosTrabajo();
+      }
+    } catch (error) {
+      console.error('❌ Error inesperado:', error);
+      // Revertir cambios locales en caso de error
+      loadEspaciosTrabajo();
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="p-6 flex items-center justify-center h-64">
@@ -230,64 +311,47 @@ export default function EspaciosTrabajoTab() {
                 </div>
               </div>
 
-              {/* Grid de Embudos */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {/* Embudos existentes */}
-                {espacio.embudos.map((embudo) => (
-                  <div 
-                    key={embudo.id} 
-                    className="bg-[#2a2d35] border border-[#3a3d45] rounded-lg p-4 hover:border-[#00b894] transition-colors group"
-                  >
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center space-x-2">
-                        <span className="text-gray-400 text-sm font-medium">
-                          {embudo.espacio_id === 1 ? '0' : embudo.espacio_id === 3 ? '1' : '0'}
-                        </span>
-                        <span className="text-white text-sm font-medium">
-                          {embudo.nombre.toUpperCase()}
-                        </span>
-                      </div>
-                      <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button 
-                          onClick={() => handleEditEmbudo(embudo)}
-                          className="text-gray-400 hover:text-white text-xs p-1" 
-                          title="Editar embudo"
-                        >
-                          ✏️
-                        </button>
-                        <button 
-                          onClick={() => handleDeleteEmbudo(embudo)}
-                          className="text-gray-400 hover:text-red-400 text-xs p-1" 
-                          title="Eliminar embudo"
-                        >
-                          🗑️
-                        </button>
-                      </div>
-                    </div>
-                    {embudo.descripcion && (
-                      <p className="text-gray-400 text-xs mb-2">{embudo.descripcion}</p>
-                    )}
-                    <div className="text-xs text-gray-500">
-                      ID: {embudo.id} • {formatDate(embudo.creado_en)}
-                    </div>
-                  </div>
-                ))}
-
-                {/* Botón para agregar nuevo embudo */}
-                <div 
-                  onClick={() => handleAgregarEmbudo(espacio)}
-                  className="bg-[#2a2d35] border-2 border-dashed border-[#3a3d45] rounded-lg p-4 flex items-center justify-center hover:border-[#00b894] transition-colors cursor-pointer group"
+              {/* Grid de Embudos con Drag & Drop */}
+              <DndContext 
+                sensors={sensors} 
+                collisionDetection={closestCenter}
+                onDragEnd={(event) => handleDragEnd(event, espacio.id)}
+              >
+                <SortableContext 
+                  items={espacio.embudos.map(embudo => embudo.id)} 
+                  strategy={verticalListSortingStrategy}
                 >
-                  <div className="text-center">
-                    <div className="text-[#00b894] text-2xl mb-2 group-hover:scale-110 transition-transform">
-                      +
-                    </div>
-                    <div className="text-gray-400 text-sm">
-                      Agregar Embudo
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                    {/* Embudos existentes draggables */}
+                    {espacio.embudos
+                      .sort((a, b) => (a.orden || 0) - (b.orden || 0)) // Ordenar por campo orden
+                      .map((embudo) => (
+                      <DraggableEmbudo
+                        key={embudo.id}
+                        embudo={embudo}
+                        onEdit={handleEditEmbudo}
+                        onDelete={handleDeleteEmbudo}
+                        formatDate={formatDate}
+                      />
+                    ))}
+
+                    {/* Botón para agregar nuevo embudo */}
+                    <div 
+                      onClick={() => handleAgregarEmbudo(espacio)}
+                      className="bg-[#2a2d35] border-2 border-dashed border-[#3a3d45] rounded-lg p-4 flex items-center justify-center hover:border-[#00b894] transition-colors cursor-pointer group"
+                    >
+                      <div className="text-center">
+                        <div className="text-[#00b894] text-2xl mb-2 group-hover:scale-110 transition-transform">
+                          +
+                        </div>
+                        <div className="text-gray-400 text-sm">
+                          Agregar Embudo
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </div>
+                </SortableContext>
+              </DndContext>
             </div>
           ))}
         </div>

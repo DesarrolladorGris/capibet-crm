@@ -7,7 +7,9 @@ import EspaciosTrabajoTab from './components/EspaciosTrabajoTab';
 import UsuariosTab from './components/UsuariosTab';
 import EtiquetasTab from './components/EtiquetasTab';
 import RespuestasRapidasTab from './components/RespuestasRapidasTab';
+import SesionesTab from './components/SesionesTab';
 import { supabaseService } from '@/services/supabaseService';
+import { isUserAuthenticated } from '@/utils/auth';
 
 // Tipos para las pestañas
 interface TabConfig {
@@ -18,127 +20,75 @@ interface TabConfig {
   component: React.ComponentType;
 }
 
-// Componentes temporales
-const PersonalizarTab = () => (
-  <div className="p-6">
-    <h3 className="text-white text-lg font-medium mb-4">Personalizar</h3>
-    <p className="text-gray-400">Configuración de personalización del sistema.</p>
-  </div>
-);
-
-const SesionesTab = () => (
-  <div className="p-6">
-    <h3 className="text-white text-lg font-medium mb-4">Sesiones</h3>
-    <p className="text-gray-400">Gestión de sesiones activas del sistema.</p>
-  </div>
-);
-
 export default function ConfiguracionPage() {
   const [activeTab, setActiveTab] = useState('espacios-trabajo');
   const [userEmail, setUserEmail] = useState('');
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [userName, setUserName] = useState('');
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [userRole, setUserRole] = useState('');
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [agencyName, setAgencyName] = useState('');
   const [userCount, setUserCount] = useState(0);
   const [espaciosCount, setEspaciosCount] = useState(0);
+  const [respuestasRapidasCount, setRespuestasRapidasCount] = useState(0);
   const router = useRouter();
 
   // Configuración de pestañas
   const tabs: TabConfig[] = [
-    { id: 'personalizar', label: 'Personalizar', icon: '⚙️', component: PersonalizarTab },
     { id: 'espacios-trabajo', label: 'Espacios de trabajo', icon: '🏢', count: espaciosCount, component: EspaciosTrabajoTab },
-    { id: 'sesiones', label: 'Sesiones', icon: '🔄', count: 0, component: SesionesTab },
+    { id: 'sesiones', label: 'Sesiones', icon: '🔗', count: 0, component: SesionesTab },
     { id: 'etiquetas', label: 'Etiquetas', icon: '🏷️', count: 4, component: EtiquetasTab },
     { id: 'usuarios', label: 'Usuarios', icon: '👥', count: userCount, component: UsuariosTab },
-    { id: 'respuestas-rapidas', label: 'Respuestas rápidas', icon: '💬', count: 4, component: RespuestasRapidasTab },
+    { id: 'respuestas-rapidas', label: 'Respuestas rápidas', icon: '💬', count: respuestasRapidasCount, component: RespuestasRapidasTab },
   ];
 
   useEffect(() => {
-    // Verificar autenticación
-    const isLoggedIn = localStorage.getItem('isLoggedIn');
-    const email = localStorage.getItem('userEmail');
-    
-    if (!isLoggedIn || !email) {
-      router.push('/login');
-      return;
-    }
-    
-    // Cargar datos del usuario
-    setUserEmail(email);
-    setUserName(localStorage.getItem('userName') || '');
-    setUserRole(localStorage.getItem('userRole') || '');
-    setAgencyName(localStorage.getItem('agencyName') || '');
-    
-    // Cargar conteo de usuarios y espacios de trabajo
-    loadUserCount();
-    loadEspaciosCount();
+    const checkAuth = async () => {
+      const isAuth = await isUserAuthenticated();
+      if (!isAuth) {
+        router.push('/login');
+        return;
+      }
+
+      // Cargar conteos
+      try {
+        const [usersResult, espaciosResult, respuestasResult] = await Promise.all([
+          supabaseService.getAllUsuarios(),
+          supabaseService.getAllEspaciosTrabajo(),
+          supabaseService.getAllRespuestasRapidas()
+        ]);
+
+        if (usersResult.success) {
+          setUserCount(usersResult.data?.length || 0);
+        }
+        if (espaciosResult.success) {
+          setEspaciosCount(espaciosResult.data?.length || 0);
+        }
+        if (respuestasResult.success) {
+          setRespuestasRapidasCount(respuestasResult.data?.length || 0);
+        }
+
+      } catch (error) {
+        console.error('Error loading data:', error);
+      }
+    };
+
+    checkAuth();
   }, [router]);
 
-  const loadUserCount = async () => {
-    try {
-      const result = await supabaseService.getAllUsuarios();
-      if (result.success && result.data) {
-        setUserCount(result.data.length);
-      }
-    } catch (error) {
-      console.error('Error loading user count:', error);
-    }
-  };
-
-  const loadEspaciosCount = async () => {
-    try {
-      const result = await supabaseService.getAllEspaciosTrabajo();
-      if (result.success && result.data) {
-        setEspaciosCount(result.data.length);
-      }
-    } catch (error) {
-      console.error('Error loading espacios count:', error);
-    }
-  };
-
-  // Actualizar contadores cada vez que se activen las pestañas correspondientes
-  useEffect(() => {
-    if (activeTab === 'usuarios') {
-      loadUserCount();
-    } else if (activeTab === 'espacios-trabajo') {
-      loadEspaciosCount();
-    }
-  }, [activeTab]);
-
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const handleLogout = () => {
-    // Limpiar todos los datos de sesión
-    localStorage.removeItem('isLoggedIn');
-    localStorage.removeItem('userEmail');
-    localStorage.removeItem('userName');
-    localStorage.removeItem('userRole');
-    localStorage.removeItem('userId');
-    localStorage.removeItem('agencyName');
-    localStorage.removeItem('userData');
-    
-    router.push('/login');
-  };
-
-  if (!userEmail) {
-    return (
-      <div className="min-h-screen bg-[#1a1d23] flex items-center justify-center">
-        <div className="text-white">Cargando...</div>
-      </div>
-    );
-  }
-
   return (
-    <div className="flex-1 flex flex-col">
-      {/* Header de Configuración */}
-      <div className="bg-[#1a1d23] border-b border-[#3a3d45] px-6 py-4">
+    <div className="flex flex-col h-screen bg-[#1a1d23]">
+      {/* Header */}
+      <div className="bg-[#2a2d35] border-b border-[#3a3d45] px-6 py-4">
         <div className="flex items-center justify-between">
-          {/* Left Section */}
-          <div className="flex items-center space-x-4">
-            {/* Page Title */}
-            <h1 className="text-white font-semibold text-2xl">Configuración</h1>
+          <div>
+            <h1 className="text-white text-xl font-semibold mb-1">Configuración</h1>
+            <p className="text-gray-400 text-sm">Gestiona tu cuenta, usuarios, espacios de trabajo y más</p>
+          </div>
+          <div className="text-right">
+            <div className="text-white text-sm font-medium">{userName || userEmail}</div>
+            <div className="text-gray-400 text-xs">
+              {userRole === 'admin' ? '👑 Administrador' : 
+               userRole === 'manager' ? '👔 Gerente' : '👤 Usuario'} • {agencyName}
+            </div>
           </div>
         </div>
       </div>
