@@ -34,13 +34,14 @@ export default function ConfiguracionPage() {
   const [userCount, setUserCount] = useState(0);
   const [espaciosCount, setEspaciosCount] = useState(0);
   const [respuestasRapidasCount, setRespuestasRapidasCount] = useState(0);
+  const [etiquetasCount, setEtiquetasCount] = useState(0);
   const router = useRouter();
 
   // Configuración de pestañas
   const tabs: TabConfig[] = [
     { id: 'espacios-trabajo', label: 'Espacios de trabajo', icon: '🏢', count: espaciosCount, component: EspaciosTrabajoTab },
     { id: 'sesiones', label: 'Sesiones', icon: '🔗', count: 0, component: SesionesTab },
-    { id: 'etiquetas', label: 'Etiquetas', icon: '🏷️', count: 4, component: EtiquetasTab },
+    { id: 'etiquetas', label: 'Etiquetas', icon: '🏷️', count: etiquetasCount, component: EtiquetasTab },
     { id: 'usuarios', label: 'Usuarios', icon: '👥', count: userCount, component: UsuariosTab },
     { id: 'respuestas-rapidas', label: 'Respuestas rápidas', icon: '💬', count: respuestasRapidasCount, component: RespuestasRapidasTab },
   ];
@@ -166,7 +167,14 @@ export default function ConfiguracionPage() {
         {/* Renderizar el componente de la pestaña activa */}
         {(() => {
           const ActiveTabComponent = tabs.find(tab => tab.id === activeTab)?.component;
-          return ActiveTabComponent ? <ActiveTabComponent /> : null;
+          if (ActiveTabComponent) {
+            // Pasar props específicas según el componente
+            if (activeTab === 'etiquetas') {
+              return <EtiquetasTab onEtiquetasCountChange={setEtiquetasCount} />;
+            }
+            return <ActiveTabComponent />;
+          }
+          return null;
         })()}
       </div>
     </div>

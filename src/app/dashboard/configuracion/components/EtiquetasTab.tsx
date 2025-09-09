@@ -1,16 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { supabaseService } from '@/services/supabaseService';
 
-// Tipos para las etiquetas
-interface Etiqueta {
-  id?: number;
-  nombre: string;
-  color: string;
-  descripcion?: string;
-  activa: boolean;
-  created_at?: string;
-}
+// Importar la interfaz del servicio
+import type { Etiqueta } from '@/services/supabaseService';
 
 interface EtiquetaFormData {
   nombre: string;
@@ -54,11 +48,17 @@ const etiquetasPrueba: Etiqueta[] = [
   }
 ];
 
-export default function EtiquetasTab() {
+interface EtiquetasTabProps {
+  onEtiquetasCountChange?: (count: number) => void;
+}
+
+export default function EtiquetasTab({ onEtiquetasCountChange }: EtiquetasTabProps = {}) {
   const [etiquetas, setEtiquetas] = useState<Etiqueta[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [editingEtiqueta, setEditingEtiqueta] = useState<Etiqueta | null>(null);
+  const [etiquetaToDelete, setEtiquetaToDelete] = useState<Etiqueta | null>(null);
   const [formData, setFormData] = useState<EtiquetaFormData>({
     nombre: '',
     color: '#00b894',
@@ -72,12 +72,42 @@ export default function EtiquetasTab() {
     '#fdcb6e', '#e17055', '#d63031', '#2d3436', '#636e72'
   ];
 
+  // Función para recargar etiquetas desde la base de datos
+  const recargarEtiquetas = async () => {
+    try {
+      const response = await supabaseService.getAllEtiquetas();
+      
+      if (response.success && response.data) {
+        console.log('Etiquetas recargadas exitosamente:', response.data);
+        setEtiquetas(response.data);
+        // Notificar el cambio de contador al componente padre
+        onEtiquetasCountChange?.(response.data.length);
+      } else {
+        console.error('Error al recargar etiquetas:', response.error);
+        // En caso de error, usar datos de prueba como fallback
+        setEtiquetas(etiquetasPrueba);
+        onEtiquetasCountChange?.(etiquetasPrueba.length);
+      }
+    } catch (error) {
+      console.error('Error al recargar etiquetas:', error);
+      // En caso de error, usar datos de prueba como fallback
+      setEtiquetas(etiquetasPrueba);
+      onEtiquetasCountChange?.(etiquetasPrueba.length);
+    }
+  };
+
   useEffect(() => {
-    console.log('EtiquetasTab: Componente montado, cargando etiquetas de prueba...');
-    // Usar datos de prueba por ahora
-    setEtiquetas(etiquetasPrueba);
-    setLoading(false);
-  }, []); // etiquetasPrueba es una constante, no necesita ser dependencia
+    const cargarEtiquetasIniciales = async () => {
+      console.log('EtiquetasTab: Componente montado, cargando etiquetas desde Supabase...');
+      setLoading(true);
+      
+      await recargarEtiquetas();
+      
+      setLoading(false);
+    };
+
+    cargarEtiquetasIniciales();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -88,58 +118,73 @@ export default function EtiquetasTab() {
     }
 
     try {
-      if (editingEtiqueta) {
+      if (editingEtiqueta && editingEtiqueta.id) {
         // Actualizar etiqueta existente
-        const etiquetasActualizadas = etiquetas.map(etiqueta =>
-          etiqueta.id === editingEtiqueta.id
-            ? { ...etiqueta, ...formData }
-            : etiqueta
-        );
-        setEtiquetas(etiquetasActualizadas);
-        cerrarModal();
-        alert('Etiqueta actualizada exitosamente');
+        const response = await supabaseService.updateEtiqueta(editingEtiqueta.id, {
+          nombre: formData.nombre,
+          color: formData.color,
+          descripcion: formData.descripcion
+        });
+
+        if (response.success && response.data) {
+          cerrarModal();
+          // Recargar todas las etiquetas desde la base de datos
+          await recargarEtiquetas();
+        } else {
+          throw new Error(response.error || 'Error al actualizar etiqueta');
+        }
       } else {
         // Crear nueva etiqueta
-        const nuevaEtiqueta: Etiqueta = {
-          id: Date.now(), // ID temporal
-          ...formData,
-          activa: true,
-          created_at: new Date().toISOString()
-        };
-        setEtiquetas([...etiquetas, nuevaEtiqueta]);
-        cerrarModal();
-        alert('Etiqueta creada exitosamente');
+        const response = await supabaseService.createEtiqueta({
+          nombre: formData.nombre,
+          color: formData.color,
+          descripcion: formData.descripcion
+        });
+
+        if (response.success && response.data) {
+          cerrarModal();
+          // Recargar todas las etiquetas desde la base de datos
+          await recargarEtiquetas();
+        } else {
+          throw new Error(response.error || 'Error al crear etiqueta');
+        }
       }
     } catch (error) {
       console.error('Error al guardar etiqueta:', error);
-      alert('Error al guardar la etiqueta');
+      alert(`Error al guardar la etiqueta: ${error instanceof Error ? error.message : 'Error desconocido'}`);
     }
   };
 
-  const handleDelete = async (id: number) => {
-    if (confirm('¿Estás seguro de que quieres eliminar esta etiqueta?')) {
-      try {
-        const etiquetasFiltradas = etiquetas.filter(etiqueta => etiqueta.id !== id);
-        setEtiquetas(etiquetasFiltradas);
-        alert('Etiqueta eliminada exitosamente');
-      } catch (error) {
-        console.error('Error al eliminar etiqueta:', error);
-        alert('Error al eliminar la etiqueta');
-      }
-    }
+  const handleDelete = (etiqueta: Etiqueta) => {
+    setEtiquetaToDelete(etiqueta);
+    setShowDeleteModal(true);
   };
 
-  const handleToggleStatus = async (etiqueta: Etiqueta) => {
+  const confirmarEliminacion = async () => {
+    if (!etiquetaToDelete?.id) return;
+    
     try {
-      const etiquetasActualizadas = etiquetas.map(e =>
-        e.id === etiqueta.id ? { ...e, activa: !e.activa } : e
-      );
-      setEtiquetas(etiquetasActualizadas);
+      const response = await supabaseService.deleteEtiqueta(etiquetaToDelete.id);
+      
+      if (response.success) {
+        setShowDeleteModal(false);
+        setEtiquetaToDelete(null);
+        // Recargar todas las etiquetas desde la base de datos
+        await recargarEtiquetas();
+      } else {
+        throw new Error(response.error || 'Error al eliminar etiqueta');
+      }
     } catch (error) {
-      console.error('Error al cambiar estado:', error);
-      alert('Error al cambiar el estado de la etiqueta');
+      console.error('Error al eliminar etiqueta:', error);
+      alert(`Error al eliminar la etiqueta: ${error instanceof Error ? error.message : 'Error desconocido'}`);
     }
   };
+
+  const cancelarEliminacion = () => {
+    setShowDeleteModal(false);
+    setEtiquetaToDelete(null);
+  };
+
 
   const abrirModal = (etiqueta?: Etiqueta) => {
     if (etiqueta) {
@@ -170,10 +215,18 @@ export default function EtiquetasTab() {
     });
   };
 
-  const etiquetasFiltradas = etiquetas.filter(etiqueta =>
-    etiqueta.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    etiqueta.descripcion?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const etiquetasFiltradas = etiquetas.filter(etiqueta => {
+    // Validar que la etiqueta tenga nombre antes de filtrar
+    if (!etiqueta || !etiqueta.nombre) {
+      console.warn('Etiqueta sin nombre encontrada:', etiqueta);
+      return false;
+    }
+    
+    const nombreMatch = etiqueta.nombre.toLowerCase().includes(searchTerm.toLowerCase());
+    const descripcionMatch = etiqueta.descripcion?.toLowerCase().includes(searchTerm.toLowerCase()) || false;
+    
+    return nombreMatch || descripcionMatch;
+  });
 
   if (loading) {
     return (
@@ -194,7 +247,6 @@ export default function EtiquetasTab() {
           <h3 className="text-white text-xl font-semibold mb-2">Gestión de Etiquetas</h3>
           <p className="text-gray-400">Organiza y categoriza tu contenido con etiquetas personalizadas</p>
           <p className="text-gray-500 text-sm mt-1">Total de etiquetas: {etiquetas.length}</p>
-          <p className="text-yellow-400 text-xs mt-1">⚠️ Modo de prueba - Datos locales</p>
         </div>
         <button
           onClick={() => abrirModal()}
@@ -263,17 +315,6 @@ export default function EtiquetasTab() {
                 
                 <div className="flex items-center space-x-2">
                   <button
-                    onClick={() => handleToggleStatus(etiqueta)}
-                    className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
-                      etiqueta.activa
-                        ? 'bg-green-600 hover:bg-green-700 text-white'
-                        : 'bg-gray-600 hover:bg-gray-700 text-white'
-                    }`}
-                  >
-                    {etiqueta.activa ? 'Activa' : 'Inactiva'}
-                  </button>
-                  
-                  <button
                     onClick={() => abrirModal(etiqueta)}
                     className="bg-[#0984e3] hover:bg-[#0873c4] text-white px-3 py-1 rounded text-xs font-medium transition-colors"
                   >
@@ -281,7 +322,7 @@ export default function EtiquetasTab() {
                   </button>
                   
                   <button
-                    onClick={() => handleDelete(etiqueta.id!)}
+                    onClick={() => handleDelete(etiqueta)}
                     className="bg-[#d63031] hover:bg-[#c0392b] text-white px-3 py-1 rounded text-xs font-medium transition-colors"
                   >
                     🗑️ Eliminar
@@ -382,6 +423,51 @@ export default function EtiquetasTab() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de confirmación de eliminación */}
+      {showDeleteModal && etiquetaToDelete && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-[#1a1d23] rounded-lg p-6 w-full max-w-md mx-4 border border-[#3a3d45]">
+            <div className="text-center">
+              {/* Icono de advertencia */}
+              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
+                <span className="text-2xl">⚠️</span>
+              </div>
+              
+              {/* Título */}
+              <h3 className="text-lg font-medium text-white mb-2">
+                ¿Eliminar etiqueta?
+              </h3>
+              
+              {/* Mensaje */}
+              <p className="text-gray-400 mb-2">
+                ¿Estás seguro de que quieres eliminar la etiqueta "{etiquetaToDelete.nombre}"?
+              </p>
+              <p className="text-gray-500 text-sm mb-6">
+                Esta acción no se puede deshacer.
+              </p>
+              
+              {/* Botones */}
+              <div className="flex space-x-3">
+                <button
+                  type="button"
+                  onClick={cancelarEliminacion}
+                  className="flex-1 bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={confirmarEliminacion}
+                  className="flex-1 bg-[#d63031] hover:bg-[#c0392b] text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                >
+                  Eliminar
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

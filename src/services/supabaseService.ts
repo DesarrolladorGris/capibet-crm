@@ -88,7 +88,9 @@ export interface Etiqueta {
   nombre: string;
   color: string;
   descripcion?: string;
-  activa: boolean;
+  activa?: boolean;
+  creado_por?: number;
+  creado_en?: string;
   created_at?: string;
 }
 
@@ -1603,6 +1605,224 @@ export class SupabaseService {
       return {
         success: false,
         error: 'Error de conexión al contar respuestas rápidas',
+        details: error instanceof Error ? error.message : 'Error desconocido'
+      };
+    }
+  }
+
+  // ===== MÉTODOS PARA ETIQUETAS =====
+
+  /**
+   * Obtiene todas las etiquetas del usuario logueado
+   */
+  async getAllEtiquetas(): Promise<ApiResponse<Etiqueta[]>> {
+    try {
+      // Obtener el ID del usuario logueado
+      const userId = this.getCurrentUserId();
+      if (!userId) {
+        return {
+          success: false,
+          error: 'Usuario no autenticado'
+        };
+      }
+
+      // Obtener etiquetas filtradas por creado_por (usuario logueado)
+      const response = await fetch(`${apiEndpoints.etiquetas}?creado_por=eq.${userId}&order=creado_en.desc`, {
+        headers: this.getHeaders(),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+      
+      const data = await this.handleResponse(response);
+      
+      // Transformar los datos para mantener compatibilidad con la interfaz existente
+      const etiquetas = Array.isArray(data) ? data.map((etiqueta: any) => ({
+        id: etiqueta.id,
+        nombre: etiqueta.nombre || '', // Asegurar que siempre tenga nombre
+        color: etiqueta.color || '#00b894', // Color por defecto si no existe
+        descripcion: etiqueta.descripcion || '', // Descripción vacía si no existe
+        activa: true, // Por defecto las etiquetas están activas
+        creado_por: etiqueta.creado_por,
+        creado_en: etiqueta.creado_en,
+        created_at: etiqueta.creado_en // Mapear fecha para compatibilidad
+      })).filter(etiqueta => etiqueta.nombre && etiqueta.id) : []; // Filtrar etiquetas inválidas
+      
+      return { success: true, data: etiquetas };
+    } catch (error) {
+      console.error('Error al obtener etiquetas:', error);
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Error desconocido' 
+      };
+    }
+  }
+
+  /**
+   * Crea una nueva etiqueta
+   */
+  async createEtiqueta(etiquetaData: Omit<Etiqueta, 'id' | 'creado_por' | 'creado_en' | 'created_at'>): Promise<ApiResponse<Etiqueta>> {
+    try {
+      // Obtener el ID del usuario logueado como creador
+      const currentUserId = this.getCurrentUserId();
+      if (!currentUserId) {
+        return {
+          success: false,
+          error: 'Usuario no autenticado'
+        };
+      }
+
+      const dataToSend = {
+        nombre: etiquetaData.nombre,
+        color: etiquetaData.color,
+        descripcion: etiquetaData.descripcion || '',
+        creado_por: currentUserId
+      };
+
+      const response = await fetch(apiEndpoints.etiquetas, {
+        method: 'POST',
+        headers: this.getHeaders(),
+        body: JSON.stringify(dataToSend),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        return {
+          success: false,
+          error: `Error del servidor: ${response.status} ${response.statusText}`,
+          details: errorData
+        };
+      }
+
+      const data = await this.handleResponse(response);
+      
+      // Asegurar que la respuesta tenga la estructura correcta
+      const etiquetaCreada: Etiqueta = {
+        id: data.id,
+        nombre: data.nombre || '',
+        color: data.color || '#00b894',
+        descripcion: data.descripcion || '',
+        activa: true,
+        creado_por: data.creado_por,
+        creado_en: data.creado_en,
+        created_at: data.creado_en
+      };
+      
+      return {
+        success: true,
+        data: etiquetaCreada
+      };
+
+    } catch (error) {
+      console.error('Error al crear etiqueta:', error);
+      return { 
+        success: false, 
+        error: 'Error de conexión al crear etiqueta',
+        details: error instanceof Error ? error.message : 'Error desconocido'
+      };
+    }
+  }
+
+  /**
+   * Actualiza una etiqueta existente
+   */
+  async updateEtiqueta(id: number, etiquetaData: Partial<Omit<Etiqueta, 'id' | 'creado_por' | 'creado_en' | 'created_at'>>): Promise<ApiResponse<Etiqueta>> {
+    try {
+      // Obtener el ID del usuario logueado
+      const userId = this.getCurrentUserId();
+      if (!userId) {
+        return {
+          success: false,
+          error: 'Usuario no autenticado'
+        };
+      }
+
+      const dataToSend: any = {};
+      if (etiquetaData.nombre) dataToSend.nombre = etiquetaData.nombre;
+      if (etiquetaData.color) dataToSend.color = etiquetaData.color;
+      if (etiquetaData.descripcion !== undefined) dataToSend.descripcion = etiquetaData.descripcion;
+
+      // Actualizar solo si pertenece al usuario logueado
+      const response = await fetch(`${apiEndpoints.etiquetas}?id=eq.${id}&creado_por=eq.${userId}`, {
+        method: 'PATCH',
+        headers: this.getHeaders(),
+        body: JSON.stringify(dataToSend),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        return {
+          success: false,
+          error: `Error del servidor: ${response.status} ${response.statusText}`,
+          details: errorData
+        };
+      }
+
+      const data = await this.handleResponse(response);
+      
+      // Asegurar que la respuesta tenga la estructura correcta
+      const etiquetaActualizada: Etiqueta = {
+        id: data.id,
+        nombre: data.nombre || '',
+        color: data.color || '#00b894',
+        descripcion: data.descripcion || '',
+        activa: true,
+        creado_por: data.creado_por,
+        creado_en: data.creado_en,
+        created_at: data.creado_en
+      };
+      
+      return {
+        success: true,
+        data: etiquetaActualizada
+      };
+
+    } catch (error) {
+      console.error('Error al actualizar etiqueta:', error);
+      return { 
+        success: false, 
+        error: 'Error de conexión al actualizar etiqueta',
+        details: error instanceof Error ? error.message : 'Error desconocido'
+      };
+    }
+  }
+
+  /**
+   * Elimina una etiqueta por ID
+   */
+  async deleteEtiqueta(id: number): Promise<ApiResponse<void>> {
+    try {
+      // Obtener el ID del usuario logueado
+      const userId = this.getCurrentUserId();
+      if (!userId) {
+        return {
+          success: false,
+          error: 'Usuario no autenticado'
+        };
+      }
+
+      // Eliminar etiqueta por ID
+      const response = await fetch(`${apiEndpoints.etiquetas}?id=eq.${id}`, {
+        method: 'DELETE',
+        headers: this.getHeaders(),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        return {
+          success: false,
+          error: `Error del servidor: ${response.status} ${response.statusText}`,
+          details: errorData
+        };
+      }
+
+      return { success: true };
+    } catch (error) {
+      console.error('Error al eliminar etiqueta:', error);
+      return { 
+        success: false, 
+        error: 'Error de conexión al eliminar etiqueta',
         details: error instanceof Error ? error.message : 'Error desconocido'
       };
     }
