@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { supabaseService, EmbUpdoResponse } from '@/services/supabaseService';
+import { embudoService, EmbUpdoResponse } from '@/services/embudoServices';
 
 interface ConfirmarEliminarEmbudoModalProps {
   isOpen: boolean;
@@ -27,7 +27,7 @@ export default function ConfirmarEliminarEmbudoModal({
       console.log('Eliminando embudo:', embudo.id);
 
       // Llamar al servicio de eliminación
-      const result = await supabaseService.deleteEmbudo(embudo.id);
+      const result = await embudoService.deleteEmbudo(embudo.id);
 
       if (result.success) {
         console.log('Embudo eliminado exitosamente');

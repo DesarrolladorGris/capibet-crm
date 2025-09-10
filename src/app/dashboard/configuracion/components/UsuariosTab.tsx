@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { supabaseService, UsuarioResponse } from '@/services/supabaseService';
+import { usuarioService, UsuarioResponse } from '@/services/usuarioServices';
 import NuevoUsuarioModal from './NuevoUsuarioModal';
 import EditarUsuarioModal from './EditarUsuarioModal';
 import ConfirmDeactivateModal from './ConfirmDeactivateModal';
@@ -29,7 +29,7 @@ export default function UsuariosTab() {
     setError('');
     
     try {
-      const result = await supabaseService.getAllUsuarios();
+      const result = await usuarioService.getAllUsuarios();
       
       if (result.success && result.data) {
         setUsuarios(result.data);
@@ -59,7 +59,7 @@ export default function UsuariosTab() {
     
     setIsTogglingStatus(true);
     try {
-      const result = await supabaseService.toggleUsuarioStatus(userToToggle.id, false);
+      const result = await usuarioService.toggleUsuarioStatus(userToToggle.id, false);
       
       if (result.success) {
         loadUsuarios();
@@ -80,7 +80,7 @@ export default function UsuariosTab() {
     
     setIsTogglingStatus(true);
     try {
-      const result = await supabaseService.toggleUsuarioStatus(userToToggle.id, true);
+      const result = await usuarioService.toggleUsuarioStatus(userToToggle.id, true);
       
       if (result.success) {
         loadUsuarios();

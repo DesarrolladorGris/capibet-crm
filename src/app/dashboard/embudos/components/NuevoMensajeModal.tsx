@@ -1,7 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { supabaseService, MensajeData, Canal, Sesion, ContactResponse, EmbUpdoResponse } from '@/services/supabaseService';
+import { sesionesService, Sesion } from '@/services/sesionesServices';
+import { mensajesService, MensajeData } from '@/services/mensajesServices';
+import { canalesService, Canal } from '@/services/canalesServices';
+import { embudoService, EmbUpdoResponse } from '@/services/embudoServices';
+import { contactoService, ContactResponse } from '@/services/contactoServices';
 
 interface NuevoMensajeModalProps {
   isOpen: boolean;
@@ -54,9 +58,9 @@ export default function NuevoMensajeModal({
 
       // Cargar datos en paralelo
       const [canalesResult, contactosResult, embudosResult] = await Promise.all([
-        supabaseService.getAllCanales(),
-        supabaseService.getAllContactos(),
-        espacioId ? supabaseService.getEmbudosByEspacio(espacioId) : supabaseService.getAllEmbudos()
+        canalesService.getAllCanales(),
+        contactoService.getAllContactos(),
+        espacioId ? embudoService.getEmbudosByEspacio(espacioId) : embudoService.getAllEmbudos()
       ]);
 
       if (canalesResult.success && canalesResult.data) {
@@ -86,7 +90,7 @@ export default function NuevoMensajeModal({
   // Cargar sesiones cuando se selecciona un canal
   const loadSesiones = async (selectedCanalId: number) => {
     try {
-      const sesionesResult = await supabaseService.getSesionesByCanal(selectedCanalId);
+      const sesionesResult = await sesionesService.getSesionesByCanal(selectedCanalId);
       if (sesionesResult.success && sesionesResult.data) {
         setSesiones(sesionesResult.data);
       }
@@ -151,7 +155,7 @@ export default function NuevoMensajeModal({
 
       console.log('Enviando mensaje:', mensajeData);
 
-      const result = await supabaseService.createMensaje(mensajeData);
+      const result = await mensajesService.createMensaje(mensajeData);
 
       if (result.success) {
         console.log('Mensaje creado exitosamente');

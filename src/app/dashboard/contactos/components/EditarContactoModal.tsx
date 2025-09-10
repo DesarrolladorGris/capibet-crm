@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ContactData, ContactResponse } from '@/services/supabaseService';
+import { ContactData, ContactResponse } from '@/services/contactoServices';
 
 interface EditarContactoModalProps {
   isOpen: boolean;

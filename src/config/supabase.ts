@@ -6,15 +6,17 @@ export const supabaseConfig = {
   restUrl: 'https://dkrdphnnsgndrqmgdvxp.supabase.co/rest/v1'
 };
 
-// API Endpoints
+// API Endpoints - Proxy local
+const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000';
+
 export const apiEndpoints = {
-  usuarios: `${supabaseConfig.restUrl}/usuarios`,
-  etiquetas: `${supabaseConfig.restUrl}/etiquetas`,
-  respuestasRapidas: `${supabaseConfig.restUrl}/respuestas_rapidas`,
-  contactos: `${supabaseConfig.restUrl}/contactos`,
-  espacios_de_trabajo: `${supabaseConfig.restUrl}/espacios_de_trabajo`,
-  embudos: `${supabaseConfig.restUrl}/embudos`,
-  canales: `${supabaseConfig.restUrl}/canales`,
-  sesiones: `${supabaseConfig.restUrl}/sesiones`,
-  mensajes: `${supabaseConfig.restUrl}/mensajes`
+  usuarios: `${baseUrl}/api/usuarios`,
+  etiquetas: `${baseUrl}/api/etiquetas`,
+  respuestasRapidas: `${baseUrl}/api/respuestas_rapidas`,
+  contactos: `${baseUrl}/api/contactos`,
+  espacios_de_trabajo: `${baseUrl}/api/espacio_trabajos`,
+  embudos: `${baseUrl}/api/embudos`,
+  canales: `${baseUrl}/api/canales`,
+  sesiones: `${baseUrl}/api/sesiones`,
+  mensajes: `${baseUrl}/api/mensajes`
 };

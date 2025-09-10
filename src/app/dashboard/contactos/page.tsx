@@ -7,7 +7,7 @@ import AgregarContactoModal from './components/AgregarContactoModal';
 import EditarContactoModal from './components/EditarContactoModal';
 import ConfirmarEliminarModal from './components/ConfirmarEliminarModal';
 import ConfirmarEliminacionMasivaModal from './components/ConfirmarEliminacionMasivaModal';
-import { supabaseService, ContactResponse, ContactData } from '@/services/supabaseService';
+import { contactoService, ContactResponse, ContactData } from '@/services/contactoServices';
 import { isUserAuthenticated, getCurrentUserId } from '@/utils/auth';
 import { useExportContacts } from '@/hooks/useExportContacts';
 import { useImportContacts } from '@/hooks/useImportContacts';
@@ -35,7 +35,7 @@ export default function ContactosPage() {
       setLoading(true);
       setError(null);
       
-      const result = await supabaseService.getAllContactos();
+      const result = await contactoService.getAllContactos();
       
       if (result.success && result.data) {
         setContacts(result.data);
@@ -88,7 +88,7 @@ export default function ContactosPage() {
   // Función para agregar nuevo contacto
   const handleAddContact = async (contactData: ContactData) => {
     try {
-      const result = await supabaseService.createContacto(contactData);
+      const result = await contactoService.createContacto(contactData);
       
       if (result.success) {
         // Recargar contactos
@@ -116,7 +116,7 @@ export default function ContactosPage() {
 
     try {
       // Usar el servicio seguro para eliminar
-      const result = await supabaseService.deleteContacto(deletingContact.id);
+      const result = await contactoService.deleteContacto(deletingContact.id);
       
       if (result.success) {
         // Recargar contactos
@@ -165,7 +165,7 @@ export default function ContactosPage() {
       for (const contactId of selectedContacts) {
         console.log(`Procesando eliminación del contacto ID: ${contactId}`);
         try {
-          const result = await supabaseService.deleteContacto(contactId);
+          const result = await contactoService.deleteContacto(contactId);
           
           if (result.success) {
             successfulDeletions.push(contactId);

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useMemo } from 'react';
 import Image from 'next/image';
-import { supabaseService, UsuarioResponse, UsuarioData } from '@/services/supabaseService';
+import { usuarioService, UsuarioResponse, UsuarioData } from '@/services/usuarioServices';
 
 interface EditarUsuarioModalProps {
   isOpen: boolean;
@@ -168,7 +168,7 @@ export default function EditarUsuarioModal({ isOpen, onClose, onUserUpdated, usu
     try {
       // Verificar si el email ya existe (solo si cambió)
       if (formData.email !== usuario.correo_electronico) {
-        const emailCheck = await supabaseService.checkEmailExists(formData.email);
+        const emailCheck = await usuarioService.checkEmailExists(formData.email);
         if (emailCheck.success && emailCheck.data) {
           setError('Este email ya está registrado');
           setIsLoading(false);
@@ -194,7 +194,7 @@ export default function EditarUsuarioModal({ isOpen, onClose, onUserUpdated, usu
       }
 
       // Llamar al API para actualizar el usuario
-      const result = await supabaseService.updateUsuario(usuario.id!, dataToUpdate);
+      const result = await usuarioService.updateUsuario(usuario.id!, dataToUpdate);
       
       if (result.success) {
         setSuccess('¡Usuario actualizado exitosamente!');

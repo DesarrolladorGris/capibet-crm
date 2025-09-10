@@ -1,7 +1,7 @@
 'use client';
 
 import { useDraggable } from '@dnd-kit/core';
-import { MensajeResponse } from '@/services/supabaseService';
+import { MensajeResponse } from '@/services/mensajesServices';
 
 interface DraggableMensajeProps {
   mensaje: MensajeResponse;

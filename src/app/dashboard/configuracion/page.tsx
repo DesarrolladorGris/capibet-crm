@@ -8,7 +8,9 @@ import UsuariosTab from './components/UsuariosTab';
 import EtiquetasTab from './components/EtiquetasTab';
 import RespuestasRapidasTab from './components/RespuestasRapidasTab';
 import SesionesTab from './components/SesionesTab';
-import { supabaseService } from '@/services/supabaseService';
+import { usuarioService } from '@/services/usuarioServices';
+import { respuestasRapidasService } from '@/services/respuestasRapidasServices';
+import { espacioTrabajoService } from '@/services/espacioTrabajoServices';
 import { isUserAuthenticated } from '@/utils/auth';
 
 // Tipos para las pestañas
@@ -51,9 +53,9 @@ export default function ConfiguracionPage() {
       // Cargar conteos
       try {
         const [usersResult, espaciosResult, respuestasResult] = await Promise.all([
-          supabaseService.getAllUsuarios(),
-          supabaseService.getAllEspaciosTrabajo(),
-          supabaseService.getAllRespuestasRapidas()
+          usuarioService.getAllUsuarios(),
+          espacioTrabajoService.getAllEspaciosTrabajo(),
+          respuestasRapidasService.getAllRespuestasRapidas()
         ]);
 
         if (usersResult.success) {

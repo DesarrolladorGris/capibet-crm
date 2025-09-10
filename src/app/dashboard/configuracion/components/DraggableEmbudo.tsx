@@ -2,7 +2,7 @@
 
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { EmbUpdoResponse } from '@/services/supabaseService';
+import { EmbUpdoResponse } from '@/services/embudoServices';
 
 interface DraggableEmbudoProps {
   embudo: EmbUpdoResponse;

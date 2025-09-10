@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { supabaseService, EmbUpdoData } from '@/services/supabaseService';
+import { embudoService, EmbUpdoData } from '@/services/embudoServices';
 
 interface NuevoEmbudoModalProps {
   isOpen: boolean;
@@ -73,7 +73,7 @@ export default function NuevoEmbudoModal({
 
       console.log('Datos del embudo a crear:', newEmbudo);
 
-      const result = await supabaseService.createEmbudo(newEmbudo);
+      const result = await embudoService.createEmbudo(newEmbudo);
 
       if (result.success) {
         console.log('Embudo creado exitosamente');

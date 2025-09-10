@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
-import { supabaseService, UsuarioData } from '@/services/supabaseService';
+import { usuarioService, UsuarioData } from '@/services/usuarioServices';
 
 interface NuevoUsuarioModalProps {
   isOpen: boolean;
@@ -154,7 +154,7 @@ export default function NuevoUsuarioModal({ isOpen, onClose, onUserCreated }: Nu
     
     try {
       // Verificar si el email ya existe
-      const emailCheck = await supabaseService.checkEmailExists(formData.email);
+      const emailCheck = await usuarioService.checkEmailExists(formData.email);
       
       if (emailCheck.success && emailCheck.data) {
         setError('Este email ya está registrado');
@@ -176,7 +176,7 @@ export default function NuevoUsuarioModal({ isOpen, onClose, onUserCreated }: Nu
       };
       
       // Crear usuario en Supabase
-      const result = await supabaseService.createUsuario(userData);
+      const result = await usuarioService.createUsuario(userData);
       
       if (result.success) {
         setSuccess('¡Usuario creado exitosamente!');

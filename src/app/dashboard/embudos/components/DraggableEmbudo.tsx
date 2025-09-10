@@ -1,7 +1,8 @@
 'use client';
 
 import { useDroppable } from '@dnd-kit/core';
-import { EmbUpdoResponse, MensajeResponse } from '@/services/supabaseService';
+import { MensajeResponse } from '@/services/mensajesServices';
+import { EmbUpdoResponse } from '@/services/embudoServices';
 import DraggableMensaje from './DraggableMensaje';
 
 interface DraggableEmbudoProps {

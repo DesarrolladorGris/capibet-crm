@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { ContactData } from '@/services/supabaseService';
+import { ContactData } from '@/services/contactoServices';
 
 interface AgregarContactoModalProps {
   isOpen: boolean;

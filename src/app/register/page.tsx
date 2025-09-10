@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { supabaseService, UsuarioData } from '@/services/supabaseService';
+import { usuarioService, UsuarioData } from '@/services/usuarioServices';
 
 export default function RegisterPage() {
   const [currentStep, setCurrentStep] = useState(1);
@@ -133,7 +133,7 @@ export default function RegisterPage() {
     
     try {
       // Verificar si el email ya existe
-      const emailCheck = await supabaseService.checkEmailExists(formData.email);
+      const emailCheck = await usuarioService.checkEmailExists(formData.email);
       
       if (emailCheck.success && emailCheck.data) {
         setError('Este email ya está registrado');
@@ -155,7 +155,7 @@ export default function RegisterPage() {
       };
       
       // Crear usuario en Supabase
-      const result = await supabaseService.createUsuario(userData);
+      const result = await usuarioService.createUsuario(userData);
       
       if (result.success) {
         setSuccess('¡Registro exitoso! Redirigiendo al login...');

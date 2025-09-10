@@ -1,6 +1,6 @@
 'use client';
 
-import { UsuarioResponse } from '@/services/supabaseService';
+import { UsuarioResponse } from '@/services/usuarioServices';
 
 interface ConfirmActivateModalProps {
   isOpen: boolean;

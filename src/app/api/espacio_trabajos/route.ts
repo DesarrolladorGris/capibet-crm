@@ -11,8 +11,7 @@ export async function POST(request: NextRequest) {
     // Preparar los datos con valores por defecto
     const dataToSend = {
       nombre: espacioData.nombre,
-      descripcion: espacioData.descripcion || null,
-      activo: espacioData.activo !== undefined ? espacioData.activo : true
+      creado_por: espacioData.creado_por
     };
 
     const response = await fetch(`${supabaseConfig.restUrl}/espacios_de_trabajo`, {

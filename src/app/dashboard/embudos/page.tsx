@@ -1,7 +1,9 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { supabaseService, EspacioConEmbudos, EspacioTrabajoResponse, EmbUpdoResponse, MensajeResponse } from '@/services/supabaseService';
+import { mensajesService, MensajeResponse } from '@/services/mensajesServices';
+import { embudoService, EmbUpdoResponse } from '@/services/embudoServices';
+import { espacioTrabajoService, EspacioConEmbudos, EspacioTrabajoResponse } from '@/services/espacioTrabajoServices';
 import NuevoEmbudoModal from '@/app/dashboard/configuracion/components/NuevoEmbudoModal';
 import EditarEmbudoModal from '@/app/dashboard/configuracion/components/EditarEmbudoModal';
 import ConfirmarEliminarEmbudoModal from '@/app/dashboard/configuracion/components/ConfirmarEliminarEmbudoModal';
@@ -58,9 +60,9 @@ export default function EmbudosPage() {
     try {
       // Cargar espacios, embudos y mensajes en paralelo
       const [espaciosResult, embudosResult, mensajesResult] = await Promise.all([
-        supabaseService.getAllEspaciosTrabajo(),
-        supabaseService.getAllEmbudos(),
-        supabaseService.getAllMensajes()
+        espacioTrabajoService.getAllEspaciosTrabajo(),
+        embudoService.getAllEmbudos(),
+        mensajesService.getAllMensajes()
       ]);
       
       if (espaciosResult.success && espaciosResult.data) {
@@ -182,7 +184,7 @@ export default function EmbudosPage() {
     
     try {
       // 1. Llamar al servicio para persistir el cambio en la base de datos
-      const result = await supabaseService.moveMensajeToEmbudo(mensajeId, nuevoEmbudoId);
+      const result = await mensajesService.moveMensajeToEmbudo(mensajeId, nuevoEmbudoId);
       
       if (result.success) {
         console.log('✅ Mensaje movido exitosamente en la base de datos');

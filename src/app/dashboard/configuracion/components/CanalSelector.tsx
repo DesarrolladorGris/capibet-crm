@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Canal } from '@/services/supabaseService';
+import { Canal } from '@/services/canalesServices';
 
 interface CanalOption {
   id: string;

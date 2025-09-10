@@ -1,7 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { supabaseService, Canal, SesionResponse, CanalData, UsuarioResponse, EspacioTrabajoResponse } from '@/services/supabaseService';
+import { sesionesService, SesionResponse } from '@/services/sesionesServices';
+import { canalesService, Canal, CanalData } from '@/services/canalesServices';
+import { espacioTrabajoService, EspacioTrabajoResponse } from '@/services/espacioTrabajoServices';
+import { usuarioService, UsuarioResponse } from '@/services/usuarioServices';
 import CanalSelector from './CanalSelector';
 import SesionesList from './SesionesList';
 import ConfirmDeleteCanalModal from './ConfirmDeleteCanalModal';
@@ -72,7 +75,7 @@ export default function SesionesTab() {
   const loadCanales = async () => {
     setLoading(true);
     try {
-      const result = await supabaseService.getAllCanales();
+      const result = await canalesService.getAllCanales();
       if (result.success && result.data) {
         setCanales(result.data);
       }
@@ -85,7 +88,7 @@ export default function SesionesTab() {
 
   const loadSesiones = async () => {
     try {
-      const result = await supabaseService.getAllSesiones();
+      const result = await sesionesService.getAllSesiones();
       if (result.success) {
         setSesiones(result.data || []);
         
@@ -119,7 +122,7 @@ export default function SesionesTab() {
 
   const loadUsuarios = async () => {
     try {
-      const result = await supabaseService.getAllUsuarios();
+      const result = await usuarioService.getAllUsuarios();
       if (result.success && result.data) {
         setUsuarios(result.data);
       }
@@ -130,7 +133,7 @@ export default function SesionesTab() {
 
   const loadEspaciosTrabajo = async () => {
     try {
-      const result = await supabaseService.getAllEspaciosTrabajo();
+      const result = await espacioTrabajoService.getAllEspaciosTrabajo();
       if (result.success && result.data) {
         setEspaciosTrabajo(result.data);
       }
@@ -169,7 +172,7 @@ export default function SesionesTab() {
         activo: true,
       };
 
-      const result = await supabaseService.createCanal(canalData);
+      const result = await canalesService.createCanal(canalData);
 
       if (result.success) {
         setShowAddCanal(false);
@@ -198,7 +201,7 @@ export default function SesionesTab() {
   const handleToggleSesionStatus = async (sesionId: number, estado: 'activo' | 'desconectado' | 'expirado') => {
     setLoading(true);
     try {
-      const result = await supabaseService.updateSesion(sesionId, { estado });
+      const result = await sesionesService.updateSesion(sesionId, { estado });
       if (result.success) {
         loadSesiones();
       } else {
@@ -218,7 +221,7 @@ export default function SesionesTab() {
     
     setLoading(true);
     try {
-      const result = await supabaseService.deleteSesion(sesionId);
+      const result = await sesionesService.deleteSesion(sesionId);
       if (result.success) {
         loadSesiones();
       } else {
@@ -243,7 +246,7 @@ export default function SesionesTab() {
     
     setLoading(true);
     try {
-      const result = await supabaseService.deleteCanal(canalToDelete.id);
+      const result = await canalesService.deleteCanal(canalToDelete.id);
       if (result.success) {
         setShowDeleteModal(false);
         setCanalToDelete(null);
@@ -278,7 +281,7 @@ export default function SesionesTab() {
   // Funciones para manejar sesiones
   const loadSesionesByCanal = async (canalId: number) => {
     try {
-      const result = await supabaseService.getSesionesByCanal(canalId);
+      const result = await sesionesService.getSesionesByCanal(canalId);
       if (result.success) {
         setCanalSesiones(prev => ({
           ...prev,
@@ -341,7 +344,7 @@ export default function SesionesTab() {
         estado: sesionFormData.estado,
       };
 
-      const result = await supabaseService.createSesion(sesionData);
+      const result = await sesionesService.createSesion(sesionData);
       
       if (result.success) {
         setShowAddSesion(false);

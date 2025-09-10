@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { UsuarioResponse } from '@/services/supabaseService';
+import { UsuarioResponse } from '@/services/usuarioServices';
 import { clearUserSession, isUserAuthenticated, getCurrentUserData } from '@/utils/auth';
 
 interface AuthState {

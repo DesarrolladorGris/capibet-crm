@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 
 import { useRouter } from 'next/navigation';
-import { supabaseService, LoginCredentials } from '@/services/supabaseService';
+import { usuarioService, LoginCredentials } from '@/services/usuarioServices';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -52,7 +52,7 @@ export default function LoginPage() {
         contrasena: password
       };
       
-      const result = await supabaseService.loginUsuario(credentials);
+      const result = await usuarioService.loginUsuario(credentials);
       
       if (result.success && result.data) {
         // Login exitoso - guardar datos de sesión

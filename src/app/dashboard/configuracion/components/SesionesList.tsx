@@ -1,6 +1,7 @@
 'use client';
 
-import { SesionResponse, Canal } from '@/services/supabaseService';
+import { SesionResponse } from '@/services/sesionesServices';
+import { Canal } from '@/services/canalesServices';
 
 interface CanalOption {
   id: string;

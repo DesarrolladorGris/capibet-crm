@@ -1,6 +1,7 @@
 'use client';
 
-import { Sesion, Canal } from '@/services/supabaseService';
+import { Sesion } from '@/services/sesionesServices';
+import { Canal } from '@/services/canalesServices';
 
 interface ConfirmDeleteSesionModalProps {
   isOpen: boolean;

@@ -1,22 +1,8 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
-import { SupabaseService } from '@/services/supabaseService';
+import { respuestasRapidasService, RespuestaRapida, RespuestaRapidaFormData } from '@/services/respuestasRapidasServices';
 
-// Interfaces
-interface RespuestaRapida {
-  id?: number;
-  titulo: string;
-  contenido: string;
-  categoria: string;
-  activa: boolean;
-  created_at?: string;
-}
-
-interface RespuestaRapidaFormData {
-  titulo: string;
-  contenido: string;
-  categoria: string;
-}
+// Interfaces importadas desde respuestasRapidasServices
 
 // Datos de prueba
 const respuestasPrueba: RespuestaRapida[] = [
@@ -82,7 +68,6 @@ export default function RespuestasRapidasTab() {
   const [nuevaCategoria, setNuevaCategoria] = useState('');
   const [error, setError] = useState<string | null>(null);
 
-  const supabaseService = new SupabaseService();
 
   const cargarRespuestas = useCallback(async () => {
     try {
@@ -90,7 +75,7 @@ export default function RespuestasRapidasTab() {
       setError(null);
       console.log('RespuestasRapidasTab: Cargando respuestas desde Supabase...');
       
-      const response = await supabaseService.getAllRespuestasRapidas();
+      const response = await respuestasRapidasService.getAllRespuestasRapidas();
       
       if (response.success && response.data) {
         setRespuestas(response.data);
@@ -126,7 +111,7 @@ export default function RespuestasRapidasTab() {
     try {
       if (editingRespuesta && editingRespuesta.id) {
         // Actualizar respuesta existente
-        const response = await supabaseService.updateRespuestaRapida(editingRespuesta.id, formData);
+        const response = await respuestasRapidasService.updateRespuestaRapida(editingRespuesta.id, formData);
         
         if (response.success) {
           // Recargar las respuestas desde la base de datos
@@ -139,7 +124,7 @@ export default function RespuestasRapidasTab() {
         }
       } else {
         // Crear nueva respuesta
-        const response = await supabaseService.createRespuestaRapida(formData);
+        const response = await respuestasRapidasService.createRespuestaRapida(formData);
         
         if (response.success) {
           // Recargar las respuestas desde la base de datos
@@ -176,7 +161,7 @@ export default function RespuestasRapidasTab() {
     }
 
     try {
-      const response = await supabaseService.deleteRespuestaRapida(respuestaToDelete.id);
+      const response = await respuestasRapidasService.deleteRespuestaRapida(respuestaToDelete.id);
       
       if (response.success) {
         // Recargar las respuestas desde la base de datos
@@ -200,7 +185,7 @@ export default function RespuestasRapidasTab() {
     }
 
     try {
-      const response = await supabaseService.toggleRespuestaRapidaStatus(respuesta.id, !respuesta.activa);
+      const response = await respuestasRapidasService.toggleRespuestaRapidaStatus(respuesta.id, !respuesta.activa);
       
       if (response.success) {
         // Recargar las respuestas desde la base de datos

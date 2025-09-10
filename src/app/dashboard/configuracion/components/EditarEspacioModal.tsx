@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { supabaseService, EspacioTrabajoResponse } from '@/services/supabaseService';
+import { espacioTrabajoService, EspacioTrabajoResponse } from '@/services/espacioTrabajoServices';
 
 interface EditarEspacioModalProps {
   isOpen: boolean;
@@ -64,7 +64,7 @@ export default function EditarEspacioModal({ isOpen, onClose, onEspacioUpdated, 
       console.log('Actualizando espacio de trabajo:', espacio.id, updateData);
 
       // Llamar al servicio de actualización
-      const result = await supabaseService.updateEspacioTrabajo(espacio.id, updateData);
+      const result = await espacioTrabajoService.updateEspacioTrabajo(espacio.id, updateData);
 
       if (result.success) {
         console.log('Espacio de trabajo actualizado exitosamente');
