@@ -24,6 +24,7 @@ import {
 // } from '@dnd-kit/sortable';
 // import { CSS } from '@dnd-kit/utilities';
 import DraggableEmbudo from './components/DraggableEmbudo';
+import { BarChart3 } from 'lucide-react';
 
 export default function EmbudosPage() {
   const [espaciosConEmbudos, setEspaciosConEmbudos] = useState<EspacioConEmbudos[]>([]);
@@ -184,14 +185,14 @@ export default function EmbudosPage() {
   };
 
   const handleMensajeMoved = async (mensajeId: number, nuevoEmbudoId: number) => {
-    console.log('🚀 Iniciando movimiento de mensaje:', mensajeId, 'al embudo:', nuevoEmbudoId);
+    console.log('Iniciando movimiento de mensaje:', mensajeId, 'al embudo:', nuevoEmbudoId);
     
     try {
       // 1. Llamar al servicio para persistir el cambio en la base de datos
       const result = await mensajesService.moveMensajeToEmbudo(mensajeId, nuevoEmbudoId);
       
       if (result.success) {
-        console.log('✅ Mensaje movido exitosamente en la base de datos');
+        console.log('Mensaje movido exitosamente en la base de datos');
         
         // 2. Actualizar el estado local para feedback inmediato
         setMensajes(prevMensajes => 
@@ -205,68 +206,68 @@ export default function EmbudosPage() {
         // 3. Recargar datos para asegurar consistencia (opcional, ya que el estado local está actualizado)
         // loadEspaciosYEmbudos();
       } else {
-        console.error('❌ Error al mover mensaje:', result.error);
+        console.error('Error al mover mensaje:', result.error);
         // Aquí podrías mostrar una notificación de error al usuario
       }
     } catch (error) {
-      console.error('❌ Error inesperado al mover mensaje:', error);
+      console.error('Error inesperado al mover mensaje:', error);
       // Aquí podrías mostrar una notificación de error al usuario
     }
   };
 
   // Manejar el inicio del drag
   const handleDragStart = (event: DragStartEvent) => {
-    console.log('🚀 Drag started:', event.active.id);
+    console.log('Drag started:', event.active.id);
     setActiveId(String(event.active.id));
   };
 
   // Manejar el final del drag & drop
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
-    console.log('🎯 Drag ended:', { active: active.id, over: over?.id });
+    console.log('Drag ended:', { active: active.id, over: over?.id });
     setActiveId(null);
 
     if (!over || !over.id) {
-      console.log('❌ No over target or no over.id');
+      console.log('No over target or no over.id');
       return;
     }
 
     const activeIdStr = String(active.id);
     const overIdStr = String(over.id);
     
-    console.log('📝 Processing:', { activeIdStr, overIdStr });
+    console.log('Processing:', { activeIdStr, overIdStr });
 
     // Verificar si es un mensaje siendo arrastrado
     if (activeIdStr.startsWith('mensaje-')) {
-      console.log('✅ Es un mensaje siendo arrastrado');
+      console.log('Es un mensaje siendo arrastrado');
       const mensajeId = parseInt(activeIdStr.replace('mensaje-', ''));
       
       // Verificar si se está soltando sobre un embudo
       if (overIdStr.startsWith('embudo-drop-')) {
-        console.log('✅ Se está soltando sobre un embudo');
+        console.log('Se está soltando sobre un embudo');
         const nuevoEmbudoId = parseInt(overIdStr.replace('embudo-drop-', ''));
         
         // Encontrar el mensaje actual
         const mensajeActual = mensajes.find(m => m.id === mensajeId);
         if (!mensajeActual) {
-          console.log('❌ Mensaje no encontrado');
+          console.log('Mensaje no encontrado');
           return;
         }
         
         if (mensajeActual.embudo_id === nuevoEmbudoId) {
-          console.log('❌ Es el mismo embudo, no hacer nada');
+          console.log('Es el mismo embudo, no hacer nada');
           return;
         }
 
-        console.log('🚀 Moviendo mensaje:', mensajeId, 'al embudo:', nuevoEmbudoId);
+        console.log('Moviendo mensaje:', mensajeId, 'al embudo:', nuevoEmbudoId);
         // Mover el mensaje
         handleMensajeMoved(mensajeId, nuevoEmbudoId);
         return;
       } else {
-        console.log('❌ No se está soltando sobre un embudo válido');
+        console.log('No se está soltando sobre un embudo válido');
       }
     } else {
-      console.log('❌ No es un mensaje siendo arrastrado');
+      console.log('No es un mensaje siendo arrastrado');
     }
 
     // Solo manejar mensajes, no hay reordenamiento de embudos
@@ -459,7 +460,9 @@ export default function EmbudosPage() {
                 </DndContext>
               ) : (
                 <div className="text-center py-16">
-                  <div className="text-gray-400 text-6xl mb-4">📊</div>
+                  <div className="text-gray-400 text-6xl mb-4">
+                    <BarChart3 className="w-16 h-16 mx-auto" />
+                  </div>
                   <h3 className="text-white text-lg font-medium mb-2">No hay embudos en este espacio</h3>
                   <p className="text-gray-400 text-sm mb-6">
                     Crea tu primer embudo para comenzar a gestionar tu flujo de trabajo.

@@ -2,6 +2,7 @@
 
 import { SesionResponse } from '@/services/sesionesServices';
 import { Canal } from '@/services/canalesServices';
+import { Edit, Trash2 } from 'lucide-react';
 
 interface CanalOption {
   id: string;
@@ -191,7 +192,7 @@ export default function SesionesList({
                     className="p-2 text-gray-400 hover:text-white hover:bg-[#3a3d45] rounded-lg transition-colors"
                     title="Editar sesión"
                   >
-                    ✏️
+                    <Edit className="w-4 h-4" />
                   </button>
                 )}
                 
@@ -202,7 +203,7 @@ export default function SesionesList({
                     className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-900 hover:bg-opacity-20 rounded-lg transition-colors"
                     title="Eliminar sesión"
                   >
-                    🗑️
+                    <Trash2 className="w-4 h-4" />
                   </button>
                 )}
               </div>

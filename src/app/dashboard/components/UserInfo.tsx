@@ -1,5 +1,7 @@
 'use client';
 
+import { Crown, Briefcase, User, Building } from 'lucide-react';
+
 interface UserInfoProps {
   userName: string;
   userRole: string;
@@ -9,10 +11,10 @@ interface UserInfoProps {
 export default function UserInfo({ userName, userRole, agencyName }: UserInfoProps) {
   const getRoleIcon = (role: string) => {
     switch (role) {
-      case 'admin': return '👑';
-      case 'supervisor': return '👔';
-      case 'comercial': return '💼';
-      default: return '👤';
+      case 'admin': return Crown;
+      case 'supervisor': return Briefcase;
+      case 'comercial': return User;
+      default: return Building;
     }
   };
 
@@ -41,7 +43,10 @@ export default function UserInfo({ userName, userRole, agencyName }: UserInfoPro
         <div className="text-gray-400 text-sm">{agencyName}</div>
       </div>
       <div className={`${getRoleColor(userRole)} text-white px-2 py-1 rounded-full text-xs font-medium flex items-center space-x-1`}>
-        <span>{getRoleIcon(userRole)}</span>
+        {(() => {
+          const IconComponent = getRoleIcon(userRole);
+          return <IconComponent className="w-3 h-3" />;
+        })()}
         <span>{getRoleLabel(userRole)}</span>
       </div>
     </div>

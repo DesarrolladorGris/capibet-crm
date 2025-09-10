@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { Trash2 } from 'lucide-react';
 
 interface ConfirmarEliminarModalProps {
   isOpen: boolean;
@@ -33,7 +34,7 @@ export default function ConfirmarEliminarModal({ isOpen, onClose, onConfirm, con
         <div className="flex items-center justify-between p-6 border-b border-[#3a3d45]">
           <div className="flex items-center space-x-3">
             <div className="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center">
-              <span className="text-white font-bold text-sm">🗑️</span>
+              <Trash2 className="w-4 h-4 text-white" />
             </div>
             <div>
               <h2 className="text-white text-lg font-semibold">Confirmar Eliminación</h2>

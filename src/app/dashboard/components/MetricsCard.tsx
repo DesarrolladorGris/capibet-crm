@@ -1,5 +1,7 @@
 'use client';
 
+import { MessageCircle, Users, Clock, Mail, TrendingUp, TrendingDown, Info } from 'lucide-react';
+
 interface MetricsCardProps {
   title: string;
   value: string;
@@ -64,29 +66,13 @@ export default function MetricsCard({ title, value, change, changeType, icon }: 
   const renderIcon = () => {
     switch (icon) {
       case 'chat':
-        return (
-          <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M20 2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h4l4 4 4-4h4c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/>
-          </svg>
-        );
+        return <MessageCircle className="w-5 h-5 text-white" />;
       case 'user':
-        return (
-          <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-          </svg>
-        );
+        return <Users className="w-5 h-5 text-white" />;
       case 'clock':
-        return (
-          <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm4.2 14.2L11 13V7h1.5v5.2l4.5 2.7-.8 1.3z"/>
-          </svg>
-        );
+        return <Clock className="w-5 h-5 text-white" />;
       case 'message':
-        return (
-          <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M20 2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h4l4 4 4-4h4c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/>
-          </svg>
-        );
+        return <Mail className="w-5 h-5 text-white" />;
       default:
         return null;
     }
@@ -97,7 +83,7 @@ export default function MetricsCard({ title, value, change, changeType, icon }: 
       {/* Ícono de información con tooltip */}
       <div className="absolute top-4 right-4 group">
         <div className="w-5 h-5 bg-gray-600 rounded-full flex items-center justify-center cursor-pointer hover:bg-gray-500">
-          <span className="text-white text-xs font-bold">i</span>
+          <Info className="w-3 h-3 text-white" />
         </div>
         {/* Tooltip */}
         <div className="absolute bottom-full right-0 mb-2 w-72 p-4 bg-gray-800 text-white text-sm rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
@@ -125,15 +111,11 @@ export default function MetricsCard({ title, value, change, changeType, icon }: 
           changeType === 'positive' ? 'text-green-500' : 'text-red-500'
         }`}>
           {changeType === 'positive' ? (
-            <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M5.293 7.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L6.707 7.707a1 1 0 01-1.414 0z" clipRule="evenodd" />
-            </svg>
+            <TrendingUp className="w-5 h-5 mr-1" />
           ) : (
-            <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M14.707 12.293a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L9 14.586V3a1 1 0 012 0v11.586l2.293-2.293a1 1 0 011.414 0z" clipRule="evenodd" />
-            </svg>
+            <TrendingDown className="w-5 h-5 mr-1" />
           )}
-          {change}
+          <span className={`text-md font-medium ${changeType === 'positive' ? 'text-green-500' : 'text-red-500'}`}>{change}</span>
         </span>
       </div>
     </div>

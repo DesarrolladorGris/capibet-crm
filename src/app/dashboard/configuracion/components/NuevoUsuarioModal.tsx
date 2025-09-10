@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { usuarioService, UsuarioData } from '@/services/usuarioServices';
+import { Plus } from 'lucide-react';
 
 interface NuevoUsuarioModalProps {
   isOpen: boolean;
@@ -214,7 +215,7 @@ export default function NuevoUsuarioModal({ isOpen, onClose, onUserCreated }: Nu
         <div className="flex items-center justify-between p-6 border-b border-[#3a3d45]">
           <div className="flex items-center space-x-3">
             <div className="w-8 h-8 bg-[#00b894] rounded-full flex items-center justify-center">
-              <span className="text-white font-bold text-sm">➕</span>
+              <Plus className="w-4 h-4 text-white" />
             </div>
             <div>
               <h2 className="text-white text-lg font-semibold">Nuevo Usuario</h2>

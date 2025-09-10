@@ -11,6 +11,7 @@ import { contactoService, ContactResponse, ContactData } from '@/services/contac
 import { isUserAuthenticated, getCurrentUserId } from '@/utils/auth';
 import { useExportContacts } from '@/hooks/useExportContacts';
 import { useImportContacts } from '@/hooks/useImportContacts';
+import { Edit, Trash2 } from 'lucide-react';
 
 export default function ContactosPage() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -501,14 +502,14 @@ export default function ContactosPage() {
                     className="text-gray-400 hover:text-blue-400 text-sm transition-colors"
                     title="Editar contacto"
                   >
-                    ✏️
+                    <Edit className="w-4 h-4" />
                   </button>
                   <button 
                     onClick={() => handleDeleteContact(contact)}
                     className="text-gray-400 hover:text-red-400 text-sm transition-colors"
                     title="Eliminar contacto"
                   >
-                    🗑️
+                    <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
               </div>

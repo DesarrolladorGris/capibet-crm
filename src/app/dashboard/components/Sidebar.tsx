@@ -2,6 +2,19 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
+import { 
+  Home, 
+  Funnel, 
+  MessageCircle, 
+  MessageCircleMore, 
+  Mail, 
+  Calendar, 
+  Users, 
+  ShoppingCart, 
+  Send, 
+  Settings,
+  Zap
+} from 'lucide-react';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -9,16 +22,16 @@ interface SidebarProps {
 }
 
 const menuItems = [
-  { id: 'dashboard', icon: '🏠', label: 'Dashboard', active: true },
-  { id: 'funnels', icon: '🔽', label: 'Embudos', active: false },
-  { id: 'chats', icon: '💬', label: 'Chats', active: false },
-  { id: 'internal-chat', icon: '💭', label: 'Chat Interno', active: false },
-  { id: 'emails', icon: '✉️', label: 'Emails', active: false },
-  { id: 'calendar', icon: '📅', label: 'Calendario', active: false },
-  { id: 'contacts', icon: '👥', label: 'Contactos', active: false },
-  { id: 'sales', icon: '🛒', label: 'Ventas', active: false },
-  { id: 'bulk-sends', icon: '📤', label: 'Envíos masivos', active: false },
-  { id: 'config', icon: '⚙️', label: 'Configuración', active: false },
+  { id: 'dashboard', icon: Home, label: 'Dashboard', active: true },
+  { id: 'funnels', icon: Funnel, label: 'Embudos', active: false },
+  { id: 'chats', icon: MessageCircle, label: 'Chats', active: false },
+  { id: 'internal-chat', icon: MessageCircleMore, label: 'Chat Interno', active: false },
+  { id: 'emails', icon: Mail, label: 'Emails', active: false },
+  { id: 'calendar', icon: Calendar, label: 'Calendario', active: false },
+  { id: 'contacts', icon: Users, label: 'Contactos', active: false },
+  { id: 'sales', icon: ShoppingCart, label: 'Ventas', active: false },
+  { id: 'bulk-sends', icon: Send, label: 'Envíos masivos', active: false },
+  { id: 'config', icon: Settings, label: 'Configuración', active: false },
 ];
 
 export default function Sidebar({ isOpen }: SidebarProps) {
@@ -77,7 +90,7 @@ export default function Sidebar({ isOpen }: SidebarProps) {
       <div className="p-4 border-b border-[#3a3d45]">
         <div className="flex items-center space-x-3">
           <div className="w-8 h-8 bg-[#00b894] rounded-full flex items-center justify-center">
-            <div className="text-white font-bold text-sm transform -rotate-12">⚡</div>
+            <Zap className="w-5 h-5 text-white" />
           </div>
           {isOpen && (
             <div>
@@ -104,7 +117,7 @@ export default function Sidebar({ isOpen }: SidebarProps) {
                 : 'text-gray-400 hover:text-white hover:bg-[#2a2d35]'
             }`}
           >
-            <span className="text-lg flex-shrink-0">{item.icon}</span>
+            <item.icon className="w-6 h-6 flex-shrink-0" />
             {isOpen && (
               <span className="font-medium text-sm">{item.label}</span>
             )}

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { Building2, Link, Tag, Users, MessageCircle } from 'lucide-react';
 
 import EspaciosTrabajoTab from './components/EspaciosTrabajoTab';
 import UsuariosTab from './components/UsuariosTab';
@@ -17,7 +18,7 @@ import { isUserAuthenticated } from '@/utils/auth';
 interface TabConfig {
   id: string;
   label: string;
-  icon: string;
+  icon: React.ComponentType<{ className?: string }>;
   count?: number;
   component: React.ComponentType;
 }
@@ -35,11 +36,11 @@ export default function ConfiguracionPage() {
 
   // Configuración de pestañas
   const tabs: TabConfig[] = [
-    { id: 'espacios-trabajo', label: 'Espacios de trabajo', icon: '🏢', count: espaciosCount, component: EspaciosTrabajoTab },
-    { id: 'sesiones', label: 'Sesiones', icon: '🔗', count: 0, component: SesionesTab },
-    { id: 'etiquetas', label: 'Etiquetas', icon: '🏷️', count: 4, component: EtiquetasTab },
-    { id: 'usuarios', label: 'Usuarios', icon: '👥', count: userCount, component: UsuariosTab },
-    { id: 'respuestas-rapidas', label: 'Respuestas rápidas', icon: '💬', count: respuestasRapidasCount, component: RespuestasRapidasTab },
+    { id: 'espacios-trabajo', label: 'Espacios de trabajo', icon: Building2, count: espaciosCount, component: EspaciosTrabajoTab },
+    { id: 'sesiones', label: 'Sesiones', icon: Link, count: 0, component: SesionesTab },
+    { id: 'etiquetas', label: 'Etiquetas', icon: Tag, count: 4, component: EtiquetasTab },
+    { id: 'usuarios', label: 'Usuarios', icon: Users, count: userCount, component: UsuariosTab },
+    { id: 'respuestas-rapidas', label: 'Respuestas rápidas', icon: MessageCircle, count: respuestasRapidasCount, component: RespuestasRapidasTab },
   ];
 
   useEffect(() => {
@@ -88,8 +89,8 @@ export default function ConfiguracionPage() {
           <div className="text-right">
             <div className="text-white text-sm font-medium">{userName || userEmail}</div>
             <div className="text-gray-400 text-xs">
-              {userRole === 'admin' ? '👑 Administrador' : 
-               userRole === 'manager' ? '👔 Gerente' : '👤 Usuario'} • {agencyName}
+              {userRole === 'admin' ? 'Administrador' : 
+               userRole === 'manager' ? 'Gerente' : 'Usuario'} • {agencyName}
             </div>
           </div>
         </div>
@@ -108,7 +109,7 @@ export default function ConfiguracionPage() {
                   : 'border-transparent text-gray-400 hover:text-white'
               }`}
             >
-              <span className="text-sm">{tab.icon}</span>
+              <tab.icon className="w-4 h-4" />
               <span className="text-sm font-medium">{tab.label}</span>
               {tab.count !== undefined && (
                 <span className="bg-[#2a2d35] text-gray-400 text-xs px-2 py-1 rounded-full">

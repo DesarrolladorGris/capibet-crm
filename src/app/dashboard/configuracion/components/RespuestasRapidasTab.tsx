@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
 import { respuestasRapidasService, RespuestaRapida, RespuestaRapidaFormData } from '@/services/respuestasRapidasServices';
+import { MessageCircle, CheckCircle, Circle, Plus, Edit, Trash2, RotateCcw } from 'lucide-react';
 
 // Interfaces importadas desde respuestasRapidasServices
 
@@ -271,14 +272,14 @@ export default function RespuestasRapidasTab() {
              onClick={cargarRespuestas}
              className="flex items-center space-x-2 bg-gray-600 hover:bg-gray-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
            >
-             <span>🔄</span>
+             <RotateCcw className="w-4 h-4" />
              <span>Actualizar</span>
            </button>
                      <button
              onClick={() => abrirModal()}
              className="flex items-center space-x-2 bg-[#00b894] hover:bg-[#00a085] text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
            >
-             <span>➕</span>
+             <Plus className="w-4 h-4" />
              <span>Nueva Respuesta</span>
            </button>
         </div>
@@ -363,7 +364,9 @@ export default function RespuestasRapidasTab() {
               </div>
             ) : (
               <div>
-                <div className="text-4xl mb-4">💬</div>
+                <div className="text-4xl mb-4">
+                  <MessageCircle className="w-12 h-12 text-gray-400 mx-auto" />
+                </div>
                 <p>No hay respuestas rápidas configuradas</p>
                 <button
                   onClick={() => abrirModal()}
@@ -412,21 +415,25 @@ export default function RespuestasRapidasTab() {
                       }`}
                       title={respuesta.activa ? 'Desactivar' : 'Activar'}
                     >
-                      {respuesta.activa ? '✅' : '⭕'}
+                      {respuesta.activa ? (
+                        <CheckCircle className="w-4 h-4 text-green-500" />
+                      ) : (
+                        <Circle className="w-4 h-4 text-gray-400" />
+                      )}
                     </button>
                     <button
                       onClick={() => abrirModal(respuesta)}
                       className="p-2 text-indigo-400 hover:bg-indigo-900 rounded-lg transition-colors duration-200"
                       title="Editar"
                     >
-                      ✏️
+                      <Edit className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => abrirModalEliminar(respuesta)}
                       className="p-2 text-rose-400 hover:bg-rose-900 rounded-lg transition-colors duration-200"
                       title="Eliminar"
                     >
-                      🗑️
+                      <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
@@ -444,7 +451,7 @@ export default function RespuestasRapidasTab() {
             <div className="flex items-center justify-between p-6 border-b border-[#3a3d45]">
               <div className="flex items-center space-x-3">
                 <div className="w-8 h-8 bg-[#00b894] rounded-full flex items-center justify-center">
-                  <span className="text-white font-bold text-sm">💬</span>
+                  <MessageCircle className="w-4 h-4 text-white" />
                 </div>
                 <div>
                   <h2 className="text-white text-lg font-semibold">

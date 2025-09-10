@@ -63,20 +63,29 @@ export default function NuevoMensajeModal({
         espacioId ? embudoService.getEmbudosByEspacio(espacioId) : embudoService.getAllEmbudos()
       ]);
 
-      if (canalesResult.success && canalesResult.data) {
+      if (canalesResult.success && canalesResult.data && Array.isArray(canalesResult.data)) {
         // Filtrar canales por espacio si está disponible
         const canalesFiltrados = espacioId 
           ? canalesResult.data.filter(canal => canal.espacio_id === espacioId)
           : canalesResult.data;
         setCanales(canalesFiltrados);
+      } else {
+        console.warn('Canales data is not an array:', canalesResult.data);
+        setCanales([]);
       }
 
-      if (contactosResult.success && contactosResult.data) {
+      if (contactosResult.success && contactosResult.data && Array.isArray(contactosResult.data)) {
         setContactos(contactosResult.data);
+      } else {
+        console.warn('Contactos data is not an array:', contactosResult.data);
+        setContactos([]);
       }
 
-      if (embudosResult.success && embudosResult.data) {
+      if (embudosResult.success && embudosResult.data && Array.isArray(embudosResult.data)) {
         setEmbudos(embudosResult.data);
+      } else {
+        console.warn('Embudos data is not an array:', embudosResult.data);
+        setEmbudos([]);
       }
 
     } catch (error) {
@@ -91,11 +100,15 @@ export default function NuevoMensajeModal({
   const loadSesiones = async (selectedCanalId: number) => {
     try {
       const sesionesResult = await sesionesService.getSesionesByCanal(selectedCanalId);
-      if (sesionesResult.success && sesionesResult.data) {
+      if (sesionesResult.success && sesionesResult.data && Array.isArray(sesionesResult.data)) {
         setSesiones(sesionesResult.data);
+      } else {
+        console.warn('Sesiones data is not an array:', sesionesResult.data);
+        setSesiones([]);
       }
     } catch (error) {
       console.error('Error loading sesiones:', error);
+      setSesiones([]);
     }
   };
 

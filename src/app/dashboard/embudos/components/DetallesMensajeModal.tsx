@@ -92,7 +92,7 @@ export default function DetallesMensajeModal({
       });
 
       if (result.success) {
-        console.log('✅ Mensaje actualizado exitosamente');
+        console.log('Mensaje actualizado exitosamente');
         setUpdateSuccess(true);
         // Actualizar el mensaje local para reflejar el cambio
         mensaje.contenido = contenidoEditado.trim();

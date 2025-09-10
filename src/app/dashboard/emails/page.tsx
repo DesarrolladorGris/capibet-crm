@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { PlusIcon, StarIcon, MagnifyingGlassIcon, FunnelIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 import { StarIcon as StarIconSolid } from '@heroicons/react/24/solid';
+import { FileText, Trash2, Inbox, Star, Send } from 'lucide-react';
 import EmailAccountManager from './components/EmailAccountManager';
 import EmailComposer from './components/EmailComposer';
 import { useAuth } from '@/hooks/useAuth';
@@ -237,11 +238,11 @@ export default function EmailsPage() {
         {/* Tabs de navegación */}
         <div className="flex space-x-1 px-4 py-2 bg-[#1a1d23] border-b border-[#3a3d45]">
           {[
-            { id: 'inbox', label: 'Bandeja de entrada', icon: '📥' },
-            { id: 'starred', label: 'Destacados', icon: '⭐' },
-            { id: 'sent', label: 'Enviados', icon: '📤' },
-            { id: 'drafts', label: 'Borradores', icon: '📝' },
-            { id: 'trash', label: 'Papelera', icon: '🗑️' }
+            { id: 'inbox', label: 'Bandeja de entrada', icon: Inbox },
+            { id: 'starred', label: 'Destacados', icon: Star },
+            { id: 'sent', label: 'Enviados', icon: Send },
+            { id: 'drafts', label: 'Borradores', icon: FileText },
+            { id: 'trash', label: 'Papelera', icon: Trash2 }
           ].map((tab) => (
             <button
               key={tab.id}
@@ -252,7 +253,11 @@ export default function EmailsPage() {
                   : 'text-gray-400 hover:text-white hover:bg-[#3a3d45]'
               }`}
             >
-              <span>{tab.icon}</span>
+              {typeof tab.icon === 'string' ? (
+                <span>{tab.icon}</span>
+              ) : (
+                <tab.icon className="w-4 h-4" />
+              )}
               <span>{tab.label}</span>
             </button>
           ))}

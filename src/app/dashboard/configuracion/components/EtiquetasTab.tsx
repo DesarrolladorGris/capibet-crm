@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { Edit, Trash2 } from 'lucide-react';
 
 interface Etiqueta {
   id: number;
@@ -170,7 +171,7 @@ export default function EtiquetasTab() {
                   className="text-gray-400 hover:text-white p-1 rounded"
                   title="Editar"
                 >
-                  ✏️
+                  <Edit className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => handleToggleStatus(etiqueta)}
@@ -184,7 +185,7 @@ export default function EtiquetasTab() {
                   className="text-gray-400 hover:text-red-400 p-1 rounded"
                   title="Eliminar"
                 >
-                  🗑️
+                  <Trash2 className="w-4 h-4" />
                 </button>
               </div>
             </div>

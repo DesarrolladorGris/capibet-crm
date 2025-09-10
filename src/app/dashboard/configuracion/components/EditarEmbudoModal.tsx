@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { embudoService, EmbUpdoResponse, EmbUpdoData } from '@/services/embudoServices';
+import { BarChart3, Edit, Lightbulb } from 'lucide-react';
 
 interface EditarEmbudoModalProps {
   isOpen: boolean;
@@ -104,7 +105,7 @@ export default function EditarEmbudoModal({
         {embudo && (
           <div className="mb-4 text-gray-400 text-sm border-b border-[#3a3d45] pb-3">
             <div className="flex items-center space-x-2 mb-2">
-              <span className="text-[#00b894]">📊</span>
+              <BarChart3 className="w-4 h-4 text-[#00b894]" />
               <span className="text-white font-medium">Editando: {embudo.nombre}</span>
             </div>
             <div className="space-y-1 text-xs">
@@ -156,11 +157,15 @@ export default function EditarEmbudoModal({
           {/* Indicador de cambios */}
           <div className="bg-[#1a1d23] rounded-lg p-3 border border-[#3a3d45]">
             <div className="text-sm text-gray-400">
-              💡 <strong>Estado de cambios:</strong>
+              <Lightbulb className="w-4 h-4 inline mr-1" />
+              <strong>Estado de cambios:</strong>
             </div>
             <div className="text-xs mt-2">
               {hasChanges ? (
-                <span className="text-yellow-400">✏️ Hay cambios sin guardar</span>
+                <span className="text-yellow-400 flex items-center">
+                  <Edit className="w-4 h-4 mr-1" />
+                  Hay cambios sin guardar
+                </span>
               ) : (
                 <span className="text-gray-500">✅ Sin cambios pendientes</span>
               )}

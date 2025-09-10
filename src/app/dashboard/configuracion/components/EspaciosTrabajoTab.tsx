@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { usuarioService } from '@/services/usuarioServices';
 import { embudoService, EmbUpdoResponse } from '@/services/embudoServices';
-import { espacioTrabajoService, EspacioTrabajoResponse, EspacioConEmbudos } from '@/services/espacioTrabajoServices';
+import { espacioTrabajoService, EspacioConEmbudos } from '@/services/espacioTrabajoServices';
+import { EspacioTrabajoResponse } from '@/app/api/espacio_trabajos/domain/espacio_trabajo';
 import NuevoEspacioModal from './NuevoEspacioModal';
 import EditarEspacioModal from './EditarEspacioModal';
 import ConfirmarEliminarEspacioModal from './ConfirmarEliminarEspacioModal';
@@ -24,6 +24,7 @@ import {
 } from '@dnd-kit/sortable';
 import ConfirmarEliminarEmbudoModal from './ConfirmarEliminarEmbudoModal';
 import DraggableEmbudo from './DraggableEmbudo';
+import { Plus, Edit, Trash2 } from 'lucide-react';
 
 export default function EspaciosTrabajoTab() {
   const [espaciosConEmbudos, setEspaciosConEmbudos] = useState<EspacioConEmbudos[]>([]);
@@ -171,7 +172,7 @@ export default function EspaciosTrabajoTab() {
       return;
     }
 
-    console.log('🚀 Drag end:', active.id, 'over:', over.id);
+    console.log('Drag end:', active.id, 'over:', over.id);
 
     // Encontrar el espacio actual
     const espacioIndex = espaciosConEmbudos.findIndex(e => e.id === espacioId);
@@ -206,16 +207,16 @@ export default function EspaciosTrabajoTab() {
       const result = await embudoService.updateEmbudosOrder(embudosConOrden);
       
       if (result.success) {
-        console.log('✅ Orden de embudos actualizado exitosamente');
+        console.log('Orden de embudos actualizado exitosamente');
         // Recargar para asegurar consistencia
         loadEspaciosTrabajo();
       } else {
-        console.error('❌ Error al actualizar orden:', result.error);
+        console.error('Error al actualizar orden:', result.error);
         // Revertir cambios locales en caso de error
         loadEspaciosTrabajo();
       }
     } catch (error) {
-      console.error('❌ Error inesperado:', error);
+      console.error('Error inesperado:', error);
       // Revertir cambios locales en caso de error
       loadEspaciosTrabajo();
     }
@@ -266,18 +267,16 @@ export default function EspaciosTrabajoTab() {
             onClick={loadEspaciosTrabajo}
             className="flex items-center space-x-2 bg-gray-600 hover:bg-gray-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
           >
-            <span>🔄</span>
             <span>Actualizar</span>
           </button>
           <button className="flex items-center space-x-2 bg-gray-600 hover:bg-gray-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
-            <span>🏗️</span>
             <span>Plantillas</span>
           </button>
           <button 
             onClick={() => setShowNuevoEspacioModal(true)}
             className="flex items-center space-x-2 bg-[#00b894] hover:bg-[#00a085] text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
           >
-            <span>➕</span>
+            <Plus className="w-4 h-4" />
             <span>Nuevo Espacio</span>
           </button>
         </div>
@@ -300,14 +299,14 @@ export default function EspaciosTrabajoTab() {
                     onClick={() => handleEditEspacio(espacio)}
                     className="flex items-center space-x-1 text-gray-400 hover:text-white text-sm transition-colors px-3 py-1 rounded border border-gray-600 hover:border-gray-500"
                   >
-                    <span>✏️</span>
+                    <Edit className="w-4 h-4" />
                     <span>Editar</span>
                   </button>
                   <button 
                     onClick={() => handleDeleteEspacio(espacio)}
                     className="flex items-center space-x-1 text-gray-400 hover:text-red-400 text-sm transition-colors px-3 py-1 rounded border border-gray-600 hover:border-red-500"
                   >
-                    <span>🗑️</span>
+                    <Trash2 className="w-4 h-4" />
                     <span>Eliminar</span>
                   </button>
                 </div>

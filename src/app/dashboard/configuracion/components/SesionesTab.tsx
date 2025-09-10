@@ -3,30 +3,31 @@
 import { useState, useEffect } from 'react';
 import { sesionesService, SesionResponse } from '@/services/sesionesServices';
 import { canalesService, Canal, CanalData } from '@/services/canalesServices';
-import { espacioTrabajoService, EspacioTrabajoResponse } from '@/services/espacioTrabajoServices';
+import { espacioTrabajoService } from '@/services/espacioTrabajoServices';
+import { EspacioTrabajoResponse } from '@/app/api/espacio_trabajos/domain/espacio_trabajo';
 import { usuarioService, UsuarioResponse } from '@/services/usuarioServices';
 import CanalSelector from './CanalSelector';
 import SesionesList from './SesionesList';
 import ConfirmDeleteCanalModal from './ConfirmDeleteCanalModal';
+import { Smartphone, Mail, Camera, MessageCircle, Send, Bot, Link, Trash2 } from 'lucide-react';
 
 interface CanalOption {
   id: Canal['tipo'];
   nombre: string;
-  icon: string;
+  icon: React.ComponentType<{ className?: string }>;
   color: string;
   tipo: Canal['tipo'];
 }
 
 const canalOptions: CanalOption[] = [
-  { id: 'whatsapp', nombre: 'WhatsApp', icon: '📱', color: '#25D366', tipo: 'whatsapp' },
-
-  { id: 'whatsappApi', nombre: 'WhatsApp API', icon: '📱', color: '#25D366', tipo: 'whatsappApi' },
-  { id: 'email', nombre: 'Email', icon: '✉️', color: '#EA4335', tipo: 'email' },
-  { id: 'instagram', nombre: 'Instagram', icon: '📷', color: '#E4405F', tipo: 'instagram' },
-  { id: 'messenger', nombre: 'Messenger', icon: '💬', color: '#0084FF', tipo: 'messenger' },
-  { id: 'telegram', nombre: 'Telegram', icon: '✈️', color: '#0088CC', tipo: 'telegram' },
-  { id: 'telegramBot', nombre: 'Telegram Bot', icon: '🤖', color: '#0088CC', tipo: 'telegramBot' },
-  { id: 'webChat', nombre: 'Web Chat', icon: '💬', color: '#00b894', tipo: 'webChat' },
+  { id: 'whatsapp', nombre: 'WhatsApp', icon: Smartphone, color: '#25D366', tipo: 'whatsapp' },
+  { id: 'whatsappApi', nombre: 'WhatsApp API', icon: Smartphone, color: '#25D366', tipo: 'whatsappApi' },
+  { id: 'email', nombre: 'Email', icon: Mail, color: '#EA4335', tipo: 'email' },
+  { id: 'instagram', nombre: 'Instagram', icon: Camera, color: '#E4405F', tipo: 'instagram' },
+  { id: 'messenger', nombre: 'Messenger', icon: MessageCircle, color: '#0084FF', tipo: 'messenger' },
+  { id: 'telegram', nombre: 'Telegram', icon: Send, color: '#0088CC', tipo: 'telegram' },
+  { id: 'telegramBot', nombre: 'Telegram Bot', icon: Bot, color: '#0088CC', tipo: 'telegramBot' },
+  { id: 'webChat', nombre: 'Web Chat', icon: MessageCircle, color: '#00b894', tipo: 'webChat' },
 ];
 
 export default function SesionesTab() {
@@ -270,7 +271,7 @@ export default function SesionesTab() {
 
   const getCanalIcon = (tipo: Canal['tipo']) => {
     const option = canalOptions.find(opt => opt.tipo === tipo);
-    return option?.icon || '📱';
+    return option?.icon || Smartphone;
   };
 
   const getCanalColor = (tipo: Canal['tipo']) => {
@@ -382,7 +383,7 @@ export default function SesionesTab() {
       {/* Header de Sesiones */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-3">
-          <span className="text-2xl">🔗</span>
+          <Link className="w-6 h-6 text-[#00b894]" />
           <div>
             <h2 className="text-white text-2xl font-semibold">Sesiones {sesiones.length}</h2>
             <p className="text-gray-400 text-sm">Crear, editar y eliminar tus sesiones vinculadas.</p>
@@ -430,7 +431,10 @@ export default function SesionesTab() {
                     className="text-xl"
                     style={{ color: getCanalColor(canal.tipo) }}
                   >
-                    {getCanalIcon(canal.tipo)}
+                    {(() => {
+                      const IconComponent = getCanalIcon(canal.tipo);
+                      return <IconComponent className="w-5 h-5" />;
+                    })()}
                   </div>
                   <div>
                     <div className="text-white font-medium">{canal.descripcion}</div>
@@ -462,7 +466,7 @@ export default function SesionesTab() {
                     title="Eliminar canal"
                     disabled={loading}
                   >
-                    🗑️
+                    <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
                 
@@ -519,7 +523,9 @@ export default function SesionesTab() {
         
         {sesiones.length === 0 ? (
           <div className="text-center py-8">
-            <div className="text-gray-400 text-6xl mb-4">🔗</div>
+            <div className="text-gray-400 text-6xl mb-4">
+              <Link className="w-16 h-16 mx-auto" />
+            </div>
             <h4 className="text-white text-lg font-medium mb-2">Sesiones en desarrollo</h4>
             <p className="text-gray-400 text-sm mb-4">
               La funcionalidad de sesiones estará disponible próximamente.
@@ -568,7 +574,7 @@ export default function SesionesTab() {
                    <option value="">Seleccionar tipo</option>
                    {canalOptions.map((option) => (
                      <option key={option.id} value={option.id}>
-                       {option.icon} {option.nombre}
+                       {option.nombre}
                      </option>
                    ))}
                  </select>

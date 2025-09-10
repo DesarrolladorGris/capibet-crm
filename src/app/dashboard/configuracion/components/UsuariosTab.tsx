@@ -6,6 +6,7 @@ import NuevoUsuarioModal from './NuevoUsuarioModal';
 import EditarUsuarioModal from './EditarUsuarioModal';
 import ConfirmDeactivateModal from './ConfirmDeactivateModal';
 import ConfirmActivateModal from './ConfirmActivateModal';
+import { Plus, Edit, ArrowDown, ArrowUp, RotateCcw } from 'lucide-react';
 
 export default function UsuariosTab() {
   const [usuarios, setUsuarios] = useState<UsuarioResponse[]>([]);
@@ -209,14 +210,14 @@ export default function UsuariosTab() {
             onClick={loadUsuarios}
             className="flex items-center space-x-2 bg-gray-600 hover:bg-gray-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
           >
-            <span>🔄</span>
+            <RotateCcw className="w-4 h-4" />
             <span>Actualizar</span>
           </button>
           <button 
             onClick={() => setShowNuevoUsuarioModal(true)}
             className="flex items-center space-x-2 bg-[#00b894] hover:bg-[#00a085] text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
           >
-            <span>➕</span>
+            <Plus className="w-4 h-4" />
             <span>Nuevo Usuario</span>
           </button>
         </div>
@@ -289,7 +290,7 @@ export default function UsuariosTab() {
                           className="text-gray-400 hover:text-blue-400 text-sm transition-colors"
                           title="Editar usuario"
                         >
-                          ✏️
+                          <Edit className="w-4 h-4" />
                         </button>
                         {usuario.activo ? (
                           <button 
@@ -297,7 +298,7 @@ export default function UsuariosTab() {
                             className="text-gray-400 hover:text-red-400 text-sm transition-colors"
                             title="Dar de baja usuario"
                           >
-                            ⬇️
+                            <ArrowDown className="w-4 h-4" />
                           </button>
                         ) : (
                           <button 
@@ -305,7 +306,7 @@ export default function UsuariosTab() {
                             className="text-gray-400 hover:text-green-400 text-sm transition-colors"
                             title="Dar de alta usuario"
                           >
-                            ⬆️
+                            <ArrowUp className="w-4 h-4" />
                           </button>
                         )}
                       </div>

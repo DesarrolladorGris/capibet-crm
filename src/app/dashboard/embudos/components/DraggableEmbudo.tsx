@@ -4,6 +4,7 @@ import { useDroppable } from '@dnd-kit/core';
 import { MensajeResponse } from '@/services/mensajesServices';
 import { EmbUpdoResponse } from '@/services/embudoServices';
 import DraggableMensaje from './DraggableMensaje';
+import { MessageCircle, BarChart3, Edit, Trash2 } from 'lucide-react';
 
 interface DraggableEmbudoProps {
   embudo: EmbUpdoResponse;
@@ -50,7 +51,7 @@ export default function DraggableEmbudo({ embudo, index, mensajes, onEdit, onDel
             className="text-gray-400 hover:text-white text-xs p-1" 
             title="Editar embudo"
           >
-            ✏️
+            <Edit className="w-4 h-4" />
           </button>
           <button 
             onClick={(e) => {
@@ -60,7 +61,7 @@ export default function DraggableEmbudo({ embudo, index, mensajes, onEdit, onDel
             className="text-gray-400 hover:text-red-400 text-xs p-1" 
             title="Eliminar embudo"
           >
-            🗑️
+            <Trash2 className="w-4 h-4" />
           </button>
         </div>
       </div>
@@ -86,12 +87,14 @@ export default function DraggableEmbudo({ embudo, index, mensajes, onEdit, onDel
         {/* Header del área de contenido */}
         <div className="p-3 border-b border-[#3a3d45] flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <span className="text-gray-400 text-xs">💬</span>
+            <MessageCircle className="w-3 h-3 text-gray-400" />
             <span className="text-gray-300 text-xs font-medium">
               {mensajes.length} mensaje{mensajes.length !== 1 ? 's' : ''}
             </span>
           </div>
-          <div className="text-gray-500 text-xs">📊</div>
+          <div className="text-gray-500 text-xs">
+            <BarChart3 className="w-3 h-3" />
+          </div>
         </div>
         
         {/* Área principal para mensajes */}

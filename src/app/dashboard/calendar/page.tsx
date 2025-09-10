@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
+import { Edit } from 'lucide-react';
 
 // Interfaces
 interface User {
@@ -367,7 +368,10 @@ function EditActivityModal({ onClose, onSubmit, evento, teamMembers }: EditActiv
         {/* Header */}
         <div className="bg-gradient-to-r from-[#10B981] to-[#059669] p-4 rounded-t-xl">
           <div className="flex items-center justify-between">
-            <h3 className="text-white text-lg font-semibold">✏️ Editar Actividad</h3>
+            <h3 className="text-white text-lg font-semibold flex items-center">
+              <Edit className="w-5 h-5 mr-2" />
+              Editar Actividad
+            </h3>
             <button
               onClick={onClose}
               className="text-white hover:text-gray-200 text-xl transition-colors"
@@ -553,7 +557,8 @@ function EditActivityModal({ onClose, onSubmit, evento, teamMembers }: EditActiv
                type="submit"
                className="flex-1 bg-gradient-to-r from-[#10B981] to-[#059669] text-white py-3 px-6 rounded-lg hover:from-[#059669] hover:to-[#047857] transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:scale-105"
              >
-               ✏️ Actualizar Actividad
+               <Edit className="w-4 h-4 mr-2" />
+               Actualizar Actividad
              </button>
              <button
                type="button"
