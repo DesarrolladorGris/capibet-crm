@@ -11,15 +11,13 @@ interface NuevoUsuarioModalProps {
 }
 
 export default function NuevoUsuarioModal({ isOpen, onClose, onUserCreated }: NuevoUsuarioModalProps) {
-  const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
-    agencyName: '',
-    companyType: '',
     name: '',
     email: '',
     phone: '',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
+    rol: 'Admin'
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -70,15 +68,13 @@ export default function NuevoUsuarioModal({ isOpen, onClose, onUserCreated }: Nu
   // Reset form when modal opens/closes
   useEffect(() => {
     if (isOpen) {
-      setCurrentStep(1);
       setFormData({
-        agencyName: '',
-        companyType: '',
         name: '',
         email: '',
         phone: '',
         password: '',
-        confirmPassword: ''
+        confirmPassword: '',
+        rol: 'Admin'
       });
       setError('');
       setSuccess('');
@@ -108,15 +104,6 @@ export default function NuevoUsuarioModal({ isOpen, onClose, onUserCreated }: Nu
     }));
   };
 
-  const handleNextStep = () => {
-    if (formData.agencyName && formData.companyType) {
-      setCurrentStep(2);
-    }
-  };
-
-  const handlePrevStep = () => {
-    setCurrentStep(1);
-  };
 
   const handleCountrySelect = (country: typeof selectedCountry) => {
     setSelectedCountry(country);
@@ -129,7 +116,7 @@ export default function NuevoUsuarioModal({ isOpen, onClose, onUserCreated }: Nu
     setSuccess('');
     
     // Validaciones básicas
-    if (!formData.name || !formData.email || !formData.phone || !formData.password || !formData.confirmPassword) {
+    if (!formData.name || !formData.email || !formData.phone || !formData.password || !formData.confirmPassword || !formData.rol) {
       setError('Por favor completa todos los campos');
       return;
     }
@@ -164,14 +151,14 @@ export default function NuevoUsuarioModal({ isOpen, onClose, onUserCreated }: Nu
       
       // Preparar datos para la API
       const userData: UsuarioData = {
-        nombre_agencia: formData.agencyName,
-        tipo_empresa: formData.companyType,
+        nombre_agencia: 'N/A',
+        tipo_empresa: 'N/A',
         nombre_usuario: formData.name,
         correo_electronico: formData.email,
         telefono: formData.phone,
         codigo_pais: selectedCountry.code.replace('+', ''),
         contrasena: formData.password,
-        rol: 'Operador',
+        rol: formData.rol,
         activo: true
       };
       
@@ -219,7 +206,7 @@ export default function NuevoUsuarioModal({ isOpen, onClose, onUserCreated }: Nu
             <div>
               <h2 className="text-white text-lg font-semibold">Nuevo Usuario</h2>
               <p className="text-gray-400 text-sm">
-                {currentStep === 1 ? 'Datos de la agencia' : 'Datos del usuario'}
+                Datos del usuario
               </p>
             </div>
           </div>
@@ -234,74 +221,6 @@ export default function NuevoUsuarioModal({ isOpen, onClose, onUserCreated }: Nu
 
         {/* Content */}
         <div className="p-6">
-          {currentStep === 1 ? (
-            <div className="space-y-6">
-              {/* Step 1: Agency and Company Type */}
-              <div className="space-y-4">
-                {/* Agency Name */}
-                <div>
-                  <label className="block text-gray-300 text-sm mb-2">Nombre de la agencia</label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                      </svg>
-                    </div>
-                    <input
-                      type="text"
-                      name="agencyName"
-                      value={formData.agencyName}
-                      onChange={handleInputChange}
-                      placeholder="Nombre de la agencia"
-                      className="w-full pl-10 pr-4 py-3 bg-[#2a2d35] border border-[#3a3d45] rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#00b894] focus:border-[#00b894] text-sm"
-                      required
-                    />
-                  </div>
-                </div>
-
-                {/* Company Type */}
-                <div>
-                  <label className="block text-gray-300 text-sm mb-2">Tipo de empresa</label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2-2v2m8 0H8m8 0v2a2 2 0 01-2 2H10a2 2 0 01-2-2V6m8 0l4 6-4 6H8l-4-6 4-6h8z" />
-                      </svg>
-                    </div>
-                    <input
-                      type="text"
-                      name="companyType"
-                      value={formData.companyType}
-                      onChange={handleInputChange}
-                      placeholder="Tipo de empresa"
-                      className="w-full pl-10 pr-4 py-3 bg-[#2a2d35] border border-[#3a3d45] rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#00b894] focus:border-[#00b894] text-sm"
-                      required
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Navigation Buttons */}
-              <div className="flex justify-between pt-4">
-                <button
-                  type="button"
-                  onClick={handleClose}
-                  disabled={isLoading}
-                  className="px-4 py-2 text-gray-400 hover:text-white transition-colors disabled:opacity-50"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="button"
-                  onClick={handleNextStep}
-                  disabled={!formData.agencyName || !formData.companyType || isLoading}
-                  className="bg-[#00b894] hover:bg-[#00a085] disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg font-medium transition-colors"
-                >
-                  Siguiente
-                </button>
-              </div>
-            </div>
-          ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
               {/* Step 2: User Details */}
               {/* Name Input */}
@@ -401,6 +320,34 @@ export default function NuevoUsuarioModal({ isOpen, onClose, onUserCreated }: Nu
                 </div>
               </div>
 
+              {/* Rol Select */}
+              <div>
+                <label className="block text-gray-300 text-sm mb-2">Rol</label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                  </div>
+                  <select
+                    name="rol"
+                    value={formData.rol}
+                    onChange={handleInputChange}
+                    className="w-full pl-10 pr-4 py-3 bg-[#2a2d35] border border-[#3a3d45] rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-[#00b894] focus:border-[#00b894] text-sm appearance-none cursor-pointer"
+                    required
+                  >
+                    <option value="Admin">Admin</option>
+                    <option value="Comercial">Comercial</option>
+                    <option value="Cliente">Cliente</option>
+                  </select>
+                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                    <svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
               {/* Password Input */}
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -485,11 +432,11 @@ export default function NuevoUsuarioModal({ isOpen, onClose, onUserCreated }: Nu
               <div className="flex justify-between pt-4">
                 <button
                   type="button"
-                  onClick={handlePrevStep}
+                  onClick={handleClose}
                   disabled={isLoading}
                   className="px-4 py-2 text-gray-400 hover:text-white transition-colors disabled:opacity-50"
                 >
-                  ← Anterior
+                  Cancelar
                 </button>
                 <button
                   type="submit"
@@ -500,7 +447,6 @@ export default function NuevoUsuarioModal({ isOpen, onClose, onUserCreated }: Nu
                 </button>
               </div>
             </form>
-          )}
         </div>
       </div>
     </div>

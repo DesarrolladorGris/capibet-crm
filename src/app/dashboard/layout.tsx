@@ -27,9 +27,17 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     
     // Cargar datos de usuario
     const email = localStorage.getItem('userEmail');
+    const role = localStorage.getItem('userRole') || '';
+    
+    // Si es un usuario Cliente, redirigir a su página específica
+    if (role === 'Cliente') {
+      router.push('/cliente');
+      return;
+    }
+    
     setUserEmail(email || '');
     setUserName(localStorage.getItem('userName') || '');
-    setUserRole(localStorage.getItem('userRole') || '');
+    setUserRole(role);
     setAgencyName(localStorage.getItem('agencyName') || '');
   }, [router]);
 

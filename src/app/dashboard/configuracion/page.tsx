@@ -10,6 +10,7 @@ import RespuestasRapidasTab from './components/RespuestasRapidasTab';
 import SesionesTab from './components/SesionesTab';
 import { supabaseService } from '@/services/supabaseService';
 import { isUserAuthenticated } from '@/utils/auth';
+import RoleProtection from '@/components/RoleProtection';
 
 // Tipos para las pestañas
 interface TabConfig {
@@ -125,58 +126,60 @@ export default function ConfiguracionPage() {
   }
 
   return (
-    <div className="flex-1 flex flex-col">
-      {/* Header de Configuración */}
-      <div className="bg-[#1a1d23] border-b border-[#3a3d45] px-6 py-4">
-        <div className="flex items-center justify-between">
-          {/* Left Section */}
-          <div className="flex items-center space-x-4">
-            {/* Page Title */}
-            <h1 className="text-white font-semibold text-2xl">Configuración</h1>
+    <RoleProtection requiredRoles={['Administrador', 'Admin']}>
+      <div className="flex-1 flex flex-col">
+        {/* Header de Configuración */}
+        <div className="bg-[#1a1d23] border-b border-[#3a3d45] px-6 py-4">
+          <div className="flex items-center justify-between">
+            {/* Left Section */}
+            <div className="flex items-center space-x-4">
+              {/* Page Title */}
+              <h1 className="text-white font-semibold text-2xl">Configuración</h1>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Tabs */}
-      <div className="bg-[#1a1d23] border-b border-[#3a3d45] px-6">
-        <div className="flex space-x-6">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center space-x-2 py-4 px-2 border-b-2 transition-colors ${
-                activeTab === tab.id
-                  ? 'border-[#00b894] text-[#00b894]'
-                  : 'border-transparent text-gray-400 hover:text-white'
-              }`}
-            >
-              <span className="text-sm">{tab.icon}</span>
-              <span className="text-sm font-medium">{tab.label}</span>
-              {tab.count !== undefined && (
-                <span className="bg-[#2a2d35] text-gray-400 text-xs px-2 py-1 rounded-full">
-                  {tab.count}
-                </span>
-              )}
-            </button>
-          ))}
+        {/* Tabs */}
+        <div className="bg-[#1a1d23] border-b border-[#3a3d45] px-6">
+          <div className="flex space-x-6">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center space-x-2 py-4 px-2 border-b-2 transition-colors ${
+                  activeTab === tab.id
+                    ? 'border-[#00b894] text-[#00b894]'
+                    : 'border-transparent text-gray-400 hover:text-white'
+                }`}
+              >
+                <span className="text-sm">{tab.icon}</span>
+                <span className="text-sm font-medium">{tab.label}</span>
+                {tab.count !== undefined && (
+                  <span className="bg-[#2a2d35] text-gray-400 text-xs px-2 py-1 rounded-full">
+                    {tab.count}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Main Content */}
+        <div className="flex-1 bg-[#1a1d23] p-6">
+          {/* Renderizar el componente de la pestaña activa */}
+          {(() => {
+            const ActiveTabComponent = tabs.find(tab => tab.id === activeTab)?.component;
+            if (ActiveTabComponent) {
+              // Pasar props específicas según el componente
+              if (activeTab === 'etiquetas') {
+                return <EtiquetasTab onEtiquetasCountChange={setEtiquetasCount} />;
+              }
+              return <ActiveTabComponent />;
+            }
+            return null;
+          })()}
         </div>
       </div>
-
-      {/* Main Content */}
-      <div className="flex-1 bg-[#1a1d23] p-6">
-        {/* Renderizar el componente de la pestaña activa */}
-        {(() => {
-          const ActiveTabComponent = tabs.find(tab => tab.id === activeTab)?.component;
-          if (ActiveTabComponent) {
-            // Pasar props específicas según el componente
-            if (activeTab === 'etiquetas') {
-              return <EtiquetasTab onEtiquetasCountChange={setEtiquetasCount} />;
-            }
-            return <ActiveTabComponent />;
-          }
-          return null;
-        })()}
-      </div>
-    </div>
+    </RoleProtection>
   );
 }

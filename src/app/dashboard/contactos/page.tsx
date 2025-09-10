@@ -9,6 +9,7 @@ import ConfirmarEliminarModal from './components/ConfirmarEliminarModal';
 import ConfirmarEliminacionMasivaModal from './components/ConfirmarEliminacionMasivaModal';
 import { supabaseService, ContactResponse, ContactData } from '@/services/supabaseService';
 import { isUserAuthenticated, getCurrentUserId } from '@/utils/auth';
+import RoleProtection from '@/components/RoleProtection';
 
 export default function ContactosPage() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -275,7 +276,8 @@ export default function ContactosPage() {
   }
 
   return (
-    <div className="flex-1 flex flex-col">
+    <RoleProtection requiredRoles={['Administrador', 'Admin']}>
+      <div className="flex-1 flex flex-col">
       {/* Header de Contactos */}
       <div className="bg-[#1a1d23] border-b border-[#3a3d45] px-6 py-4">
         <div className="flex items-center justify-between">
@@ -506,6 +508,7 @@ export default function ContactosPage() {
         onConfirm={handleConfirmBulkDelete}
         contactCount={selectedContacts.length}
       />
-    </div>
+      </div>
+    </RoleProtection>
   );
 }

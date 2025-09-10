@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { supabaseService, EspacioConEmbudos, EspacioTrabajoResponse, EmbUpdoResponse, MensajeResponse } from '@/services/supabaseService';
+import { supabaseService, EspacioConEmbudos, EspacioTrabajoResponse, EmbUpdoResponse, MensajeResponse, Canal } from '@/services/supabaseService';
 import NuevoEmbudoModal from '@/app/dashboard/configuracion/components/NuevoEmbudoModal';
 import EditarEmbudoModal from '@/app/dashboard/configuracion/components/EditarEmbudoModal';
 import ConfirmarEliminarEmbudoModal from '@/app/dashboard/configuracion/components/ConfirmarEliminarEmbudoModal';
@@ -26,6 +26,7 @@ export default function EmbudosPage() {
   const [espaciosConEmbudos, setEspaciosConEmbudos] = useState<EspacioConEmbudos[]>([]);
   const [selectedEspacio, setSelectedEspacio] = useState<EspacioTrabajoResponse | null>(null);
   const [mensajes, setMensajes] = useState<MensajeResponse[]>([]);
+  const [canales, setCanales] = useState<Canal[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -56,20 +57,23 @@ export default function EmbudosPage() {
     setError('');
     
     try {
-      // Cargar espacios, embudos y mensajes en paralelo
-      const [espaciosResult, embudosResult, mensajesResult] = await Promise.all([
+      // Cargar espacios, embudos, mensajes y canales en paralelo
+      const [espaciosResult, embudosResult, mensajesResult, canalesResult] = await Promise.all([
         supabaseService.getAllEspaciosTrabajo(),
         supabaseService.getAllEmbudos(),
-        supabaseService.getAllMensajes()
+        supabaseService.getAllMensajes(),
+        supabaseService.getAllCanales()
       ]);
       
       if (espaciosResult.success && espaciosResult.data) {
         const espacios = espaciosResult.data;
         const embudos = embudosResult.success ? embudosResult.data || [] : [];
         const mensajesData = mensajesResult.success ? mensajesResult.data || [] : [];
+        const canalesData = canalesResult.success ? canalesResult.data || [] : [];
         
-        // Guardar los mensajes en el estado
+        // Guardar los mensajes y canales en el estado
         setMensajes(mensajesData);
+        setCanales(canalesData);
         
         // Asociar embudos a sus espacios correspondientes y ordenarlos
         const espaciosConEmbudos: EspacioConEmbudos[] = espacios.map(espacio => ({
@@ -99,10 +103,21 @@ export default function EmbudosPage() {
     }
   }, [selectedEspacio]);
 
-  // Función para obtener mensajes de un embudo específico
+  // Función para obtener el tipo de canal por ID
+  const getCanalTipo = useCallback((canalId: number): string | undefined => {
+    const canal = canales.find(c => c.id === canalId);
+    return canal?.tipo;
+  }, [canales]);
+
+  // Función para obtener mensajes de un embudo específico con tipo de canal
   const getMensajesByEmbudo = useCallback((embudoId: number): MensajeResponse[] => {
-    return mensajes.filter(mensaje => mensaje.embudo_id === embudoId);
-  }, [mensajes]);
+    return mensajes
+      .filter(mensaje => mensaje.embudo_id === embudoId)
+      .map(mensaje => ({
+        ...mensaje,
+        tipo: getCanalTipo(mensaje.canal_id) // Enriquecer con tipo de canal
+      }));
+  }, [mensajes, getCanalTipo]);
 
   useEffect(() => {
     loadEspaciosYEmbudos();

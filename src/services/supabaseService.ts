@@ -252,7 +252,7 @@ export interface MensajeResponse {
   creado_en: string;
   enviado_en?: string;
   leido?: boolean;
-  tipo?: string;
+  tipo?: string; // Tipo de canal (whatsapp, email, telegram, etc.) - viene del API
   estado?: string;
 }
 
@@ -375,11 +375,66 @@ export class SupabaseService {
   }
 
   /**
-   * Obtiene todos los usuarios creados por el usuario logueado
+   * Registra un nuevo usuario externamente (sin autenticación requerida)
+   */
+  async registerExternalUser(userData: UsuarioData): Promise<ApiResponse> {
+    try {
+      // Preparar los datos con valores por defecto para registro externo
+      const dataToSend = {
+        nombre_agencia: userData.nombre_agencia || 'N/A',
+        tipo_empresa: userData.tipo_empresa || 'N/A',
+        nombre_usuario: userData.nombre_usuario,
+        correo_electronico: userData.correo_electronico,
+        telefono: userData.telefono,
+        codigo_pais: userData.codigo_pais,
+        contrasena: userData.contrasena,
+        rol: userData.rol || 'Cliente',
+        activo: userData.activo !== undefined ? userData.activo : true
+      };
+
+      const response = await fetch(apiEndpoints.usuarios, {
+        method: 'POST',
+        headers: {
+          'apikey': supabaseConfig.serviceRoleKey,
+          'Authorization': `Bearer ${supabaseConfig.serviceRoleKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(dataToSend)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        
+        return {
+          success: false,
+          error: `Error del servidor: ${response.status} ${response.statusText}`,
+          details: errorData
+        };
+      }
+
+      const data = await this.handleResponse(response);
+      
+      return {
+        success: true,
+        data
+      };
+
+    } catch (error) {
+      console.error('Error registering external user:', error);
+      return {
+        success: false,
+        error: 'Error de conexión al registrar usuario',
+        details: error instanceof Error ? error.message : 'Error desconocido'
+      };
+    }
+  }
+
+  /**
+   * Obtiene todos los usuarios del sistema (incluyendo clientes registrados externamente)
    */
   async getAllUsuarios(): Promise<ApiResponse<UsuarioResponse[]>> {
     try {
-      // Obtener el ID del usuario logueado
+      // Obtener el ID del usuario logueado para verificar autenticación
       const userId = this.getCurrentUserId();
       if (!userId) {
         return {
@@ -388,8 +443,8 @@ export class SupabaseService {
         };
       }
 
-      // Filtrar usuarios por creado_por (usuarios creados por el usuario logueado)
-      const response = await fetch(`${apiEndpoints.usuarios}?creado_por=eq.${userId}`, {
+      // Obtener TODOS los usuarios sin filtrar por creado_por
+      const response = await fetch(`${apiEndpoints.usuarios}`, {
         method: 'GET',
         headers: this.getHeaders()
       });
@@ -2462,7 +2517,8 @@ export class SupabaseService {
   }
 
   /**
-   * Obtiene todos los mensajes
+   * Obtiene todos los mensajes con información de tipo de canal
+   * El tipo de canal debe venir directamente desde el backend mediante JOIN con tabla canales
    */
   async getAllMensajes(): Promise<ApiResponse<MensajeResponse[]>> {
     try {
@@ -2482,8 +2538,9 @@ export class SupabaseService {
       
       const data = await response.json();
       
-      console.log('Mensajes obtenidos:', data);
+      console.log('📦 Mensajes obtenidos del API:', data);
       
+      // Los mensajes vienen sin tipo de canal, se enriquecerá en el frontend
       return { success: true, data: Array.isArray(data) ? data : [] };
     } catch (error) {
       console.error('Error al obtener mensajes:', error);

@@ -7,7 +7,6 @@ import { useRouter } from 'next/navigation';
 import { supabaseService, UsuarioData } from '@/services/supabaseService';
 
 export default function RegisterPage() {
-  const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
     agencyName: '',
     companyType: '',
@@ -87,15 +86,6 @@ export default function RegisterPage() {
     }));
   };
 
-  const handleNextStep = () => {
-    if (formData.agencyName && formData.companyType) {
-      setCurrentStep(2);
-    }
-  };
-
-  const handlePrevStep = () => {
-    setCurrentStep(1);
-  };
 
   const handleCountrySelect = (country: typeof selectedCountry) => {
     setSelectedCountry(country);
@@ -143,19 +133,19 @@ export default function RegisterPage() {
       
       // Preparar datos para la API
       const userData: UsuarioData = {
-        nombre_agencia: formData.agencyName,
-        tipo_empresa: formData.companyType,
+        nombre_agencia: 'N/A',
+        tipo_empresa: 'N/A',
         nombre_usuario: formData.name,
         correo_electronico: formData.email,
         telefono: formData.phone,
         codigo_pais: selectedCountry.code.replace('+', ''),
         contrasena: formData.password,
-        rol: 'Operador',
+        rol: 'Cliente',
         activo: true
       };
       
-      // Crear usuario en Supabase
-      const result = await supabaseService.createUsuario(userData);
+      // Crear usuario en Supabase usando registro externo
+      const result = await supabaseService.registerExternalUser(userData);
       
       if (result.success) {
         setSuccess('¡Registro exitoso! Redirigiendo al login...');
@@ -189,11 +179,11 @@ export default function RegisterPage() {
           {/* Beast Logo */}
           <div className="mb-6">
             <div className="w-16 h-16 mx-auto bg-[#00b894] rounded-full flex items-center justify-center border-2 border-[#00a085] shadow-lg">
-              <div className="text-slate-900 font-bold text-2xl transform -rotate-12">
-                ⚡
+              <div className="text-slate-900 font-bold text-2xl">
+                🎲
               </div>
             </div>
-            <h1 className="text-white text-2xl font-bold mt-2">BEAST</h1>
+            <h1 className="text-white text-2xl font-bold mt-2">CapiBet</h1>
             <div className="flex items-center justify-center gap-2 mt-1">
               <div className="h-0.5 w-8 bg-[#00b894]"></div>
               <span className="text-[#00b894] text-sm font-medium tracking-wider">CRM</span>
@@ -203,82 +193,12 @@ export default function RegisterPage() {
           
           <h2 className="text-white text-xl lg:text-2xl font-semibold mb-2">Crear tu cuenta</h2>
           <p className="text-gray-400 text-sm lg:text-base">
-            {currentStep === 1 ? 'Ingrese los datos de su agencia.' : 'Ingrese sus datos de usuario.'}
+            Ingrese sus datos para registrarse.
           </p>
         </div>
 
         {/* Form */}
-        {currentStep === 1 ? (
-          <div className="space-y-6">
-            {/* Step 1: Agency and Company Type */}
-            <div className="space-y-4">
-              {/* Agency Name */}
-              <div>
-                <label className="block text-gray-300 text-sm mb-2">Nombre de la agencia</label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                    </svg>
-                  </div>
-                  <input
-                    type="text"
-                    name="agencyName"
-                    value={formData.agencyName}
-                    onChange={handleInputChange}
-                    placeholder="Tu Agencia"
-                    className="w-full pl-10 pr-4 py-4 bg-[#2a2d35] border border-[#3a3d45] rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#00b894] focus:border-[#00b894] text-base"
-                    required
-                  />
-                </div>
-              </div>
-
-              {/* Company Type */}
-              <div>
-                <label className="block text-gray-300 text-sm mb-2">Tipo de empresa</label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2-2v2m8 0H8m8 0v2a2 2 0 01-2 2H10a2 2 0 01-2-2V6m8 0l4 6-4 6H8l-4-6 4-6h8z" />
-                    </svg>
-                  </div>
-                  <input
-                    type="text"
-                    name="companyType"
-                    value={formData.companyType}
-                    onChange={handleInputChange}
-                    placeholder="Tipo de empresa"
-                    className="w-full pl-10 pr-4 py-4 bg-[#2a2d35] border border-[#3a3d45] rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#00b894] focus:border-[#00b894] text-base"
-                    required
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Navigation Buttons */}
-            <div className="flex justify-between mt-6">
-              <Link 
-                href="/login"
-                className="w-14 h-14 lg:w-12 lg:h-12 bg-[#00b894] hover:bg-[#00a085] rounded-full flex items-center justify-center text-white transition-colors duration-200"
-              >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-              </Link>
-              <button
-                type="button"
-                onClick={handleNextStep}
-                disabled={!formData.agencyName || !formData.companyType}
-                className="w-14 h-14 lg:w-12 lg:h-12 bg-[#00b894] hover:bg-[#00a085] disabled:bg-slate-600 disabled:cursor-not-allowed rounded-full flex items-center justify-center text-white transition-colors duration-200"
-              >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
-            </div>
-          </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
             {/* Step 2: User Details */}
             {/* Name Input */}
             <div className="relative">
@@ -481,16 +401,7 @@ export default function RegisterPage() {
               {isLoading ? 'REGISTRANDO...' : 'REGISTRAR'}
             </button>
 
-            {/* Back to Step 1 Button */}
-            <button
-              type="button"
-              onClick={handlePrevStep}
-              className="w-full text-gray-400 hover:text-white font-medium py-2 transition-colors duration-200"
-            >
-              ← Volver al paso anterior
-            </button>
-          </form>
-        )}
+        </form>
 
         {/* Login Link */}
         <p className="mt-6 text-center text-gray-400">

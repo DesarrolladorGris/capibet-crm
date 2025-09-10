@@ -1,6 +1,28 @@
+'use client';
+
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/hooks/useAuth';
 import MetricsCard from './components/MetricsCard';
 
 export default function DashboardPage() {
+  const { user, isLoading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!isLoading && user) {
+      // Si es un usuario Cliente, redirigir a su página específica
+      if (user.rol === 'Cliente') {
+        router.push('/cliente');
+        return;
+      }
+    }
+  }, [user, isLoading, router]);
+
+  // Si es un cliente, no mostrar el dashboard normal
+  if (user?.rol === 'Cliente') {
+    return null;
+  }
   return (
     <div className="flex-1 flex flex-col">
       {/* Header del Dashboard */}
