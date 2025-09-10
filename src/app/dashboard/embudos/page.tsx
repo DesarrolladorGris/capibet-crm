@@ -3,7 +3,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { mensajesService, MensajeResponse } from '@/services/mensajesServices';
 import { embudoService, EmbUpdoResponse } from '@/services/embudoServices';
-import { espacioTrabajoService, EspacioConEmbudos, EspacioTrabajoResponse } from '@/services/espacioTrabajoServices';
+import { espacioTrabajoService, EspacioConEmbudos } from '@/services/espacioTrabajoServices';
+import { EspacioTrabajoResponse } from '@/app/api/espacio_trabajos/domain/espacio_trabajo';
 import NuevoEmbudoModal from '@/app/dashboard/configuracion/components/NuevoEmbudoModal';
 import EditarEmbudoModal from '@/app/dashboard/configuracion/components/EditarEmbudoModal';
 import ConfirmarEliminarEmbudoModal from '@/app/dashboard/configuracion/components/ConfirmarEliminarEmbudoModal';
@@ -84,9 +85,12 @@ export default function EmbudosPage() {
         setEspaciosConEmbudos(espaciosConEmbudos);
         
         // Seleccionar el primer espacio por defecto si no hay ninguno seleccionado
-        if (!selectedEspacio && espacios.length > 0) {
-          setSelectedEspacio(espacios[0]);
-        }
+        setSelectedEspacio(prevSelected => {
+          if (!prevSelected && espacios.length > 0) {
+            return espacios[0];
+          }
+          return prevSelected;
+        });
         
         console.log('Espacios con embudos cargados:', espaciosConEmbudos);
         console.log('Mensajes cargados:', mensajesData);
@@ -99,7 +103,7 @@ export default function EmbudosPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [selectedEspacio]);
+  }, []); // Removí selectedEspacio de las dependencias
 
   // Función para obtener mensajes de un embudo específico
   const getMensajesByEmbudo = useCallback((embudoId: number): MensajeResponse[] => {
@@ -273,32 +277,74 @@ export default function EmbudosPage() {
     ? espaciosConEmbudos.find(e => e.id === selectedEspacio.id)?.embudos || []
     : [];
 
-  // Debug: Log de mensajes y embudos
-  React.useEffect(() => {
-    if (mensajes.length > 0 || embudosDelEspacio.length > 0) {
-      console.log('🔍 Debug info:', {
-        mensajes: mensajes.length,
-        embudos: embudosDelEspacio.length,
-        mensajeIds: mensajes.map(m => `mensaje-${m.id}`),
-        embudoIds: embudosDelEspacio.map(e => `embudo-drop-${e.id}`),
-        selectedEspacio: selectedEspacio?.id
-      });
-    }
-  }, [mensajes.length, embudosDelEspacio.length, selectedEspacio?.id]);
-
-  if (isLoading) {
-    return (
-      <div className="p-6 flex items-center justify-center h-64">
-        <div className="text-white">Cargando espacios y embudos...</div>
-      </div>
-    );
-  }
-
   if (error) {
     return (
-      <div className="p-6">
-        <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4 text-red-400">
-          Error: {error}
+      <div className="flex-1 flex flex-col">
+        {/* Header con selector de espacio */}
+        <div className="bg-[#1a1d23] border-b border-[#3a3d45] px-6 py-4">
+          <div className="flex items-center justify-between">
+            {/* Left Section - Selector de Espacio */}
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-3">
+                <button className="text-gray-400 hover:text-white p-1 rounded">
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+                <div className="relative">
+                  <select
+                    value={selectedEspacio?.id || ''}
+                    onChange={(e) => {
+                      const espacioId = parseInt(e.target.value);
+                      const espacio = espaciosConEmbudos.find(e => e.id === espacioId);
+                      if (espacio) {
+                        handleEspacioSelect(espacio);
+                      }
+                    }}
+                    className="bg-[#2a2d35] border border-[#3a3d45] rounded px-3 py-2 text-white text-lg font-semibold focus:outline-none focus:ring-2 focus:ring-[#00b894] focus:border-[#00b894] appearance-none cursor-pointer pr-8"
+                  >
+                    <option value="">Seleccionar Espacio</option>
+                    {espaciosConEmbudos.map((espacio) => (
+                      <option key={espacio.id} value={espacio.id}>
+                        {espacio.nombre.toUpperCase()}
+                      </option>
+                    ))}
+                  </select>
+                  <svg className="w-4 h-4 text-gray-400 absolute right-3 top-3 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+              </div>
+              
+              {/* Tabs de navegación */}
+              <div className="flex space-x-4 ml-8">
+                <button className="text-white font-medium px-3 py-1 bg-[#00b894] rounded text-sm">
+                  Todos
+                </button>
+                <button className="text-gray-400 hover:text-white font-medium px-3 py-1 hover:bg-[#2a2d35] rounded text-sm">
+                  Mis Chats
+                </button>
+              </div>
+            </div>
+
+            {/* Right Section - Actions */}
+            <div className="flex items-center space-x-4">
+              <button 
+                onClick={handleNuevoMensaje}
+                disabled={!selectedEspacio}
+                className="bg-[#00b894] hover:bg-[#00a085] disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-4 py-2 rounded text-sm font-medium transition-colors"
+              >
+                + Nuevo Mensaje
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Main Content - Error */}
+        <div className="flex-1 bg-[#1a1d23] p-6">
+          <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4 text-red-400">
+            Error: {error}
+          </div>
         </div>
       </div>
     );
@@ -368,7 +414,11 @@ export default function EmbudosPage() {
 
       {/* Main Content - Embudos */}
       <div className="flex-1 bg-[#1a1d23]">
-        {selectedEspacio ? (
+        {isLoading ? (
+          <div className="h-full flex items-center justify-center">
+            <div className="text-white">Cargando...</div>
+          </div>
+        ) : selectedEspacio ? (
           <div className="h-full">
             {/* Información del espacio seleccionado */}
             <div className="px-6 py-4 border-b border-[#3a3d45]">
