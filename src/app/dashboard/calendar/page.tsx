@@ -158,120 +158,226 @@ export default function CalendarPage() {
   }
 
   return (
-    <div className="flex-1 p-6">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-white text-2xl font-semibold mb-2">Calendario Principal</h1>
-          <p className="text-gray-400">Gestiona todas tus actividades desde un solo lugar</p>
-        </div>
-
-        {/* Calendar Controls */}
-        <div className="bg-[#2a2d35] rounded-lg p-4 mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={() => setFechaSeleccionada(new Date())}
-                className="px-4 py-2 bg-[#00b894] text-white rounded-lg hover:bg-[#00a085] transition-colors"
-              >
-                Hoy
-              </button>
-                             <div className="flex items-center space-x-2">
-                 <button
-                   onClick={() => setFechaSeleccionada(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1))}
-                   className="p-2 text-gray-400 hover:text-white"
-                 >
-                   ←
-                 </button>
-                 <span className="text-white font-medium">
-                   {fechaSeleccionada.toLocaleDateString('es-ES', { 
-                     month: 'long', 
-                     year: 'numeric' 
-                   })}
-                 </span>
-                 <button
-                   onClick={() => setFechaSeleccionada(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1))}
-                   className="p-2 text-gray-400 hover:text-white"
-                 >
-                   →
-                 </button>
-               </div>
+    <div className="flex-1 flex flex-col h-full">
+      {/* Header compacto estilo Beast CRM */}
+      <div className="bg-[#1a1d23] border-b border-[#3a3d45] px-4 py-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <h1 className="text-white font-semibold text-xl">Calendario</h1>
+            <div className="flex items-center space-x-2 text-sm text-gray-400">
+              <span>•</span>
+              <span>Gestión de actividades</span>
             </div>
+          </div>
+          <div className="flex items-center space-x-3">
+            <button
+              onClick={() => setFechaSeleccionada(new Date())}
+              className="px-3 py-1.5 bg-[#00b894] text-white rounded text-sm font-medium hover:bg-[#00a085] transition-colors"
+            >
+              Hoy
+            </button>
             <button
               onClick={() => setShowCreateModal(true)}
-              className="px-6 py-2 bg-[#00b894] text-white rounded-lg hover:bg-[#00a085] transition-colors flex items-center space-x-2"
+              className="px-3 py-1.5 bg-[#2a2d35] text-white rounded text-sm font-medium hover:bg-[#3a3d45] transition-colors flex items-center space-x-2"
             >
               <span>+</span>
               <span>Nueva Actividad</span>
             </button>
           </div>
         </div>
+      </div>
 
-        {/* Calendar Grid */}
-        <div className="bg-[#2a2d35] rounded-lg p-6">
-          <div className="grid grid-cols-7 gap-1 mb-4">
-            {['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'].map(dia => (
-              <div key={dia} className="text-center text-gray-400 font-medium py-2">
-                {dia}
-              </div>
-            ))}
-          </div>
-          
-          <div className="grid grid-cols-7 gap-1">
-            {Array.from({ length: 35 }, (_, i) => {
-              const fecha = new Date(fechaSeleccionada.getFullYear(), fechaSeleccionada.getMonth(), 1);
-              fecha.setDate(fecha.getDate() + i - fecha.getDay());
-              
-              const eventosDelDia = eventos.filter(evento => 
-                evento.fecha === fecha.toISOString().split('T')[0]
-              );
-              
-              const esHoy = fecha.toDateString() === new Date().toDateString();
-              const esMesActual = fecha.getMonth() === fechaSeleccionada.getMonth();
-              
-              return (
-                <div
-                  key={i}
-                  className={`min-h-[120px] p-2 border border-[#3a3d45] cursor-pointer hover:bg-[#3a3d45] transition-colors ${
-                    esHoy ? 'bg-[#00b894] bg-opacity-20' : ''
-                  } ${!esMesActual ? 'opacity-50' : ''}`}
-                  onClick={() => {
-                    if (esMesActual) {
-                      setFechaSeleccionada(fecha);
-                      setShowCreateModal(true);
-                    }
-                  }}
-                  title={esMesActual ? `Hacer clic para crear actividad en ${fecha.toLocaleDateString('es-ES')}` : ''}
-                >
-                  <div className={`text-sm mb-2 ${esHoy ? 'text-[#00b894] font-bold' : 'text-gray-400'}`}>
-                    {fecha.getDate()}
+      {/* Layout de 3 columnas estilo Beast CRM */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* Columna izquierda - Lista de actividades */}
+        <div className="w-1/3 border-r border-[#3a3d45] bg-[#1a1d23] overflow-y-auto">
+          <div className="p-3">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-white font-medium">Actividades de Hoy</h3>
+              <span className="text-gray-400 text-sm">{eventos.length}</span>
+            </div>
+            <div className="space-y-2">
+              {eventos.length > 0 ? (
+                eventos.map((evento) => (
+                  <div key={evento.id} className="bg-[#2a2d35] rounded-lg p-3 border border-[#3a3d45] hover:border-[#00b894] transition-colors cursor-pointer">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="text-white font-medium text-sm">{evento.titulo}</div>
+                      <div className="flex items-center space-x-1">
+                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: evento.color }}></div>
+                        <span className="text-xs text-gray-400">{evento.hora}</span>
+                      </div>
+                    </div>
+                    <div className="text-gray-300 text-sm">{evento.actividad.descripcion}</div>
+                    <div className="text-gray-400 text-xs mt-1">{evento.actividad.tipo}</div>
                   </div>
-                  
-                  {eventosDelDia.map(evento => (
-                    <div
-                      key={evento.id}
-                      className="text-xs p-1 mb-1 rounded text-white truncate cursor-pointer hover:opacity-80"
-                      style={{ backgroundColor: evento.color }}
-                      title={`${evento.titulo} - ${evento.hora}`}
-                      onClick={(e) => {
-                        e.stopPropagation(); // Evitar que se abra el modal de crear
-                        handleEditEvento(evento);
-                      }}
-                    >
-                      {evento.titulo}
-                    </div>
-                  ))}
-                  
-                  {/* Indicador de que se puede hacer clic */}
-                  {esMesActual && (
-                    <div className="text-xs text-gray-500 mt-1 opacity-0 hover:opacity-100 transition-opacity">
-                      + Agregar
-                    </div>
-                  )}
+                ))
+              ) : (
+                <div className="text-center text-gray-400 py-8">
+                  <svg className="w-12 h-12 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  <p className="text-sm">No hay actividades</p>
                 </div>
-              );
-            })}
+              )}
+            </div>
           </div>
         </div>
+
+        {/* Columna central - Calendario */}
+        <div className="flex-1 bg-[#1a1d23] overflow-y-auto">
+          <div className="p-4">
+            {/* Calendar Controls */}
+            <div className="bg-[#2a2d35] rounded-lg p-4 mb-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={() => setFechaSeleccionada(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1))}
+                    className="p-2 text-gray-400 hover:text-white"
+                  >
+                    ←
+                  </button>
+                  <span className="text-white font-medium">
+                    {fechaSeleccionada.toLocaleDateString('es-ES', { 
+                      month: 'long', 
+                      year: 'numeric' 
+                    })}
+                  </span>
+                  <button
+                    onClick={() => setFechaSeleccionada(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1))}
+                    className="p-2 text-gray-400 hover:text-white"
+                  >
+                    →
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Calendar Grid */}
+            <div className="bg-[#2a2d35] rounded-lg p-4">
+              <div className="grid grid-cols-7 gap-1 mb-4">
+                {['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'].map(dia => (
+                  <div key={dia} className="text-center text-gray-400 font-medium py-2 text-sm">
+                    {dia}
+                  </div>
+                ))}
+              </div>
+              
+              <div className="grid grid-cols-7 gap-1">
+                {Array.from({ length: 35 }, (_, i) => {
+                  const fecha = new Date(fechaSeleccionada.getFullYear(), fechaSeleccionada.getMonth(), 1);
+                  fecha.setDate(fecha.getDate() + i - fecha.getDay());
+                  
+                  const eventosDelDia = eventos.filter(evento => 
+                    evento.fecha === fecha.toISOString().split('T')[0]
+                  );
+                  
+                  const esHoy = fecha.toDateString() === new Date().toDateString();
+                  const esMesActual = fecha.getMonth() === fechaSeleccionada.getMonth();
+                  
+                  return (
+                    <div
+                      key={i}
+                      className={`min-h-[80px] p-2 border border-[#3a3d45] cursor-pointer hover:bg-[#3a3d45] transition-colors ${
+                        esHoy ? 'bg-[#00b894] bg-opacity-20' : ''
+                      } ${!esMesActual ? 'opacity-50' : ''}`}
+                      onClick={() => {
+                        if (esMesActual) {
+                          setFechaSeleccionada(fecha);
+                          setShowCreateModal(true);
+                        }
+                      }}
+                      title={esMesActual ? `Hacer clic para crear actividad en ${fecha.toLocaleDateString('es-ES')}` : ''}
+                    >
+                      <div className={`text-sm mb-1 ${esHoy ? 'text-[#00b894] font-bold' : 'text-gray-400'}`}>
+                        {fecha.getDate()}
+                      </div>
+                      
+                      {eventosDelDia.slice(0, 2).map(evento => (
+                        <div
+                          key={evento.id}
+                          className="text-xs p-1 mb-1 rounded text-white truncate cursor-pointer hover:opacity-80"
+                          style={{ backgroundColor: evento.color }}
+                          title={`${evento.titulo} - ${evento.hora}`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEditEvento(evento);
+                          }}
+                        >
+                          {evento.titulo}
+                        </div>
+                      ))}
+                      
+                      {eventosDelDia.length > 2 && (
+                        <div className="text-xs text-gray-500">
+                          +{eventosDelDia.length - 2} más
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Columna derecha - Panel lateral */}
+        <div className="w-80 border-l border-[#3a3d45] bg-[#1a1d23] overflow-y-auto">
+          <div className="p-4">
+            <h3 className="text-white font-medium mb-4">Filtros</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-gray-400 text-sm mb-2">Tipo de Actividad</label>
+                <select className="w-full bg-[#2a2d35] border border-[#3a3d45] rounded px-3 py-2 text-white text-sm focus:outline-none focus:ring-1 focus:ring-[#00b894]">
+                  <option>Todas las actividades</option>
+                  <option>Llamadas</option>
+                  <option>Reuniones</option>
+                  <option>Tareas</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-gray-400 text-sm mb-2">Estado</label>
+                <select className="w-full bg-[#2a2d35] border border-[#3a3d45] rounded px-3 py-2 text-white text-sm focus:outline-none focus:ring-1 focus:ring-[#00b894]">
+                  <option>Todos los estados</option>
+                  <option>Pendientes</option>
+                  <option>Completadas</option>
+                  <option>Canceladas</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-gray-400 text-sm mb-2">Asignado a</label>
+                <select className="w-full bg-[#2a2d35] border border-[#3a3d45] rounded px-3 py-2 text-white text-sm focus:outline-none focus:ring-1 focus:ring-[#00b894]">
+                  <option>Todos los usuarios</option>
+                  <option>Admin Principal</option>
+                  <option>Supervisor 1</option>
+                  <option>Comercial 1</option>
+                </select>
+              </div>
+            </div>
+            
+            <div className="mt-6">
+              <h3 className="text-white font-medium mb-4">Estadísticas</h3>
+              <div className="space-y-3">
+                <div className="bg-[#2a2d35] rounded-lg p-3 border border-[#3a3d45]">
+                  <div className="text-gray-400 text-sm">Actividades Hoy</div>
+                  <div className="text-white text-2xl font-bold">{eventos.length}</div>
+                </div>
+                <div className="bg-[#2a2d35] rounded-lg p-3 border border-[#3a3d45]">
+                  <div className="text-gray-400 text-sm">Llamadas</div>
+                  <div className="text-white text-2xl font-bold">{eventos.filter(e => e.tipo === 'llamada').length}</div>
+                </div>
+                <div className="bg-[#2a2d35] rounded-lg p-3 border border-[#3a3d45]">
+                  <div className="text-gray-400 text-sm">Reuniones</div>
+                  <div className="text-white text-2xl font-bold">{eventos.filter(e => e.tipo === 'reunion').length}</div>
+                </div>
+                <div className="bg-[#2a2d35] rounded-lg p-3 border border-[#3a3d45]">
+                  <div className="text-gray-400 text-sm">Tareas</div>
+                  <div className="text-white text-2xl font-bold">{eventos.filter(e => e.tipo === 'tarea').length}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
         {/* Create Activity Modal */}
         {showCreateModal && (

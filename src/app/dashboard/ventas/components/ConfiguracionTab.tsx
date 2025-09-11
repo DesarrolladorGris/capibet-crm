@@ -31,7 +31,7 @@ export default function ConfiguracionTab() {
 
   const [nuevaCategoria, setNuevaCategoria] = useState('');
 
-  const handleConfiguracionChange = (key: keyof ConfiguracionVentas, value: any) => {
+  const handleConfiguracionChange = (key: keyof ConfiguracionVentas, value: string | number | boolean) => {
     setConfiguracion(prev => ({
       ...prev,
       [key]: value
