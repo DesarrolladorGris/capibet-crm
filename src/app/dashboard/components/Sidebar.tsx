@@ -135,7 +135,7 @@ export default function Sidebar({ isOpen }: SidebarProps) {
           </div>
           {isOpen && (
             <div>
-              <h1 className="text-[var(--text-primary)] font-bold text-lg">CapiBet</h1>
+              <h1 className="text-[var(--text-primary)] font-bold text-lg">CAPIBET</h1>
               <div className="flex items-center space-x-1">
                 <div className="h-0.5 w-4 bg-[#00b894]"></div>
                 <span className="text-[#00b894] text-xs font-medium">CRM</span>

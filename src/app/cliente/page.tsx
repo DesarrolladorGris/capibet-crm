@@ -98,7 +98,7 @@ export default function ClientChatPage() {
           timestamp: new Date(msg.created_at),
           isFromClient: msg.emisor === 'cliente',
           status: msg.leido ? 'read' : 'delivered',
-          senderName: msg.emisor === 'cliente' ? userName : 'Soporte CapiBet CRM'
+          senderName: msg.emisor === 'cliente' ? userName : 'Soporte CAPIBET CRM'
         }));
         
         // Agregar mensaje de bienvenida al inicio si no existe
@@ -113,7 +113,7 @@ export default function ClientChatPage() {
             timestamp: new Date(convertedMessages[0]?.timestamp.getTime() - 1000 || Date.now()),
             isFromClient: false,
             status: 'read',
-            senderName: 'Soporte CapiBet CRM'
+            senderName: 'Soporte CAPIBET CRM'
           };
           convertedMessages.unshift(welcomeMessage);
         }
@@ -142,7 +142,7 @@ export default function ClientChatPage() {
         timestamp: new Date(),
         isFromClient: false,
         status: 'read',
-        senderName: 'Soporte CapiBet CRM'
+        senderName: 'Soporte CAPIBET CRM'
       }
     ];
     setMessages(welcomeMessage);
@@ -157,7 +157,7 @@ export default function ClientChatPage() {
         timestamp: new Date(),
         isFromClient: false,
         status: 'read',
-        senderName: 'Soporte CapiBet CRM'
+        senderName: 'Soporte CAPIBET CRM'
       }
     ];
     setMessages(welcomeMessage);
@@ -200,7 +200,7 @@ export default function ClientChatPage() {
               timestamp: new Date(),
               isFromClient: false,
               status: 'read',
-              senderName: 'Sistema CapiBet CRM'
+              senderName: 'Sistema CAPIBET CRM'
             };
             setMessages(prev => [...prev, finalizationMessage]);
             return;

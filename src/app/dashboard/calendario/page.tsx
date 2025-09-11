@@ -3,77 +3,67 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { isUserAuthenticated } from '@/utils/auth';
+import { supabaseService } from '@/services/supabaseService';
 
-// Tipos para las tareas
+// Tipos para las tareas (basado en la API de Supabase)
 interface Task {
   id: number;
+  created_at?: string;
   titulo: string;
-  descripcion?: string;
+  descripion?: string; // Nota: en la API viene como "descripion" (sin c)
   fecha: string;
-  hora: string;
-  categoria: 'trabajo' | 'personal' | 'reunion' | 'llamada' | 'otro';
-  prioridad: 'alta' | 'media' | 'baja';
-  completada: boolean;
-  color: string;
+  asignada?: number; // ID del usuario asignado (en la API viene como "asignada")
+  creado_por?: number;
+  categoria: string;
+  prioridad: string;
+  // Campos locales adicionales para UI
+  completada?: boolean;
+  color?: string;
+  asignado_nombre?: string;
 }
 
-// Datos de ejemplo
-const taskData: Task[] = [
-  {
-    id: 1,
-    titulo: 'Reunión con cliente',
-    descripcion: 'Revisión del proyecto Q4',
-    fecha: '2025-09-15',
-    hora: '10:00',
-    categoria: 'reunion',
-    prioridad: 'alta',
-    completada: false,
-    color: '#ff6b6b'
-  },
-  {
-    id: 2,
-    titulo: 'Llamada de seguimiento',
-    descripcion: 'Seguimiento de propuesta comercial',
-    fecha: '2025-09-15',
-    hora: '14:30',
-    categoria: 'llamada',
-    prioridad: 'media',
-    completada: false,
-    color: '#4ecdc4'
-  }
-];
+interface Usuario {
+  id: number;
+  nombre_usuario: string;
+  correo_electronico: string;
+  rol: string;
+}
 
 const categorias = [
-  { id: 'trabajo', label: 'Trabajo', color: '#4ecdc4' },
-  { id: 'personal', label: 'Personal', color: '#45b7d1' },
-  { id: 'reunion', label: 'Reunión', color: '#ff6b6b' },
-  { id: 'llamada', label: 'Llamada', color: '#96ceb4' },
-  { id: 'otro', label: 'Otro', color: '#feca57' }
+  { id: 'Trabajo', label: 'Trabajo', color: '#4ecdc4' },
+  { id: 'Personal', label: 'Personal', color: '#45b7d1' },
+  { id: 'Reunion', label: 'Reunión', color: '#ff6b6b' },
+  { id: 'Llamada', label: 'Llamada', color: '#96ceb4' },
+  { id: 'Otro', label: 'Otro', color: '#a8e6cf' }
 ];
 
 const prioridades = [
-  { id: 'alta', label: 'Alta', color: '#ff6b6b' },
-  { id: 'media', label: 'Media', color: '#feca57' },
-  { id: 'baja', label: 'Baja', color: '#96ceb4' }
+  { id: 'Alta', label: 'Alta', color: '#ff6b6b' },
+  { id: 'Media', label: 'Media', color: '#feca57' },
+  { id: 'Baja', label: 'Baja', color: '#96ceb4' }
 ];
 
 export default function CalendarioPage() {
-  const [tasks, setTasks] = useState<Task[]>(taskData);
+  const [tasks, setTasks] = useState<Task[]>([]);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<'month' | 'week' | 'day'>('month');
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [selectedDate, setSelectedDate] = useState<string>('');
+  const [usuarios, setUsuarios] = useState<Usuario[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
   const router = useRouter();
 
   // Form state para nueva tarea
   const [formData, setFormData] = useState({
     titulo: '',
-    descripcion: '',
+    descripion: '', // Cambiar a "descripion" para coincidir con la API
     fecha: '',
-    hora: '',
-    categoria: 'trabajo' as Task['categoria'],
-    prioridad: 'media' as Task['prioridad']
+    categoria: 'Trabajo',
+    prioridad: 'Media',
+    asignada: 0
   });
 
   useEffect(() => {
@@ -81,7 +71,64 @@ export default function CalendarioPage() {
       router.push('/login');
       return;
     }
+    loadUsuarios();
+    loadTareas();
   }, [router]);
+
+  // Cargar usuarios para el select
+  const loadUsuarios = async () => {
+    try {
+      const result = await supabaseService.getAllUsuarios();
+      if (result.success) {
+        setUsuarios(result.data);
+      } else {
+        console.error('Error al cargar usuarios:', result.error);
+      }
+    } catch (error) {
+      console.error('Error al cargar usuarios:', error);
+    }
+  };
+
+  // Cargar tareas desde la API
+  const loadTareas = async () => {
+    setLoading(true);
+    try {
+      const result = await supabaseService.getAllTareas();
+      if (result.success) {
+        // Obtener el rol del usuario actual
+        const currentUserRole = localStorage.getItem('userRole');
+        const currentUserId = parseInt(localStorage.getItem('userId') || '0');
+        
+        // Enriquecer tareas con información de usuarios y colores
+        let enrichedTasks = result.data.map((task: any) => {
+          const categoria = categorias.find(c => c.id === task.categoria);
+          const usuario = usuarios.find(u => u.id === task.asignada);
+          
+          return {
+            ...task,
+            color: categoria?.color || '#4ecdc4',
+            completada: false, // Por defecto, las tareas no están completadas
+            asignado_nombre: usuario?.nombre_usuario || undefined
+          };
+        });
+
+        // Filtrar tareas según el rol del usuario
+        if (currentUserRole === 'Comercial') {
+          // Los usuarios Comercial solo ven tareas asignadas a ellos
+          enrichedTasks = enrichedTasks.filter(task => task.asignada === currentUserId);
+        }
+        // Los usuarios Admin ven todas las tareas (sin filtro)
+
+        setTasks(enrichedTasks);
+      } else {
+        console.error('Error al cargar tareas:', result.error);
+      }
+    } catch (error) {
+      console.error('Error al cargar tareas:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Obtener días del mes actual
   const getDaysInMonth = (date: Date) => {
@@ -102,17 +149,55 @@ export default function CalendarioPage() {
     return days;
   };
 
+  // Obtener días de la semana actual
+  const getDaysInWeek = (date: Date) => {
+    const startOfWeek = new Date(date);
+    const day = startOfWeek.getDay();
+    const diff = startOfWeek.getDate() - day + (day === 0 ? -6 : 1); // Ajustar para que lunes sea el primer día
+    startOfWeek.setDate(diff);
+    
+    const days = [];
+    for (let i = 0; i < 7; i++) {
+      const day = new Date(startOfWeek);
+      day.setDate(startOfWeek.getDate() + i);
+      days.push(day);
+    }
+    
+    return days;
+  };
+
+  // Obtener día actual
+  const getCurrentDay = (date: Date) => {
+    return [new Date(date)];
+  };
+
   // Obtener tareas para una fecha específica
   const getTasksForDate = (date: Date) => {
     const dateStr = date.toISOString().split('T')[0];
     return tasks.filter(task => task.fecha === dateStr);
   };
 
-  // Manejar navegación de mes
-  const navigateMonth = (direction: 'prev' | 'next') => {
+  // Manejar navegación según la vista actual
+  const navigateDate = (direction: 'prev' | 'next') => {
     const newDate = new Date(currentDate);
-    newDate.setMonth(currentDate.getMonth() + (direction === 'next' ? 1 : -1));
+    
+    if (viewMode === 'month') {
+      newDate.setMonth(currentDate.getMonth() + (direction === 'next' ? 1 : -1));
+    } else if (viewMode === 'week') {
+      newDate.setDate(currentDate.getDate() + (direction === 'next' ? 7 : -7));
+    } else if (viewMode === 'day') {
+      newDate.setDate(currentDate.getDate() + (direction === 'next' ? 1 : -1));
+    }
+    
     setCurrentDate(newDate);
+  };
+
+  // Seleccionar día para mostrar tareas
+  const selectDay = (date: string) => {
+    setSelectedDate(date);
+    // Filtrar tareas para el día seleccionado
+    const dayTasks = tasks.filter(task => task.fecha === date);
+    // Las tareas ya se filtran automáticamente en el render
   };
 
   // Abrir modal para nueva tarea
@@ -120,11 +205,11 @@ export default function CalendarioPage() {
     setEditingTask(null);
     setFormData({
       titulo: '',
-      descripcion: '',
-      fecha: date || '',
-      hora: '',
-      categoria: 'trabajo',
-      prioridad: 'media'
+      descripion: '',
+      fecha: date || selectedDate || '',
+      categoria: 'Trabajo',
+      prioridad: 'Media',
+      asignada: 0
     });
     setShowTaskModal(true);
   };
@@ -134,48 +219,92 @@ export default function CalendarioPage() {
     setEditingTask(task);
     setFormData({
       titulo: task.titulo,
-      descripcion: task.descripcion || '',
+      descripion: task.descripion || '',
       fecha: task.fecha,
-      hora: task.hora,
       categoria: task.categoria,
-      prioridad: task.prioridad
+      prioridad: task.prioridad,
+      asignada: task.asignada || 0
     });
     setShowTaskModal(true);
   };
 
   // Guardar tarea
-  const handleSaveTask = () => {
-    if (!formData.titulo || !formData.fecha || !formData.hora) {
+  const handleSaveTask = async () => {
+    if (!formData.titulo || !formData.fecha) {
       alert('Por favor completa todos los campos requeridos');
       return;
     }
 
-    const categoria = categorias.find(c => c.id === formData.categoria);
-    const taskData: Task = {
-      id: editingTask ? editingTask.id : Date.now(),
-      titulo: formData.titulo,
-      descripcion: formData.descripcion,
-      fecha: formData.fecha,
-      hora: formData.hora,
-      categoria: formData.categoria,
-      prioridad: formData.prioridad,
-      completada: editingTask ? editingTask.completada : false,
-      color: categoria?.color || '#4ecdc4'
-    };
+    setLoading(true);
+    
+    try {
+      const currentUserId = parseInt(localStorage.getItem('userId') || '0');
+      
+      const tareaData = {
+        titulo: formData.titulo,
+        descripion: formData.descripion,
+        fecha: formData.fecha,
+        categoria: formData.categoria,
+        prioridad: formData.prioridad,
+        asignada: formData.asignada || null,
+        creado_por: currentUserId
+      };
 
-    if (editingTask) {
-      setTasks(tasks.map(t => t.id === editingTask.id ? taskData : t));
-    } else {
-      setTasks([...tasks, taskData]);
+      if (editingTask) {
+        // Actualizar tarea existente
+        const result = await supabaseService.updateTarea(editingTask.id, tareaData);
+        if (result.success) {
+          // Recargar tareas para obtener datos actualizados
+          await loadTareas();
+          setShowTaskModal(false);
+        } else {
+          alert('Error al actualizar la tarea: ' + result.error);
+        }
+      } else {
+        // Crear nueva tarea
+        const result = await supabaseService.createTarea(tareaData);
+        if (result.success) {
+          // Recargar tareas para obtener datos actualizados
+          await loadTareas();
+          setShowTaskModal(false);
+        } else {
+          alert('Error al crear la tarea: ' + result.error);
+        }
+      }
+    } catch (error) {
+      console.error('Error al guardar tarea:', error);
+      alert('Error inesperado al guardar la tarea');
+    } finally {
+      setLoading(false);
     }
-
-    setShowTaskModal(false);
   };
 
-  // Eliminar tarea
-  const handleDeleteTask = (taskId: number) => {
-    if (confirm('¿Estás seguro de que quieres eliminar esta tarea?')) {
-      setTasks(tasks.filter(t => t.id !== taskId));
+  // Abrir modal de confirmación para eliminar tarea
+  const openDeleteModal = (task: Task) => {
+    setTaskToDelete(task);
+    setShowDeleteModal(true);
+  };
+
+  // Eliminar tarea confirmada
+  const confirmDeleteTask = async () => {
+    if (!taskToDelete) return;
+
+    setLoading(true);
+    try {
+      const result = await supabaseService.deleteTarea(taskToDelete.id);
+      if (result.success) {
+        // Recargar tareas para obtener datos actualizados
+        await loadTareas();
+        setShowDeleteModal(false);
+        setTaskToDelete(null);
+      } else {
+        alert('Error al eliminar la tarea: ' + result.error);
+      }
+    } catch (error) {
+      console.error('Error al eliminar tarea:', error);
+      alert('Error inesperado al eliminar la tarea');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -226,15 +355,17 @@ export default function CalendarioPage() {
               ))}
             </div>
 
-            <button 
-              onClick={() => openNewTaskModal()}
-              className="flex items-center space-x-2 bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] text-white px-4 py-2 rounded text-sm font-medium transition-colors"
-            >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-              </svg>
-              <span>Nueva Tarea</span>
-            </button>
+            {localStorage.getItem('userRole') !== 'Comercial' && (
+              <button 
+                onClick={() => openNewTaskModal(selectedDate)}
+                className="flex items-center space-x-2 bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] text-white px-4 py-2 rounded text-sm font-medium transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+                <span>Nueva Tarea</span>
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -244,7 +375,7 @@ export default function CalendarioPage() {
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <button
-              onClick={() => navigateMonth('prev')}
+              onClick={() => navigateDate('prev')}
               className="text-[var(--text-muted)] hover:text-[var(--text-primary)] p-2 rounded"
             >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -253,11 +384,35 @@ export default function CalendarioPage() {
             </button>
             
             <h2 className="text-[var(--text-primary)] font-semibold text-xl">
-              {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
+              {viewMode === 'month' 
+                ? `${monthNames[currentDate.getMonth()]} ${currentDate.getFullYear()}`
+                : viewMode === 'week'
+                ? (() => {
+                    const startOfWeek = new Date(currentDate);
+                    const day = startOfWeek.getDay();
+                    const diff = startOfWeek.getDate() - day + (day === 0 ? -6 : 1);
+                    startOfWeek.setDate(diff);
+                    
+                    const endOfWeek = new Date(startOfWeek);
+                    endOfWeek.setDate(startOfWeek.getDate() + 6);
+                    
+                    if (startOfWeek.getMonth() === endOfWeek.getMonth()) {
+                      return `${startOfWeek.getDate()} - ${endOfWeek.getDate()} de ${monthNames[startOfWeek.getMonth()]} ${startOfWeek.getFullYear()}`;
+                    } else {
+                      return `${startOfWeek.getDate()} ${monthNames[startOfWeek.getMonth()]} - ${endOfWeek.getDate()} ${monthNames[endOfWeek.getMonth()]} ${endOfWeek.getFullYear()}`;
+                    }
+                  })()
+                : currentDate.toLocaleDateString('es-ES', { 
+                    weekday: 'long',
+                    year: 'numeric', 
+                    month: 'long',
+                    day: 'numeric'
+                  })
+              }
             </h2>
             
             <button
-              onClick={() => navigateMonth('next')}
+              onClick={() => navigateDate('next')}
               className="text-[var(--text-muted)] hover:text-[var(--text-primary)] p-2 rounded"
             >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -302,8 +457,10 @@ export default function CalendarioPage() {
                     key={index}
                     className={`min-h-[120px] border-r border-b border-[var(--border-primary)] p-2 ${
                       !isCurrentMonth ? 'bg-[var(--bg-primary)] opacity-50' : 'hover:bg-[var(--bg-tertiary)]'
+                    } ${
+                      selectedDate === dayStr ? 'bg-[var(--accent-primary)] bg-opacity-20 border-[var(--accent-primary)]' : ''
                     } transition-colors cursor-pointer`}
-                    onClick={() => openNewTaskModal(dayStr)}
+                    onClick={() => selectDay(dayStr)}
                   >
                     <div className={`text-sm font-medium mb-2 ${
                       isToday 
@@ -323,7 +480,10 @@ export default function CalendarioPage() {
                           className={`text-xs p-1 rounded truncate cursor-pointer transition-opacity ${
                             task.completada ? 'opacity-50 line-through' : ''
                           }`}
-                          style={{ backgroundColor: task.color + '20', color: task.color }}
+                          style={{ 
+                            backgroundColor: task.color + '20', 
+                            color: selectedDate === dayStr ? 'black' : task.color 
+                          }}
                           onClick={(e) => {
                             e.stopPropagation();
                             openEditTaskModal(task);
@@ -346,13 +506,181 @@ export default function CalendarioPage() {
           </div>
         )}
 
-        {/* Lista de tareas para hoy (sidebar derecho) */}
+        {/* Vista de semana */}
+        {viewMode === 'week' && (
+          <div className="bg-[var(--bg-secondary)] rounded-lg border border-[var(--border-primary)]">
+            {/* Header de días */}
+            <div className="grid grid-cols-7 border-b border-[var(--border-primary)]">
+              {dayNames.map((day) => (
+                <div key={day} className="p-4 text-center text-[var(--text-muted)] font-medium text-sm">
+                  {day}
+                </div>
+              ))}
+            </div>
+
+            {/* Grid de días de la semana */}
+            <div className="grid grid-cols-7">
+              {getDaysInWeek(currentDate).map((day, index) => {
+                const dayStr = day.toISOString().split('T')[0];
+                const isToday = dayStr === todayStr;
+                const dayTasks = getTasksForDate(day);
+
+                return (
+                  <div
+                    key={index}
+                    className={`min-h-[200px] border-r border-b border-[var(--border-primary)] p-3 hover:bg-[var(--bg-tertiary)] ${
+                      selectedDate === dayStr ? 'bg-[var(--accent-primary)] bg-opacity-20 border-[var(--accent-primary)]' : ''
+                    } transition-colors cursor-pointer`}
+                    onClick={() => selectDay(dayStr)}
+                  >
+                    <div className={`text-sm font-medium mb-3 ${
+                      isToday 
+                        ? 'bg-[var(--accent-primary)] text-white w-8 h-8 rounded-full flex items-center justify-center' 
+                        : 'text-[var(--text-primary)]'
+                    }`}>
+                      {day.getDate()}
+                    </div>
+                    
+                    {/* Tareas del día */}
+                    <div className="space-y-2">
+                      {dayTasks.map((task) => (
+                        <div
+                          key={task.id}
+                          className={`text-xs p-2 rounded cursor-pointer transition-opacity ${
+                            task.completada ? 'opacity-50 line-through' : ''
+                          }`}
+                          style={{ 
+                            backgroundColor: task.color + '20', 
+                            color: selectedDate === dayStr ? 'black' : task.color 
+                          }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openEditTaskModal(task);
+                          }}
+                          title={`${task.titulo}`}
+                        >
+                          {task.titulo}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Vista de día */}
+        {viewMode === 'day' && (
+          <div className="bg-[var(--bg-secondary)] rounded-lg border border-[var(--border-primary)] p-6">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center space-x-4">
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg ${
+                  new Date().toISOString().split('T')[0] === currentDate.toISOString().split('T')[0] 
+                    ? 'bg-[var(--accent-primary)]' 
+                    : 'bg-[var(--bg-primary)] text-[var(--text-primary)]'
+                }`}>
+                  {currentDate.getDate()}
+                </div>
+                <div>
+                  <h3 className="text-[var(--text-primary)] font-semibold text-lg">
+                    {currentDate.toLocaleDateString('es-ES', { weekday: 'long' })}
+                  </h3>
+                  <p className="text-[var(--text-muted)] text-sm">
+                    {currentDate.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Tareas del día */}
+            <div className="space-y-3">
+              {getTasksForDate(currentDate).map((task) => (
+                <div
+                  key={task.id}
+                  className={`flex items-center justify-between p-4 bg-[var(--bg-primary)] rounded-lg border border-[var(--border-primary)] ${
+                    task.completada ? 'opacity-50' : ''
+                  }`}
+                >
+                  <div className="flex items-center space-x-4">
+                    <div
+                      className="w-4 h-4 rounded-full"
+                      style={{ backgroundColor: task.color }}
+                    />
+                    <div>
+                      <h4 className={`text-[var(--text-primary)] font-medium ${task.completada ? 'line-through' : ''}`}>
+                        {task.titulo}
+                      </h4>
+                      <p className="text-[var(--text-muted)] text-sm">
+                        {task.descripion || 'Sin descripción'}
+                      </p>
+                      <div className="flex items-center space-x-4 mt-1 text-xs text-[var(--text-muted)]">
+                        <span>🏷️ {task.categoria}</span>
+                        <span>⚡ {task.prioridad}</span>
+                        {task.asignado_nombre && <span>👤 {task.asignado_nombre}</span>}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={() => openEditTaskModal(task)}
+                      className="text-[var(--text-muted)] hover:text-[var(--text-primary)] text-sm"
+                    >
+                      ✏️
+                    </button>
+                    {localStorage.getItem('userRole') !== 'Comercial' && (
+                      <button
+                        onClick={() => openDeleteModal(task)}
+                        className="text-[var(--text-muted)] hover:text-red-400 text-sm"
+                      >
+                        🗑️
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+              
+              {getTasksForDate(currentDate).length === 0 && (
+                <div className="text-center py-8 text-[var(--text-muted)]">
+                  <div className="text-4xl mb-2">📅</div>
+                  <p>
+                    {localStorage.getItem('userRole') === 'Comercial' 
+                      ? 'No tienes tareas asignadas para este día'
+                      : 'No hay tareas para este día'
+                    }
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Lista de tareas para el día seleccionado */}
         <div className="mt-6">
           <div className="bg-[var(--bg-secondary)] rounded-lg border border-[var(--border-primary)] p-4">
-            <h3 className="text-[var(--text-primary)] font-semibold mb-4">Tareas de Hoy</h3>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-[var(--text-primary)] font-semibold">
+                {selectedDate ? `Tareas del ${new Date(selectedDate).toLocaleDateString('es-ES', { 
+                  weekday: 'long', 
+                  year: 'numeric', 
+                  month: 'long', 
+                  day: 'numeric' 
+                })}` : 'Selecciona un día para ver las tareas'}
+              </h3>
+              
+              {/* Indicador de filtrado por rol */}
+              {localStorage.getItem('userRole') === 'Comercial' && (
+                <div className="flex items-center space-x-2 text-xs text-[var(--text-muted)] bg-[var(--bg-primary)] px-3 py-1 rounded-full border border-[var(--border-primary)]">
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.207A1 1 0 013 6.5V4z" />
+                  </svg>
+                  <span>Solo mis tareas</span>
+                </div>
+              )}
+            </div>
             <div className="space-y-3">
-              {getTasksForDate(today).length > 0 ? (
-                getTasksForDate(today).map((task) => (
+              {selectedDate && getTasksForDate(new Date(selectedDate)).length > 0 ? (
+                getTasksForDate(new Date(selectedDate)).map((task) => (
                   <div
                     key={task.id}
                     className={`flex items-center justify-between p-3 bg-[var(--bg-primary)] rounded border border-[var(--border-primary)] ${
@@ -386,18 +714,27 @@ export default function CalendarioPage() {
                       >
                         ✏️
                       </button>
-                      <button
-                        onClick={() => handleDeleteTask(task.id)}
-                        className="text-[var(--text-muted)] hover:text-red-400 text-sm"
-                      >
-                        🗑️
-                      </button>
+                      {localStorage.getItem('userRole') !== 'Comercial' && (
+                        <button
+                          onClick={() => openDeleteModal(task)}
+                          className="text-[var(--text-muted)] hover:text-red-400 text-sm"
+                        >
+                          🗑️
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))
+              ) : selectedDate ? (
+                <div className="text-[var(--text-muted)] text-center py-4">
+                  {localStorage.getItem('userRole') === 'Comercial' 
+                    ? 'No tienes tareas asignadas para este día'
+                    : 'No hay tareas programadas para este día'
+                  }
+                </div>
               ) : (
                 <div className="text-[var(--text-muted)] text-center py-4">
-                  No hay tareas programadas para hoy
+                  Haz clic en un día del calendario para ver sus tareas
                 </div>
               )}
             </div>
@@ -411,9 +748,16 @@ export default function CalendarioPage() {
           <div className="bg-[var(--bg-secondary)] rounded-lg border border-[var(--border-primary)] w-full max-w-md mx-4">
             {/* Header del modal */}
             <div className="flex items-center justify-between p-4 border-b border-[var(--border-primary)]">
-              <h3 className="text-[var(--text-primary)] font-semibold">
-                {editingTask ? 'Editar Tarea' : 'Nueva Tarea'}
-              </h3>
+              <div>
+                <h3 className="text-[var(--text-primary)] font-semibold">
+                  {editingTask ? 'Editar Tarea' : 'Nueva Tarea'}
+                </h3>
+                {localStorage.getItem('userRole') === 'Comercial' && (
+                  <p className="text-sm text-[var(--text-muted)] mt-1">
+                    Puedes editar el título, descripción, fecha, categoría y prioridad
+                  </p>
+                )}
+              </div>
               <button 
                 onClick={() => setShowTaskModal(false)}
                 className="text-[var(--text-muted)] hover:text-[var(--text-primary)]"
@@ -442,34 +786,48 @@ export default function CalendarioPage() {
               <div>
                 <label className="block text-[var(--text-muted)] text-sm mb-2">Descripción</label>
                 <textarea
-                  value={formData.descripcion}
-                  onChange={(e) => setFormData({ ...formData, descripcion: e.target.value })}
+                  value={formData.descripion}
+                  onChange={(e) => setFormData({ ...formData, descripion: e.target.value })}
                   className="w-full bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded px-3 py-2 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-primary)] focus:border-[var(--accent-primary)] resize-none"
                   rows={3}
                   placeholder="Descripción de la tarea"
                 />
               </div>
 
-              {/* Fecha y Hora */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-[var(--text-muted)] text-sm mb-2">Fecha *</label>
-                  <input
-                    type="date"
-                    value={formData.fecha}
-                    onChange={(e) => setFormData({ ...formData, fecha: e.target.value })}
+              {/* Fecha */}
+              <div>
+                <label className="block text-[var(--text-muted)] text-sm mb-2">Fecha *</label>
+                <input
+                  type="date"
+                  value={formData.fecha}
+                  onChange={(e) => setFormData({ ...formData, fecha: e.target.value })}
+                  className="w-full bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded px-3 py-2 text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-primary)] focus:border-[var(--accent-primary)]"
+                />
+              </div>
+
+              {/* Asignar a Usuario */}
+              <div>
+                <label className="block text-[var(--text-muted)] text-sm mb-2">Asignar a</label>
+                {localStorage.getItem('userRole') === 'Comercial' ? (
+                  <div className="w-full bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded px-3 py-2 text-[var(--text-muted)] cursor-not-allowed">
+                    {usuarios.find(u => u.id === formData.asignada)?.nombre_usuario || 'Sin asignar'} (Solo lectura)
+                  </div>
+                ) : (
+                  <select
+                    value={formData.asignada}
+                    onChange={(e) => setFormData({ ...formData, asignada: parseInt(e.target.value) })}
                     className="w-full bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded px-3 py-2 text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-primary)] focus:border-[var(--accent-primary)]"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[var(--text-muted)] text-sm mb-2">Hora *</label>
-                  <input
-                    type="time"
-                    value={formData.hora}
-                    onChange={(e) => setFormData({ ...formData, hora: e.target.value })}
-                    className="w-full bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded px-3 py-2 text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-primary)] focus:border-[var(--accent-primary)]"
-                  />
-                </div>
+                  >
+                    <option value={0}>Sin asignar</option>
+                    {usuarios
+                      .filter(usuario => usuario.rol !== 'Cliente')
+                      .map((usuario) => (
+                        <option key={usuario.id} value={usuario.id}>
+                          {usuario.nombre_usuario} ({usuario.rol})
+                        </option>
+                      ))}
+                  </select>
+                )}
               </div>
 
               {/* Categoría y Prioridad */}
@@ -478,7 +836,7 @@ export default function CalendarioPage() {
                   <label className="block text-[var(--text-muted)] text-sm mb-2">Categoría</label>
                   <select
                     value={formData.categoria}
-                    onChange={(e) => setFormData({ ...formData, categoria: e.target.value as Task['categoria'] })}
+                    onChange={(e) => setFormData({ ...formData, categoria: e.target.value })}
                     className="w-full bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded px-3 py-2 text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-primary)] focus:border-[var(--accent-primary)]"
                   >
                     {categorias.map((cat) => (
@@ -492,7 +850,7 @@ export default function CalendarioPage() {
                   <label className="block text-[var(--text-muted)] text-sm mb-2">Prioridad</label>
                   <select
                     value={formData.prioridad}
-                    onChange={(e) => setFormData({ ...formData, prioridad: e.target.value as Task['prioridad'] })}
+                    onChange={(e) => setFormData({ ...formData, prioridad: e.target.value })}
                     className="w-full bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded px-3 py-2 text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-primary)] focus:border-[var(--accent-primary)]"
                   >
                     {prioridades.map((pri) => (
@@ -518,6 +876,89 @@ export default function CalendarioPage() {
                 className="px-4 py-2 bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] text-white rounded transition-colors"
               >
                 {editingTask ? 'Actualizar' : 'Crear'} Tarea
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de confirmación para eliminar tarea */}
+      {showDeleteModal && taskToDelete && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded-lg p-6 w-full max-w-md mx-4">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-[var(--text-primary)]">Eliminar Tarea</h3>
+              <button 
+                onClick={() => setShowDeleteModal(false)} 
+                className="text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            <div className="mb-6">
+              <p className="text-[var(--text-secondary)] mb-4">
+                ¿Estás seguro de que quieres eliminar esta tarea?
+              </p>
+              
+              <div className="bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-lg p-4">
+                <div className="flex items-center space-x-3">
+                  <div
+                    className="w-4 h-4 rounded-full"
+                    style={{ backgroundColor: taskToDelete.color }}
+                  />
+                  <div className="flex-1">
+                    <h4 className="text-[var(--text-primary)] font-medium">
+                      {taskToDelete.titulo}
+                    </h4>
+                    <p className="text-[var(--text-muted)] text-sm">
+                      {taskToDelete.descripion || 'Sin descripción'}
+                    </p>
+                    <div className="flex items-center space-x-4 mt-2 text-xs text-[var(--text-muted)]">
+                      <span>📅 {new Date(taskToDelete.fecha).toLocaleDateString('es-ES')}</span>
+                      <span>🏷️ {taskToDelete.categoria}</span>
+                      <span>⚡ {taskToDelete.prioridad}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <p className="text-red-400 text-sm mt-3">
+                ⚠️ Esta acción no se puede deshacer.
+              </p>
+            </div>
+
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                className="px-4 py-2 border border-[var(--border-primary)] text-[var(--text-primary)] rounded-md hover:bg-[var(--bg-secondary)] transition-colors"
+                disabled={loading}
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={confirmDeleteTask}
+                disabled={loading}
+                className="px-4 py-2 bg-red-500 hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-md transition-colors flex items-center gap-2"
+              >
+                {loading ? (
+                  <>
+                    <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Eliminando...
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    Eliminar Tarea
+                  </>
+                )}
               </button>
             </div>
           </div>

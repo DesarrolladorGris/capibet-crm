@@ -98,7 +98,7 @@ export default function LoginPage() {
           <div className="w-16 h-16 mx-auto bg-[#00b894] rounded-full flex items-center justify-center border-2 border-[#00a085] shadow-lg mb-4">
             <div className="text-white font-bold text-2xl">🎲</div>
           </div>
-          <h1 className="text-white text-2xl font-bold">CapiBet</h1>
+          <h1 className="text-white text-2xl font-bold">CAPIBET</h1>
           <div className="flex items-center justify-center gap-2 mt-1">
             <div className="h-0.5 w-8 bg-[#00b894]"></div>
             <span className="text-[#00b894] text-sm font-medium tracking-wider">CRM</span>
@@ -200,7 +200,7 @@ export default function LoginPage() {
               </div>
             </div>
           </div>
-          <h1 className="text-white text-6xl font-bold mb-2">CapiBet</h1>
+          <h1 className="text-white text-6xl font-bold mb-2">CAPIBET</h1>
           <div className="flex items-center justify-center gap-4">
             <div className="h-1 w-16 bg-white/50"></div>
             <span className="text-white text-xl font-medium tracking-wider">CRM</span>

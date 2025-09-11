@@ -183,7 +183,7 @@ export default function RegisterPage() {
                 🎲
               </div>
             </div>
-            <h1 className="text-white text-2xl font-bold mt-2">CapiBet</h1>
+            <h1 className="text-white text-2xl font-bold mt-2">CAPIBET</h1>
             <div className="flex items-center justify-center gap-2 mt-1">
               <div className="h-0.5 w-8 bg-[#00b894]"></div>
               <span className="text-[#00b894] text-sm font-medium tracking-wider">CRM</span>

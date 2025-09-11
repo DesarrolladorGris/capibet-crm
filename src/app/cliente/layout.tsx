@@ -68,13 +68,13 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
           <div className="flex items-center justify-between">
             {/* Sección izquierda: Logo + Soporte */}
             <div className="flex items-center space-x-6">
-              {/* Logo CapiBet CRM */}
+              {/* Logo CAPIBET CRM */}
               <div className="flex items-center space-x-3">
                 <div className="w-8 h-8 bg-[#00b894] rounded-full flex items-center justify-center">
                   <div className="text-white font-bold text-sm">🎲</div>
                 </div>
                 <div>
-                  <h1 className="text-white font-bold text-lg">CapiBet CRM</h1>
+                  <h1 className="text-white font-bold text-lg">CAPIBET CRM</h1>
                   <p className="text-gray-400 text-sm">Portal del Cliente</p>
                 </div>
               </div>
@@ -152,7 +152,7 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
                 <div className="text-white font-bold text-sm">🎲</div>
               </div>
               <div>
-                <h1 className="text-white font-bold text-base">CapiBet CRM</h1>
+                <h1 className="text-white font-bold text-base">CAPIBET CRM</h1>
                 <p className="text-gray-400 text-xs">Portal del Cliente</p>
               </div>
             </div>

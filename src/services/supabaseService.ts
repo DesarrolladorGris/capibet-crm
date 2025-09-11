@@ -2657,6 +2657,223 @@ export class SupabaseService {
   }
 
   // ================================
+  // MÉTODOS PARA TAREAS
+  // ================================
+
+  /**
+   * Obtiene todas las tareas
+   */
+  async getAllTareas(): Promise<ApiResponse<any[]>> {
+    try {
+      console.log('Obteniendo todas las tareas');
+
+      const response = await fetch('https://dkrdphnnsgndrqmgdvxp.supabase.co/rest/v1/tareas', {
+        method: 'GET',
+        headers: {
+          'apikey': supabaseConfig.serviceRoleKey,
+          'Authorization': `Bearer ${supabaseConfig.serviceRoleKey}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      console.log('Response status:', response.status);
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error('Error response body:', errorData);
+        return {
+          success: false,
+          error: `Error del servidor: ${response.status} ${response.statusText}`,
+          details: errorData
+        };
+      }
+
+      const data = await response.json();
+      console.log('Tareas obtenidas:', data);
+
+      return { 
+        success: true, 
+        data: data 
+      };
+    } catch (error) {
+      console.error('Error al obtener tareas:', error);
+      return { 
+        success: false, 
+        error: 'Error de conexión al obtener tareas',
+        details: error instanceof Error ? error.message : 'Error desconocido'
+      };
+    }
+  }
+
+  /**
+   * Crea una nueva tarea
+   */
+  async createTarea(tareaData: any): Promise<ApiResponse<any>> {
+    try {
+      console.log('Creando nueva tarea:', tareaData);
+
+      const response = await fetch('https://dkrdphnnsgndrqmgdvxp.supabase.co/rest/v1/tareas', {
+        method: 'POST',
+        headers: {
+          'apikey': supabaseConfig.serviceRoleKey,
+          'Authorization': `Bearer ${supabaseConfig.serviceRoleKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(tareaData)
+      });
+
+      console.log('Response status:', response.status);
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error('Error response body:', errorData);
+        return {
+          success: false,
+          error: `Error del servidor: ${response.status} ${response.statusText}`,
+          details: errorData
+        };
+      }
+
+      // Manejar respuesta vacía o no-JSON
+      let data = null;
+      const contentType = response.headers.get('content-type');
+      const responseText = await response.text();
+      
+      if (responseText && contentType && contentType.includes('application/json')) {
+        try {
+          data = JSON.parse(responseText);
+        } catch (jsonError) {
+          console.warn('No se pudo parsear JSON, pero la operación fue exitosa:', responseText);
+          data = { success: true, message: 'Tarea creada exitosamente' };
+        }
+      } else {
+        console.log('Respuesta exitosa sin JSON:', responseText);
+        data = { success: true, message: 'Tarea creada exitosamente' };
+      }
+
+      console.log('Tarea creada exitosamente:', data);
+
+      return { 
+        success: true, 
+        data: data 
+      };
+    } catch (error) {
+      console.error('Error al crear tarea:', error);
+      return { 
+        success: false, 
+        error: 'Error de conexión al crear tarea',
+        details: error instanceof Error ? error.message : 'Error desconocido'
+      };
+    }
+  }
+
+  /**
+   * Actualiza una tarea existente
+   */
+  async updateTarea(tareaId: number, tareaData: any): Promise<ApiResponse<any>> {
+    try {
+      console.log('Actualizando tarea:', tareaId, tareaData);
+
+      const response = await fetch(`https://dkrdphnnsgndrqmgdvxp.supabase.co/rest/v1/tareas?id=eq.${tareaId}`, {
+        method: 'PATCH',
+        headers: {
+          'apikey': supabaseConfig.serviceRoleKey,
+          'Authorization': `Bearer ${supabaseConfig.serviceRoleKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(tareaData)
+      });
+
+      console.log('Response status:', response.status);
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error('Error response body:', errorData);
+        return {
+          success: false,
+          error: `Error del servidor: ${response.status} ${response.statusText}`,
+          details: errorData
+        };
+      }
+
+      // Manejar respuesta vacía o no-JSON
+      let data = null;
+      const contentType = response.headers.get('content-type');
+      const responseText = await response.text();
+      
+      if (responseText && contentType && contentType.includes('application/json')) {
+        try {
+          data = JSON.parse(responseText);
+        } catch (jsonError) {
+          console.warn('No se pudo parsear JSON, pero la operación fue exitosa:', responseText);
+          data = { success: true, message: 'Tarea actualizada exitosamente' };
+        }
+      } else {
+        console.log('Respuesta exitosa sin JSON:', responseText);
+        data = { success: true, message: 'Tarea actualizada exitosamente' };
+      }
+
+      console.log('Tarea actualizada exitosamente:', data);
+
+      return { 
+        success: true, 
+        data: data 
+      };
+    } catch (error) {
+      console.error('Error al actualizar tarea:', error);
+      return { 
+        success: false, 
+        error: 'Error de conexión al actualizar tarea',
+        details: error instanceof Error ? error.message : 'Error desconocido'
+      };
+    }
+  }
+
+  /**
+   * Elimina una tarea
+   */
+  async deleteTarea(tareaId: number): Promise<ApiResponse<any>> {
+    try {
+      console.log('Eliminando tarea:', tareaId);
+
+      const response = await fetch(`https://dkrdphnnsgndrqmgdvxp.supabase.co/rest/v1/tareas?id=eq.${tareaId}`, {
+        method: 'DELETE',
+        headers: {
+          'apikey': supabaseConfig.serviceRoleKey,
+          'Authorization': `Bearer ${supabaseConfig.serviceRoleKey}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      console.log('Response status:', response.status);
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error('Error response body:', errorData);
+        return {
+          success: false,
+          error: `Error del servidor: ${response.status} ${response.statusText}`,
+          details: errorData
+        };
+      }
+
+      console.log('Tarea eliminada exitosamente');
+
+      return { 
+        success: true, 
+        data: { message: 'Tarea eliminada exitosamente' }
+      };
+    } catch (error) {
+      console.error('Error al eliminar tarea:', error);
+      return { 
+        success: false, 
+        error: 'Error de conexión al eliminar tarea',
+        details: error instanceof Error ? error.message : 'Error desconocido'
+      };
+    }
+  }
+
+  // ================================
   // MÉTODOS PARA CHAT INTERNO
   // ================================
 

@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Beast CRM - Capibet",
-  description: "Sistema de gestión de relaciones con clientes para Capibet",
+  title: "Beast CRM - CAPIBET",
+  description: "Sistema de gestión de relaciones con clientes para CAPIBET",
 };
 
 export default function RootLayout({
