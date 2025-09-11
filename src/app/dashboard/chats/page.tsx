@@ -268,16 +268,16 @@ export default function ChatsPage() {
   return (
     <div className="flex-1 flex flex-col">
       {/* Header de Chats */}
-      <div className="bg-[#1a1d23] border-b border-[#3a3d45] px-6 py-4">
+      <div className="bg-[var(--bg-primary)] border-b border-[var(--border-primary)] px-6 py-4">
         <div className="flex items-center justify-between">
           {/* Left Section */}
           <div className="flex items-center space-x-4">
-            <button className="text-gray-400 hover:text-white p-2 rounded">
+            <button className="text-[var(--text-muted)] hover:text-[var(--text-primary)] p-2 rounded">
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
-            <h1 className="text-white font-semibold text-2xl">Chats</h1>
+            <h1 className="text-[var(--text-primary)] font-semibold text-2xl">Chats</h1>
           </div>
 
           {/* Center Section - Selector de Espacio */}
@@ -291,7 +291,7 @@ export default function ChatsPage() {
                     const espacio = espaciosTrabajo.find(e => e.id === espacioId);
                     setSelectedEspacio(espacio || null);
                   }}
-                  className="bg-[#2a2d35] border border-[#3a3d45] rounded-lg px-4 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#00b894] focus:border-[#00b894] appearance-none cursor-pointer min-w-[200px]"
+                  className="bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-lg px-4 py-2 text-[var(--text-primary)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent-primary)] focus:border-[var(--accent-primary)] appearance-none cursor-pointer min-w-[200px]"
                 >
                   <option value="">Seleccionar espacio...</option>
                   {espaciosTrabajo.map(espacio => (
@@ -301,14 +301,14 @@ export default function ChatsPage() {
                   ))}
                 </select>
                 <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                  <svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className="h-4 w-4 text-[var(--text-muted)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
                 </div>
               </div>
             )}
             {selectedEspacio && (
-              <div className="text-gray-400 text-sm">
+              <div className="text-[var(--text-muted)] text-sm">
                 {chats.length} conversación{chats.length !== 1 ? 'es' : ''}
               </div>
             )}
@@ -316,7 +316,7 @@ export default function ChatsPage() {
 
           {/* Right Section */}
           <div className="flex items-center space-x-4">
-            <button className="text-gray-400 hover:text-white p-2 rounded">
+            <button className="text-[var(--text-muted)] hover:text-[var(--text-primary)] p-2 rounded">
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
               </svg>
@@ -328,14 +328,14 @@ export default function ChatsPage() {
       {/* Contenido principal */}
       <div className="flex-1 flex">
         {/* Lista de chats */}
-        <div className="w-1/3 bg-[#1a1d23] border-r border-[#3a3d45] flex flex-col">
+        <div className="w-1/3 bg-[var(--bg-primary)] border-r border-[var(--border-primary)] flex flex-col">
           {/* Loading state */}
           {isLoading && (
             <div className="flex-1 flex items-center justify-center">
               <div className="text-center">
-                <div className="text-gray-400 text-4xl mb-4">⏳</div>
-                <h3 className="text-white text-lg font-medium mb-2">Cargando chats...</h3>
-                <p className="text-gray-400 text-sm">Obteniendo conversaciones del espacio de trabajo</p>
+                <div className="text-[var(--text-muted)] text-4xl mb-4">⏳</div>
+                <h3 className="text-[var(--text-primary)] text-lg font-medium mb-2">Cargando chats...</h3>
+                <p className="text-[var(--text-muted)] text-sm">Obteniendo conversaciones del espacio de trabajo</p>
               </div>
             </div>
           )}
@@ -344,9 +344,9 @@ export default function ChatsPage() {
           {!isLoading && !selectedEspacio && (
             <div className="flex-1 flex items-center justify-center">
               <div className="text-center">
-                <div className="text-gray-400 text-4xl mb-4">🏢</div>
-                <h3 className="text-white text-lg font-medium mb-2">Selecciona un espacio</h3>
-                <p className="text-gray-400 text-sm">Elige un espacio de trabajo para ver sus conversaciones</p>
+                <div className="text-[var(--text-muted)] text-4xl mb-4">🏢</div>
+                <h3 className="text-[var(--text-primary)] text-lg font-medium mb-2">Selecciona un espacio</h3>
+                <p className="text-[var(--text-muted)] text-sm">Elige un espacio de trabajo para ver sus conversaciones</p>
               </div>
             </div>
           )}
@@ -355,16 +355,16 @@ export default function ChatsPage() {
           {!isLoading && selectedEspacio && (
             <>
           {/* Buscador */}
-          <div className="p-4 border-b border-[#3a3d45]">
+          <div className="p-4 border-b border-[var(--border-primary)]">
             <div className="relative">
               <input
                 type="text"
                 placeholder="Buscar chats..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-[#2a2d35] border border-[#3a3d45] rounded px-3 py-2 pl-9 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#00b894] focus:border-[#00b894]"
+                className="w-full bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded px-3 py-2 pl-9 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-primary)] focus:border-[var(--accent-primary)]"
               />
-              <svg className="w-4 h-4 text-gray-400 absolute left-3 top-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="w-4 h-4 text-[var(--text-muted)] absolute left-3 top-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
             </div>
@@ -376,13 +376,13 @@ export default function ChatsPage() {
               <div
                 key={chat.id}
                 onClick={() => handleSelectChat(chat)}
-                className={`p-4 border-b border-[#3a3d45] cursor-pointer hover:bg-[#2a2d35] transition-colors ${
-                  selectedChat?.id === chat.id ? 'bg-[#2a2d35] border-l-4 border-l-[#00b894]' : ''
+                className={`p-4 border-b border-[var(--border-primary)] cursor-pointer hover:bg-[var(--bg-secondary)] transition-colors ${
+                  selectedChat?.id === chat.id ? 'bg-[var(--bg-secondary)] border-l-4 border-l-[var(--accent-primary)]' : ''
                 }`}
               >
                 <div className="flex items-center space-x-3">
                   {/* Avatar */}
-                  <div className="w-12 h-12 bg-[#00b894] rounded-full flex items-center justify-center text-white font-bold">
+                  <div className="w-12 h-12 bg-[var(--accent-primary)] rounded-full flex items-center justify-center text-white font-bold">
                     {chat.contacto.nombre.charAt(0).toUpperCase()}
                   </div>
 
@@ -390,20 +390,20 @@ export default function ChatsPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-1">
                       <div className="flex items-center space-x-2">
-                        <h3 className="text-white font-medium truncate">{chat.contacto.nombre}</h3>
+                        <h3 className="text-[var(--text-primary)] font-medium truncate">{chat.contacto.nombre}</h3>
                         <span className="text-xs">{chat.canal.icono}</span>
                       </div>
                       <div className="flex items-center space-x-2">
-                        <span className="text-gray-400 text-xs">{formatTime(chat.ultimoMensaje.creado_en)}</span>
+                        <span className="text-[var(--text-muted)] text-xs">{formatTime(chat.ultimoMensaje.creado_en)}</span>
                         {chat.noLeidos > 0 && (
-                          <span className="bg-[#00b894] text-white text-xs rounded-full px-2 py-0.5 min-w-[20px] text-center">
+                          <span className="bg-[var(--accent-primary)] text-white text-xs rounded-full px-2 py-0.5 min-w-[20px] text-center">
                             {chat.noLeidos}
                           </span>
                         )}
                       </div>
                     </div>
                     <div className="flex items-center justify-between">
-                      <p className="text-gray-400 text-sm truncate flex-1">
+                      <p className="text-[var(--text-muted)] text-sm truncate flex-1">
                         {chat.ultimoMensaje.contenido}
                       </p>
                     </div>
@@ -414,9 +414,9 @@ export default function ChatsPage() {
 
             {filteredChats.length === 0 && (
               <div className="p-8 text-center">
-                <div className="text-gray-400 text-4xl mb-4">💬</div>
-                <h3 className="text-white text-lg font-medium mb-2">No hay chats</h3>
-                <p className="text-gray-400 text-sm">
+                <div className="text-[var(--text-muted)] text-4xl mb-4">💬</div>
+                <h3 className="text-[var(--text-primary)] text-lg font-medium mb-2">No hay chats</h3>
+                <p className="text-[var(--text-muted)] text-sm">
                   {searchQuery ? 'No se encontraron chats con ese término' : 'Aún no tienes conversaciones'}
                 </p>
               </div>
@@ -431,24 +431,24 @@ export default function ChatsPage() {
           {selectedChat ? (
             <>
               {/* Header del chat */}
-              <div className="bg-[#2a2d35] border-b border-[#3a3d45] p-4">
+              <div className="bg-[var(--bg-secondary)] border-b border-[var(--border-primary)] p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-[#00b894] rounded-full flex items-center justify-center text-white font-bold">
+                    <div className="w-10 h-10 bg-[var(--accent-primary)] rounded-full flex items-center justify-center text-white font-bold">
                       {selectedChat.contacto.nombre.charAt(0).toUpperCase()}
                     </div>
                     <div>
-                      <h3 className="text-white font-medium">{selectedChat.contacto.nombre}</h3>
+                      <h3 className="text-[var(--text-primary)] font-medium">{selectedChat.contacto.nombre}</h3>
                       <div className="flex items-center space-x-2">
                         <span className="text-xs">{selectedChat.canal.icono}</span>
-                        <span className="text-gray-400 text-sm">{getChannelInfoByType(selectedChat.canal.tipo).name}</span>
-                        <span className="text-gray-500">•</span>
-                        <span className="text-gray-400 text-sm">{selectedChat.contacto.telefono}</span>
+                        <span className="text-[var(--text-muted)] text-sm">{getChannelInfoByType(selectedChat.canal.tipo).name}</span>
+                        <span className="text-[var(--text-muted)]">•</span>
+                        <span className="text-[var(--text-muted)] text-sm">{selectedChat.contacto.telefono}</span>
                       </div>
                     </div>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <button className="text-gray-400 hover:text-white p-2 rounded">
+                    <button className="text-[var(--text-muted)] hover:text-[var(--text-primary)] p-2 rounded">
                       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
                       </svg>
@@ -458,7 +458,7 @@ export default function ChatsPage() {
               </div>
 
               {/* Mensajes */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-[#1a1d23]">
+              <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-[var(--bg-primary)]">
                 {messages.map((message) => (
                   <div
                     key={message.id}
@@ -467,13 +467,13 @@ export default function ChatsPage() {
                     <div
                       className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
                         message.remitente_id === 1
-                          ? 'bg-[#00b894] text-white'
-                          : 'bg-[#2a2d35] text-white border border-[#3a3d45]'
+                          ? 'bg-[var(--accent-primary)] text-white'
+                          : 'bg-[var(--bg-secondary)] text-[var(--text-primary)] border border-[var(--border-primary)]'
                       }`}
                     >
                       <p className="text-sm">{message.contenido}</p>
                       <div className={`text-xs mt-1 ${
-                        message.remitente_id === 1 ? 'text-green-100' : 'text-gray-400'
+                        message.remitente_id === 1 ? 'text-green-100' : 'text-[var(--text-muted)]'
                       }`}>
                         {formatTime(message.creado_en)}
                         {message.remitente_id === 1 && (
@@ -490,9 +490,9 @@ export default function ChatsPage() {
               </div>
 
               {/* Input de mensaje */}
-              <div className="bg-[#2a2d35] border-t border-[#3a3d45] p-4">
+              <div className="bg-[var(--bg-secondary)] border-t border-[var(--border-primary)] p-4">
                 <div className="flex items-center space-x-3">
-                  <button className="text-gray-400 hover:text-white p-2 rounded">
+                  <button className="text-[var(--text-muted)] hover:text-[var(--text-primary)] p-2 rounded">
                     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
                     </svg>
@@ -503,12 +503,12 @@ export default function ChatsPage() {
                     onChange={(e) => setNewMessage(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
                     placeholder="Escribe un mensaje..."
-                    className="flex-1 bg-[#1a1d23] border border-[#3a3d45] rounded px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#00b894] focus:border-[#00b894]"
+                    className="flex-1 bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded px-3 py-2 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-primary)] focus:border-[var(--accent-primary)]"
                   />
                   <button
                     onClick={handleSendMessage}
                     disabled={!newMessage.trim()}
-                    className="bg-[#00b894] hover:bg-[#00a085] disabled:bg-gray-600 disabled:cursor-not-allowed text-white p-2 rounded transition-colors"
+                    className="bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] disabled:bg-gray-600 disabled:cursor-not-allowed text-white p-2 rounded transition-colors"
                   >
                     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
@@ -519,11 +519,11 @@ export default function ChatsPage() {
             </>
           ) : (
             /* Estado sin chat seleccionado */
-            <div className="flex-1 flex items-center justify-center bg-[#1a1d23]">
+            <div className="flex-1 flex items-center justify-center bg-[var(--bg-primary)]">
               <div className="text-center">
-                <div className="text-gray-400 text-6xl mb-4">💬</div>
-                <h3 className="text-white text-xl font-medium mb-2">Selecciona una conversación</h3>
-                <p className="text-gray-400 text-sm">
+                <div className="text-[var(--text-muted)] text-6xl mb-4">💬</div>
+                <h3 className="text-[var(--text-primary)] text-xl font-medium mb-2">Selecciona una conversación</h3>
+                <p className="text-[var(--text-muted)] text-sm">
                   Elige un chat de la lista para comenzar a conversar
                 </p>
               </div>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { supabaseService } from '@/services/supabaseService';
 
 interface Message {
   id: number;
@@ -11,23 +12,132 @@ interface Message {
   senderName: string;
 }
 
+interface MensajeInterno {
+  id: number;
+  created_at: string;
+  chat_interno_id: number;
+  mensaje: string;
+  leido: boolean;
+  emisor: 'cliente' | 'operador';
+}
+
 export default function ClientChatPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [isConnected, setIsConnected] = useState(true);
   const [userName, setUserName] = useState('Cliente');
+  const [userId, setUserId] = useState<number | null>(null);
+  const [hasCreatedConversation, setHasCreatedConversation] = useState(false);
+  const [isCreatingConversation, setIsCreatingConversation] = useState(false);
+  const [conversationData, setConversationData] = useState<any>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Cargar nombre del usuario y mensaje de bienvenida
+  // Cargar datos del usuario y mensaje de bienvenida
   useEffect(() => {
     const name = localStorage.getItem('userName') || 'Cliente';
+    const userIdStr = localStorage.getItem('userId');
+    
     setUserName(name);
+    
+    if (userIdStr) {
+      const parsedUserId = parseInt(userIdStr);
+      setUserId(parsedUserId);
+      
+      // Verificar si ya existe una conversación para este usuario
+      checkExistingConversation(parsedUserId);
+    }
 
+    // Los mensajes se cargarán desde checkExistingConversation
+  }, []);
+
+  // Función para verificar si ya existe una conversación y cargar mensajes
+  const checkExistingConversation = async (clienteId: number) => {
+    try {
+      console.log('🚀 Verificando conversación existente para cliente:', clienteId);
+      const result = await supabaseService.checkClientChatInternoConversation(clienteId);
+      
+      if (result.success && result.data) {
+        console.log('✅ Conversación encontrada:', result.data);
+        
+        // Verificar si la conversación está finalizada
+        if (result.data.estado === 'FINALIZADO') {
+          console.log('🔒 Conversación finalizada, permitiendo crear nueva conversación');
+          setHasCreatedConversation(false);
+          setConversationData(null);
+          setWelcomeMessageWithClosedInfo();
+        } else {
+          setHasCreatedConversation(true);
+          setConversationData(result.data);
+          // Cargar mensajes existentes
+          await loadExistingMessages(result.data.id);
+        }
+      } else {
+        console.log('ℹ️ No se encontró conversación existente');
+        // Mostrar solo el mensaje de bienvenida si no hay conversación
+        setWelcomeMessage();
+      }
+    } catch (error) {
+      console.error('❌ Error al verificar conversación existente:', error);
+      setWelcomeMessage();
+    }
+  };
+
+  // Función para cargar mensajes existentes
+  const loadExistingMessages = async (chatInternoId: number) => {
+    try {
+      console.log('🚀 Cargando mensajes existentes para conversación:', chatInternoId);
+      const result = await supabaseService.getClientMensajesInternos(chatInternoId);
+      
+      if (result.success && result.data.length > 0) {
+        // Convertir mensajes del servidor al formato de la UI
+        const convertedMessages: Message[] = result.data.map((msg: MensajeInterno) => ({
+          id: msg.id,
+          content: msg.mensaje,
+          timestamp: new Date(msg.created_at),
+          isFromClient: msg.emisor === 'cliente',
+          status: msg.leido ? 'read' : 'delivered',
+          senderName: msg.emisor === 'cliente' ? userName : 'Soporte CapiBet CRM'
+        }));
+        
+        // Agregar mensaje de bienvenida al inicio si no existe
+        const hasWelcomeMessage = convertedMessages.some(msg => 
+          msg.content.includes('Bienvenido a nuestro sistema de atención al cliente')
+        );
+        
+        if (!hasWelcomeMessage) {
+          const welcomeMessage: Message = {
+            id: 0,
+            content: "¡Hola! Bienvenido a nuestro sistema de atención al cliente. ¿En qué podemos ayudarte hoy?",
+            timestamp: new Date(convertedMessages[0]?.timestamp.getTime() - 1000 || Date.now()),
+            isFromClient: false,
+            status: 'read',
+            senderName: 'Soporte CapiBet CRM'
+          };
+          convertedMessages.unshift(welcomeMessage);
+        }
+        
+        setMessages(convertedMessages);
+        console.log('✅ Mensajes cargados:', convertedMessages.length);
+        
+        // Marcar mensajes del operador como leídos
+        await markOperatorMessagesAsRead(chatInternoId);
+      } else {
+        console.log('ℹ️ No se encontraron mensajes, mostrando mensaje de bienvenida');
+        setWelcomeMessage();
+      }
+    } catch (error) {
+      console.error('❌ Error al cargar mensajes existentes:', error);
+      setWelcomeMessage();
+    }
+  };
+
+  // Función para establecer el mensaje de bienvenida
+  const setWelcomeMessage = () => {
     const welcomeMessage: Message[] = [
       {
-        id: 1,
+        id: 0,
         content: "¡Hola! Bienvenido a nuestro sistema de atención al cliente. ¿En qué podemos ayudarte hoy?",
         timestamp: new Date(),
         isFromClient: false,
@@ -36,7 +146,74 @@ export default function ClientChatPage() {
       }
     ];
     setMessages(welcomeMessage);
-  }, []);
+  };
+
+  // Función para establecer el mensaje de bienvenida cuando la conversación anterior fue cerrada
+  const setWelcomeMessageWithClosedInfo = () => {
+    const welcomeMessage: Message[] = [
+      {
+        id: 0,
+        content: "Tu conversación anterior fue finalizada. ¡Hola! Bienvenido nuevamente a nuestro sistema de atención al cliente. ¿En qué podemos ayudarte hoy?",
+        timestamp: new Date(),
+        isFromClient: false,
+        status: 'read',
+        senderName: 'Soporte CapiBet CRM'
+      }
+    ];
+    setMessages(welcomeMessage);
+  };
+
+  // Función para marcar mensajes del operador como leídos
+  const markOperatorMessagesAsRead = async (chatInternoId: number) => {
+    try {
+      console.log('📖 Marcando mensajes del operador como leídos...');
+      const result = await supabaseService.markOperatorMessagesAsRead(chatInternoId);
+      
+      if (result.success) {
+        console.log('✅ Mensajes del operador marcados como leídos exitosamente');
+      } else {
+        console.error('❌ Error al marcar mensajes del operador como leídos:', result.error);
+      }
+    } catch (error) {
+      console.error('❌ Error al marcar mensajes del operador como leídos:', error);
+    }
+  };
+
+  // Función para verificar nuevas respuestas del operador
+  const checkForNewMessages = async () => {
+    if (conversationData && conversationData.id) {
+      try {
+        console.log('🔄 Verificando nuevos mensajes...');
+        
+        // Primero verificar si la conversación sigue activa
+        if (userId) {
+          const result = await supabaseService.checkClientChatInternoConversation(userId);
+          if (result.success && result.data && result.data.estado === 'FINALIZADO') {
+            console.log('🔒 Conversación fue finalizada por el operador');
+            setHasCreatedConversation(false);
+            setConversationData(null);
+            
+            // Mostrar mensaje informativo
+            const finalizationMessage: Message = {
+              id: Date.now(),
+              content: "El operador ha finalizado esta conversación. Si necesitas más ayuda, puedes escribir un nuevo mensaje para iniciar una nueva conversación.",
+              timestamp: new Date(),
+              isFromClient: false,
+              status: 'read',
+              senderName: 'Sistema CapiBet CRM'
+            };
+            setMessages(prev => [...prev, finalizationMessage]);
+            return;
+          }
+        }
+        
+        // Si la conversación sigue activa, cargar nuevos mensajes
+        await loadExistingMessages(conversationData.id);
+      } catch (error) {
+        console.error('❌ Error al verificar nuevos mensajes:', error);
+      }
+    }
+  };
 
   // Enfocar el campo de texto cuando la página carga
   useEffect(() => {
@@ -44,6 +221,45 @@ export default function ClientChatPage() {
       textareaRef.current.focus();
     }
   }, []);
+
+  // Verificar nuevos mensajes periódicamente
+  useEffect(() => {
+    if (conversationData && conversationData.id) {
+      const interval = setInterval(() => {
+        checkForNewMessages();
+      }, 10000); // Verificar cada 10 segundos
+
+      return () => clearInterval(interval);
+    }
+  }, [conversationData]);
+
+  // Marcar mensajes como leídos cuando la página está en foco
+  useEffect(() => {
+    const handleFocus = async () => {
+      if (conversationData && conversationData.id) {
+        console.log('👀 Página en foco, marcando mensajes del operador como leídos...');
+        await markOperatorMessagesAsRead(conversationData.id);
+      }
+    };
+
+    const handleVisibilityChange = async () => {
+      if (!document.hidden && conversationData && conversationData.id) {
+        console.log('👀 Página visible, marcando mensajes del operador como leídos...');
+        await markOperatorMessagesAsRead(conversationData.id);
+      }
+    };
+
+    // Marcar como leído cuando la página obtiene foco
+    window.addEventListener('focus', handleFocus);
+    
+    // Marcar como leído cuando la página se vuelve visible
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [conversationData]);
 
   // Auto scroll al final cuando hay nuevos mensajes
   useEffect(() => {
@@ -54,12 +270,14 @@ export default function ClientChatPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!newMessage.trim()) return;
+    if (isCreatingConversation) return; // Evitar envíos múltiples mientras se crea la conversación
 
+    const messageContent = newMessage.trim();
     const message: Message = {
       id: Date.now(),
-      content: newMessage.trim(),
+      content: messageContent,
       timestamp: new Date(),
       isFromClient: true,
       status: 'sent',
@@ -69,35 +287,78 @@ export default function ClientChatPage() {
     setMessages(prev => [...prev, message]);
     setNewMessage('');
 
-    // Simular respuesta automática después de un momento
-    setTimeout(() => {
-      // Actualizar estado del mensaje a 'delivered'
-      setMessages(prev => prev.map(msg => 
-        msg.id === message.id ? { ...msg, status: 'delivered' } : msg
-      ));
+    let currentConversationData = conversationData;
 
-      // Simular que el agente está escribiendo
-      setIsTyping(true);
-      setTimeout(() => {
-        setIsTyping(false);
-        const autoResponse: Message = {
-          id: Date.now() + 1,
-          content: "Gracias por tu mensaje. Un agente revisará tu consulta y te responderá pronto.",
-          timestamp: new Date(),
-          isFromClient: false,
-          status: 'sent',
-          senderName: 'Sistema Automático'
-        };
-        setMessages(prev => [...prev, autoResponse]);
+    // Si no hay conversación activa (primera vez o conversación anterior finalizada)
+    if (!hasCreatedConversation && userId) {
+      setIsCreatingConversation(true);
+      
+      try {
+        console.log('🚀 Paso 1: Creando nueva conversación de chat interno para cliente:', userId);
+        const createResult = await supabaseService.createChatInternoConversation(userId);
+        
+        if (createResult.success) {
+          console.log('✅ Paso 1 completado: Nueva conversación creada exitosamente');
+          
+          // Paso 2: Obtener la conversación recién creada para obtener su ID
+          // Esperamos un momento para asegurar que la conversación esté disponible en la base de datos
+          await new Promise(resolve => setTimeout(resolve, 500));
+          
+          console.log('🚀 Paso 2: Obteniendo nueva conversación para obtener el ID...');
+          const getResult = await supabaseService.getChatInternoConversation(userId);
+          
+          if (getResult.success && getResult.data) {
+            currentConversationData = getResult.data;
+            setConversationData(currentConversationData);
+            setHasCreatedConversation(true);
+            console.log('✅ Paso 2 completado: Nueva conversación obtenida:', currentConversationData);
+          } else {
+            console.error('❌ Error en Paso 2: No se pudo obtener la nueva conversación:', getResult.error);
+            console.log('🔄 Intentando obtener conversación sin filtro de estado...');
+            
+            // Fallback: intentar obtener cualquier conversación del cliente
+            const fallbackResult = await supabaseService.checkClientChatInternoConversation(userId);
+            if (fallbackResult.success && fallbackResult.data) {
+              currentConversationData = fallbackResult.data;
+              setConversationData(currentConversationData);
+              setHasCreatedConversation(true);
+              console.log('✅ Fallback exitoso: Conversación obtenida:', currentConversationData);
+            }
+          }
+        } else {
+          console.error('❌ Error en Paso 1: No se pudo crear la nueva conversación:', createResult.error);
+        }
+      } catch (error) {
+        console.error('❌ Error general en creación de nueva conversación:', error);
+      } finally {
+        setIsCreatingConversation(false);
+      }
+    }
 
-        // Marcar mensaje original como leído
-        setTimeout(() => {
-          setMessages(prev => prev.map(msg => 
-            msg.id === message.id ? { ...msg, status: 'read' } : msg
-          ));
-        }, 1000);
-      }, 2000);
-    }, 1000);
+        // Paso 3: Crear el mensaje interno si tenemos los datos de la conversación
+        if (currentConversationData && currentConversationData.id) {
+          try {
+            console.log('🚀 Paso 3: Creando mensaje interno en conversación:', currentConversationData.id);
+            const messageResult = await supabaseService.createMensajeInterno(
+              currentConversationData.id, 
+              messageContent, 
+              'cliente'
+            );
+            
+            if (messageResult.success) {
+              console.log('✅ Paso 3 completado: Mensaje interno creado exitosamente:', messageResult.data);
+              
+              // Recargar mensajes desde el servidor para mostrar el mensaje recién enviado
+              await loadExistingMessages(currentConversationData.id);
+            } else {
+              console.error('❌ Error en Paso 3: No se pudo crear el mensaje interno:', messageResult.error);
+            }
+          } catch (error) {
+            console.error('❌ Error general en creación de mensaje interno:', error);
+          }
+        } else {
+          console.log('⚠️ No se pudo crear mensaje interno: faltan datos de conversación');
+        }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -247,7 +508,7 @@ export default function ClientChatPage() {
             />
             <button
               onClick={handleSendMessage}
-              disabled={!newMessage.trim()}
+              disabled={!newMessage.trim() || isCreatingConversation}
               className="absolute right-3 bottom-3 w-8 h-8 bg-[#00b894] hover:bg-[#00a085] disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-full flex items-center justify-center transition-colors"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -257,9 +518,15 @@ export default function ClientChatPage() {
           </div>
           
           {/* Help Text */}
-          <p className="text-gray-500 text-xs mt-2 text-center hidden sm:block">
-            Presiona Enter para enviar, Shift + Enter para nueva línea
-          </p>
+          {isCreatingConversation ? (
+            <p className="text-[#00b894] text-xs mt-2 text-center animate-pulse">
+              📞 Conectando con soporte...
+            </p>
+          ) : (
+            <p className="text-gray-500 text-xs mt-2 text-center hidden sm:block">
+              Presiona Enter para enviar, Shift + Enter para nueva línea
+            </p>
+          )}
         </div>
       </div>
     </div>

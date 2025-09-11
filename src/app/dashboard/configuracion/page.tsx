@@ -119,8 +119,8 @@ export default function ConfiguracionPage() {
 
   if (!userEmail) {
     return (
-      <div className="min-h-screen bg-[#1a1d23] flex items-center justify-center">
-        <div className="text-white">Cargando...</div>
+      <div className="min-h-screen bg-[var(--bg-primary)] flex items-center justify-center">
+        <div className="text-[var(--text-primary)]">Cargando...</div>
       </div>
     );
   }
@@ -129,18 +129,18 @@ export default function ConfiguracionPage() {
     <RoleProtection requiredRoles={['Administrador', 'Admin']}>
       <div className="flex-1 flex flex-col">
         {/* Header de Configuración */}
-        <div className="bg-[#1a1d23] border-b border-[#3a3d45] px-6 py-4">
+        <div className="bg-[var(--bg-primary)] border-b border-[var(--border-primary)] px-6 py-4">
           <div className="flex items-center justify-between">
             {/* Left Section */}
             <div className="flex items-center space-x-4">
               {/* Page Title */}
-              <h1 className="text-white font-semibold text-2xl">Configuración</h1>
+              <h1 className="text-[var(--text-primary)] font-semibold text-2xl">Configuración</h1>
             </div>
           </div>
         </div>
 
         {/* Tabs */}
-        <div className="bg-[#1a1d23] border-b border-[#3a3d45] px-6">
+        <div className="bg-[var(--bg-primary)] border-b border-[var(--border-primary)] px-6">
           <div className="flex space-x-6">
             {tabs.map((tab) => (
               <button
@@ -148,14 +148,14 @@ export default function ConfiguracionPage() {
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex items-center space-x-2 py-4 px-2 border-b-2 transition-colors ${
                   activeTab === tab.id
-                    ? 'border-[#00b894] text-[#00b894]'
-                    : 'border-transparent text-gray-400 hover:text-white'
+                    ? 'border-[var(--accent-primary)] text-[var(--accent-primary)]'
+                    : 'border-transparent text-[var(--text-muted)] hover:text-[var(--text-primary)]'
                 }`}
               >
                 <span className="text-sm">{tab.icon}</span>
                 <span className="text-sm font-medium">{tab.label}</span>
                 {tab.count !== undefined && (
-                  <span className="bg-[#2a2d35] text-gray-400 text-xs px-2 py-1 rounded-full">
+                  <span className="bg-[var(--bg-secondary)] text-[var(--text-muted)] text-xs px-2 py-1 rounded-full">
                     {tab.count}
                   </span>
                 )}
@@ -165,7 +165,7 @@ export default function ConfiguracionPage() {
         </div>
 
         {/* Main Content */}
-        <div className="flex-1 bg-[#1a1d23] p-6">
+        <div className="flex-1 bg-[var(--bg-primary)] p-6">
           {/* Renderizar el componente de la pestaña activa */}
           {(() => {
             const ActiveTabComponent = tabs.find(tab => tab.id === activeTab)?.component;

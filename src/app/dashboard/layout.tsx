@@ -48,14 +48,14 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
   if (!userEmail) {
     return (
-      <div className="min-h-screen bg-[#1a1d23] flex items-center justify-center">
-        <div className="text-white">Cargando...</div>
+      <div className="min-h-screen bg-[var(--bg-primary)] flex items-center justify-center">
+        <div className="text-[var(--text-primary)]">Cargando...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#1a1d23] flex">
+    <div className="min-h-screen bg-[var(--bg-primary)] flex">
       {/* Sidebar */}
       <Sidebar 
         isOpen={isSidebarOpen} 
@@ -63,7 +63,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       />
       
       {/* Main Content */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col bg-[var(--bg-primary)]">
         {/* Header */}
         <Header 
           userEmail={userEmail}

@@ -31,8 +31,8 @@ export default function DraggableEmbudo({ embudo, onEdit, onDelete, formatDate }
     <div
       ref={setNodeRef}
       style={style}
-      className={`bg-[#2a2d35] border border-[#3a3d45] rounded-lg p-4 hover:border-[#00b894] transition-colors group cursor-grab active:cursor-grabbing ${
-        isDragging ? 'opacity-50 shadow-2xl rotate-2 scale-105 border-[#00b894]' : ''
+      className={`bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-lg p-4 hover:border-[var(--accent-primary)] transition-colors group cursor-grab active:cursor-grabbing ${
+        isDragging ? 'opacity-50 shadow-2xl rotate-2 scale-105 border-[var(--accent-primary)]' : ''
       }`}
       {...attributes}
       {...listeners}
@@ -40,7 +40,7 @@ export default function DraggableEmbudo({ embudo, onEdit, onDelete, formatDate }
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center space-x-2">
           {/* Indicador de drag */}
-          <div className="flex flex-col space-y-1 text-gray-500 mr-2">
+          <div className="flex flex-col space-y-1 text-[var(--text-muted)] mr-2">
             <div className="w-1 h-1 bg-current rounded-full"></div>
             <div className="w-1 h-1 bg-current rounded-full"></div>
             <div className="w-1 h-1 bg-current rounded-full"></div>
@@ -48,10 +48,10 @@ export default function DraggableEmbudo({ embudo, onEdit, onDelete, formatDate }
             <div className="w-1 h-1 bg-current rounded-full"></div>
             <div className="w-1 h-1 bg-current rounded-full"></div>
           </div>
-          <span className="text-gray-400 text-sm font-medium">
+          <span className="text-[var(--text-muted)] text-sm font-medium">
             {embudo.orden || 0}
           </span>
-          <span className="text-white text-sm font-medium">
+          <span className="text-[var(--text-primary)] text-sm font-medium">
             {embudo.nombre.toUpperCase()}
           </span>
         </div>
@@ -61,7 +61,7 @@ export default function DraggableEmbudo({ embudo, onEdit, onDelete, formatDate }
               e.stopPropagation();
               onEdit(embudo);
             }}
-            className="text-gray-400 hover:text-white text-xs p-1" 
+            className="text-[var(--text-muted)] hover:text-[var(--text-primary)] text-xs p-1" 
             title="Editar embudo"
           >
             ✏️
@@ -71,7 +71,7 @@ export default function DraggableEmbudo({ embudo, onEdit, onDelete, formatDate }
               e.stopPropagation();
               onDelete(embudo);
             }}
-            className="text-gray-400 hover:text-red-400 text-xs p-1" 
+            className="text-[var(--text-muted)] hover:text-red-400 text-xs p-1" 
             title="Eliminar embudo"
           >
             🗑️
@@ -79,9 +79,9 @@ export default function DraggableEmbudo({ embudo, onEdit, onDelete, formatDate }
         </div>
       </div>
       {embudo.descripcion && (
-        <p className="text-gray-400 text-xs mb-2">{embudo.descripcion}</p>
+        <p className="text-[var(--text-muted)] text-xs mb-2">{embudo.descripcion}</p>
       )}
-      <div className="text-xs text-gray-500">
+      <div className="text-xs text-[var(--text-muted)]">
         ID: {embudo.id} • {formatDate(embudo.creado_en)}
       </div>
     </div>

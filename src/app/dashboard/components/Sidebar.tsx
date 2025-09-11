@@ -126,16 +126,16 @@ export default function Sidebar({ isOpen }: SidebarProps) {
   };
 
   return (
-    <div className={`bg-[#1a1d23] border-r border-[#3a3d45] transition-all duration-300 ${isOpen ? 'w-64' : 'w-16'}`}>
+    <div className={`bg-[var(--bg-primary)] border-r border-[var(--border-primary)] transition-all duration-300 ${isOpen ? 'w-64' : 'w-16'}`}>
       {/* Logo */}
-      <div className="p-4 border-b border-[#3a3d45]">
+      <div className="p-4 border-b border-[var(--border-primary)]">
         <div className="flex items-center space-x-3">
           <div className="w-8 h-8 bg-[#00b894] rounded-full flex items-center justify-center">
             <div className="text-white font-bold text-sm">🎲</div>
           </div>
           {isOpen && (
             <div>
-              <h1 className="text-white font-bold text-lg">CapiBet</h1>
+              <h1 className="text-[var(--text-primary)] font-bold text-lg">CapiBet</h1>
               <div className="flex items-center space-x-1">
                 <div className="h-0.5 w-4 bg-[#00b894]"></div>
                 <span className="text-[#00b894] text-xs font-medium">CRM</span>

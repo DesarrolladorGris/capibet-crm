@@ -200,25 +200,25 @@ export default function CalendarioPage() {
   return (
     <div className="flex-1 flex flex-col">
       {/* Header del Calendario */}
-      <div className="bg-[#1a1d23] border-b border-[#3a3d45] px-6 py-4">
+      <div className="bg-[var(--bg-primary)] border-b border-[var(--border-primary)] px-6 py-4">
         <div className="flex items-center justify-between">
           {/* Left Section */}
           <div className="flex items-center space-x-4">
-            <h1 className="text-white font-semibold text-2xl">Calendario</h1>
+            <h1 className="text-[var(--text-primary)] font-semibold text-2xl">Calendario</h1>
           </div>
 
           {/* Right Section */}
           <div className="flex items-center space-x-4">
             {/* Botones de vista */}
-            <div className="flex items-center bg-[#2a2d35] rounded-lg border border-[#3a3d45]">
+            <div className="flex items-center bg-[var(--bg-secondary)] rounded-lg border border-[var(--border-primary)]">
               {(['month', 'week', 'day'] as const).map((mode) => (
                 <button
                   key={mode}
                   onClick={() => setViewMode(mode)}
                   className={`px-3 py-1.5 text-sm font-medium transition-colors ${
                     viewMode === mode
-                      ? 'bg-[#00b894] text-white'
-                      : 'text-gray-400 hover:text-white'
+                      ? 'bg-[var(--accent-primary)] text-white'
+                      : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
                   }`}
                 >
                   {mode === 'month' ? 'Mes' : mode === 'week' ? 'Semana' : 'Día'}
@@ -228,7 +228,7 @@ export default function CalendarioPage() {
 
             <button 
               onClick={() => openNewTaskModal()}
-              className="flex items-center space-x-2 bg-[#00b894] hover:bg-[#00a085] text-white px-4 py-2 rounded text-sm font-medium transition-colors"
+              className="flex items-center space-x-2 bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] text-white px-4 py-2 rounded text-sm font-medium transition-colors"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -240,25 +240,25 @@ export default function CalendarioPage() {
       </div>
 
       {/* Navegación del calendario */}
-      <div className="bg-[#1a1d23] border-b border-[#3a3d45] px-6 py-3">
+      <div className="bg-[var(--bg-primary)] border-b border-[var(--border-primary)] px-6 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <button
               onClick={() => navigateMonth('prev')}
-              className="text-gray-400 hover:text-white p-2 rounded"
+              className="text-[var(--text-muted)] hover:text-[var(--text-primary)] p-2 rounded"
             >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
             
-            <h2 className="text-white font-semibold text-xl">
+            <h2 className="text-[var(--text-primary)] font-semibold text-xl">
               {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
             </h2>
             
             <button
               onClick={() => navigateMonth('next')}
-              className="text-gray-400 hover:text-white p-2 rounded"
+              className="text-[var(--text-muted)] hover:text-[var(--text-primary)] p-2 rounded"
             >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -268,7 +268,7 @@ export default function CalendarioPage() {
 
           <button
             onClick={() => setCurrentDate(new Date())}
-            className="text-gray-400 hover:text-white text-sm px-3 py-1 rounded border border-[#3a3d45] hover:border-gray-400"
+            className="text-[var(--text-muted)] hover:text-[var(--text-primary)] text-sm px-3 py-1 rounded border border-[var(--border-primary)] hover:border-[var(--text-muted)]"
           >
             Hoy
           </button>
@@ -276,14 +276,14 @@ export default function CalendarioPage() {
       </div>
 
       {/* Contenido principal */}
-      <div className="flex-1 bg-[#1a1d23] p-6">
+      <div className="flex-1 bg-[var(--bg-primary)] p-6">
         {/* Vista de mes */}
         {viewMode === 'month' && (
-          <div className="bg-[#2a2d35] rounded-lg border border-[#3a3d45]">
+          <div className="bg-[var(--bg-secondary)] rounded-lg border border-[var(--border-primary)]">
             {/* Header de días */}
-            <div className="grid grid-cols-7 border-b border-[#3a3d45]">
+            <div className="grid grid-cols-7 border-b border-[var(--border-primary)]">
               {dayNames.map((day) => (
-                <div key={day} className="p-4 text-center text-gray-400 font-medium text-sm">
+                <div key={day} className="p-4 text-center text-[var(--text-muted)] font-medium text-sm">
                   {day}
                 </div>
               ))}
@@ -300,17 +300,17 @@ export default function CalendarioPage() {
                 return (
                   <div
                     key={index}
-                    className={`min-h-[120px] border-r border-b border-[#3a3d45] p-2 ${
-                      !isCurrentMonth ? 'bg-[#1a1d23] opacity-50' : 'hover:bg-[#3a3d45]'
+                    className={`min-h-[120px] border-r border-b border-[var(--border-primary)] p-2 ${
+                      !isCurrentMonth ? 'bg-[var(--bg-primary)] opacity-50' : 'hover:bg-[var(--bg-tertiary)]'
                     } transition-colors cursor-pointer`}
                     onClick={() => openNewTaskModal(dayStr)}
                   >
                     <div className={`text-sm font-medium mb-2 ${
                       isToday 
-                        ? 'bg-[#00b894] text-white w-6 h-6 rounded-full flex items-center justify-center' 
+                        ? 'bg-[var(--accent-primary)] text-white w-6 h-6 rounded-full flex items-center justify-center' 
                         : isCurrentMonth 
-                          ? 'text-white' 
-                          : 'text-gray-500'
+                          ? 'text-[var(--text-primary)]' 
+                          : 'text-[var(--text-muted)]'
                     }`}>
                       {day.getDate()}
                     </div>
@@ -334,7 +334,7 @@ export default function CalendarioPage() {
                         </div>
                       ))}
                       {dayTasks.length > 3 && (
-                        <div className="text-xs text-gray-400 text-center">
+                        <div className="text-xs text-[var(--text-muted)] text-center">
                           +{dayTasks.length - 3} más
                         </div>
                       )}
@@ -348,14 +348,14 @@ export default function CalendarioPage() {
 
         {/* Lista de tareas para hoy (sidebar derecho) */}
         <div className="mt-6">
-          <div className="bg-[#2a2d35] rounded-lg border border-[#3a3d45] p-4">
-            <h3 className="text-white font-semibold mb-4">Tareas de Hoy</h3>
+          <div className="bg-[var(--bg-secondary)] rounded-lg border border-[var(--border-primary)] p-4">
+            <h3 className="text-[var(--text-primary)] font-semibold mb-4">Tareas de Hoy</h3>
             <div className="space-y-3">
               {getTasksForDate(today).length > 0 ? (
                 getTasksForDate(today).map((task) => (
                   <div
                     key={task.id}
-                    className={`flex items-center justify-between p-3 bg-[#1a1d23] rounded border border-[#3a3d45] ${
+                    className={`flex items-center justify-between p-3 bg-[var(--bg-primary)] rounded border border-[var(--border-primary)] ${
                       task.completada ? 'opacity-50' : ''
                     }`}
                   >
@@ -364,13 +364,13 @@ export default function CalendarioPage() {
                         type="checkbox"
                         checked={task.completada}
                         onChange={() => toggleTaskComplete(task.id)}
-                        className="w-4 h-4 text-[#00b894] bg-[#1a1d23] border-[#3a3d45] rounded focus:ring-[#00b894] focus:ring-2"
+                        className="w-4 h-4 text-[var(--accent-primary)] bg-[var(--bg-primary)] border-[var(--border-primary)] rounded focus:ring-[var(--accent-primary)] focus:ring-2"
                       />
                       <div>
-                        <div className={`text-white font-medium ${task.completada ? 'line-through' : ''}`}>
+                        <div className={`text-[var(--text-primary)] font-medium ${task.completada ? 'line-through' : ''}`}>
                           {task.titulo}
                         </div>
-                        <div className="text-gray-400 text-sm">
+                        <div className="text-[var(--text-muted)] text-sm">
                           {task.hora} • {categorias.find(c => c.id === task.categoria)?.label}
                         </div>
                       </div>
@@ -382,13 +382,13 @@ export default function CalendarioPage() {
                       />
                       <button
                         onClick={() => openEditTaskModal(task)}
-                        className="text-gray-400 hover:text-white text-sm"
+                        className="text-[var(--text-muted)] hover:text-[var(--text-primary)] text-sm"
                       >
                         ✏️
                       </button>
                       <button
                         onClick={() => handleDeleteTask(task.id)}
-                        className="text-gray-400 hover:text-red-400 text-sm"
+                        className="text-[var(--text-muted)] hover:text-red-400 text-sm"
                       >
                         🗑️
                       </button>
@@ -396,7 +396,7 @@ export default function CalendarioPage() {
                   </div>
                 ))
               ) : (
-                <div className="text-gray-400 text-center py-4">
+                <div className="text-[var(--text-muted)] text-center py-4">
                   No hay tareas programadas para hoy
                 </div>
               )}
@@ -408,15 +408,15 @@ export default function CalendarioPage() {
       {/* Modal Nueva/Editar Tarea */}
       {showTaskModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-[#2a2d35] rounded-lg border border-[#3a3d45] w-full max-w-md mx-4">
+          <div className="bg-[var(--bg-secondary)] rounded-lg border border-[var(--border-primary)] w-full max-w-md mx-4">
             {/* Header del modal */}
-            <div className="flex items-center justify-between p-4 border-b border-[#3a3d45]">
-              <h3 className="text-white font-semibold">
+            <div className="flex items-center justify-between p-4 border-b border-[var(--border-primary)]">
+              <h3 className="text-[var(--text-primary)] font-semibold">
                 {editingTask ? 'Editar Tarea' : 'Nueva Tarea'}
               </h3>
               <button 
                 onClick={() => setShowTaskModal(false)}
-                className="text-gray-400 hover:text-white"
+                className="text-[var(--text-muted)] hover:text-[var(--text-primary)]"
               >
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -428,23 +428,23 @@ export default function CalendarioPage() {
             <div className="p-4 space-y-4">
               {/* Título */}
               <div>
-                <label className="block text-gray-400 text-sm mb-2">Título *</label>
+                <label className="block text-[var(--text-muted)] text-sm mb-2">Título *</label>
                 <input
                   type="text"
                   value={formData.titulo}
                   onChange={(e) => setFormData({ ...formData, titulo: e.target.value })}
-                  className="w-full bg-[#1a1d23] border border-[#3a3d45] rounded px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#00b894] focus:border-[#00b894]"
+                  className="w-full bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded px-3 py-2 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-primary)] focus:border-[var(--accent-primary)]"
                   placeholder="Título de la tarea"
                 />
               </div>
 
               {/* Descripción */}
               <div>
-                <label className="block text-gray-400 text-sm mb-2">Descripción</label>
+                <label className="block text-[var(--text-muted)] text-sm mb-2">Descripción</label>
                 <textarea
                   value={formData.descripcion}
                   onChange={(e) => setFormData({ ...formData, descripcion: e.target.value })}
-                  className="w-full bg-[#1a1d23] border border-[#3a3d45] rounded px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#00b894] focus:border-[#00b894] resize-none"
+                  className="w-full bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded px-3 py-2 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-primary)] focus:border-[var(--accent-primary)] resize-none"
                   rows={3}
                   placeholder="Descripción de la tarea"
                 />
@@ -453,21 +453,21 @@ export default function CalendarioPage() {
               {/* Fecha y Hora */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-gray-400 text-sm mb-2">Fecha *</label>
+                  <label className="block text-[var(--text-muted)] text-sm mb-2">Fecha *</label>
                   <input
                     type="date"
                     value={formData.fecha}
                     onChange={(e) => setFormData({ ...formData, fecha: e.target.value })}
-                    className="w-full bg-[#1a1d23] border border-[#3a3d45] rounded px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-[#00b894] focus:border-[#00b894]"
+                    className="w-full bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded px-3 py-2 text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-primary)] focus:border-[var(--accent-primary)]"
                   />
                 </div>
                 <div>
-                  <label className="block text-gray-400 text-sm mb-2">Hora *</label>
+                  <label className="block text-[var(--text-muted)] text-sm mb-2">Hora *</label>
                   <input
                     type="time"
                     value={formData.hora}
                     onChange={(e) => setFormData({ ...formData, hora: e.target.value })}
-                    className="w-full bg-[#1a1d23] border border-[#3a3d45] rounded px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-[#00b894] focus:border-[#00b894]"
+                    className="w-full bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded px-3 py-2 text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-primary)] focus:border-[var(--accent-primary)]"
                   />
                 </div>
               </div>
@@ -475,11 +475,11 @@ export default function CalendarioPage() {
               {/* Categoría y Prioridad */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-gray-400 text-sm mb-2">Categoría</label>
+                  <label className="block text-[var(--text-muted)] text-sm mb-2">Categoría</label>
                   <select
                     value={formData.categoria}
                     onChange={(e) => setFormData({ ...formData, categoria: e.target.value as Task['categoria'] })}
-                    className="w-full bg-[#1a1d23] border border-[#3a3d45] rounded px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-[#00b894] focus:border-[#00b894]"
+                    className="w-full bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded px-3 py-2 text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-primary)] focus:border-[var(--accent-primary)]"
                   >
                     {categorias.map((cat) => (
                       <option key={cat.id} value={cat.id}>
@@ -489,11 +489,11 @@ export default function CalendarioPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-gray-400 text-sm mb-2">Prioridad</label>
+                  <label className="block text-[var(--text-muted)] text-sm mb-2">Prioridad</label>
                   <select
                     value={formData.prioridad}
                     onChange={(e) => setFormData({ ...formData, prioridad: e.target.value as Task['prioridad'] })}
-                    className="w-full bg-[#1a1d23] border border-[#3a3d45] rounded px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-[#00b894] focus:border-[#00b894]"
+                    className="w-full bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded px-3 py-2 text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-primary)] focus:border-[var(--accent-primary)]"
                   >
                     {prioridades.map((pri) => (
                       <option key={pri.id} value={pri.id}>
@@ -506,16 +506,16 @@ export default function CalendarioPage() {
             </div>
 
             {/* Footer del modal */}
-            <div className="flex items-center justify-end space-x-3 p-4 border-t border-[#3a3d45]">
+            <div className="flex items-center justify-end space-x-3 p-4 border-t border-[var(--border-primary)]">
               <button
                 onClick={() => setShowTaskModal(false)}
-                className="px-4 py-2 text-gray-400 hover:text-white transition-colors"
+                className="px-4 py-2 text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
               >
                 Cancelar
               </button>
               <button
                 onClick={handleSaveTask}
-                className="px-4 py-2 bg-[#00b894] hover:bg-[#00a085] text-white rounded transition-colors"
+                className="px-4 py-2 bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] text-white rounded transition-colors"
               >
                 {editingTask ? 'Actualizar' : 'Crear'} Tarea
               </button>
