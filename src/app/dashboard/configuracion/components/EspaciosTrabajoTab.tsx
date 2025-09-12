@@ -222,8 +222,8 @@ export default function EspaciosTrabajoTab() {
   if (isLoading) {
     return (
       <div className="p-6 flex items-center justify-center h-64">
-        <div className="text-white">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#00b894] mx-auto mb-4"></div>
+        <div className="text-[var(--text-primary)]">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--accent-primary)] mx-auto mb-4"></div>
           <p>Cargando espacios de trabajo...</p>
         </div>
       </div>
@@ -254,8 +254,8 @@ export default function EspaciosTrabajoTab() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h3 className="text-white text-lg font-medium">Espacios de trabajo</h3>
-          <p className="text-gray-400 text-sm">
+          <h3 className="text-[var(--text-primary)] text-lg font-medium">Espacios de trabajo</h3>
+          <p className="text-[var(--text-muted)] text-sm">
             Crear, editar y eliminar tus espacios de trabajo
           </p>
         </div>
@@ -273,7 +273,7 @@ export default function EspaciosTrabajoTab() {
           </button>
           <button 
             onClick={() => setShowNuevoEspacioModal(true)}
-            className="flex items-center space-x-2 bg-[#00b894] hover:bg-[#00a085] text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+            className="flex items-center space-x-2 bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
           >
             <span>➕</span>
             <span>Nuevo Espacio</span>
@@ -289,21 +289,21 @@ export default function EspaciosTrabajoTab() {
               {/* Header del Espacio */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
-                  <span className="text-white text-lg font-medium">
+                  <span className="text-[var(--text-primary)] text-lg font-medium">
                     ⚙️ {espacio.nombre.toUpperCase()}
                   </span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <button 
                     onClick={() => handleEditEspacio(espacio)}
-                    className="flex items-center space-x-1 text-gray-400 hover:text-white text-sm transition-colors px-3 py-1 rounded border border-gray-600 hover:border-gray-500"
+                    className="flex items-center space-x-1 text-[var(--text-muted)] hover:text-[var(--text-primary)] text-sm transition-colors px-3 py-1 rounded border border-[var(--border-primary)] hover:border-[var(--border-secondary)]"
                   >
                     <span>✏️</span>
                     <span>Editar</span>
                   </button>
                   <button 
                     onClick={() => handleDeleteEspacio(espacio)}
-                    className="flex items-center space-x-1 text-gray-400 hover:text-red-400 text-sm transition-colors px-3 py-1 rounded border border-gray-600 hover:border-red-500"
+                    className="flex items-center space-x-1 text-[var(--text-muted)] hover:text-red-400 text-sm transition-colors px-3 py-1 rounded border border-[var(--border-primary)] hover:border-red-500"
                   >
                     <span>🗑️</span>
                     <span>Eliminar</span>
@@ -338,13 +338,13 @@ export default function EspaciosTrabajoTab() {
                     {/* Botón para agregar nuevo embudo */}
                     <div 
                       onClick={() => handleAgregarEmbudo(espacio)}
-                      className="bg-[#2a2d35] border-2 border-dashed border-[#3a3d45] rounded-lg p-4 flex items-center justify-center hover:border-[#00b894] transition-colors cursor-pointer group"
+                      className="bg-[var(--bg-secondary)] border-2 border-dashed border-[var(--border-primary)] rounded-lg p-4 flex items-center justify-center hover:border-[var(--accent-primary)] transition-colors cursor-pointer group"
                     >
                       <div className="text-center">
-                        <div className="text-[#00b894] text-2xl mb-2 group-hover:scale-110 transition-transform">
+                        <div className="text-[var(--accent-primary)] text-2xl mb-2 group-hover:scale-110 transition-transform">
                           +
                         </div>
-                        <div className="text-gray-400 text-sm">
+                        <div className="text-[var(--text-muted)] text-sm">
                           Agregar Embudo
                         </div>
                       </div>
@@ -357,12 +357,12 @@ export default function EspaciosTrabajoTab() {
         </div>
       ) : (
         <div className="text-center py-12">
-          <div className="text-gray-400 text-6xl mb-4">🏢</div>
-          <h4 className="text-white text-lg font-medium mb-2">No hay espacios de trabajo</h4>
-          <p className="text-gray-400 text-sm mb-6">No se encontraron espacios de trabajo en el sistema.</p>
+          <div className="text-[var(--text-muted)] text-6xl mb-4">🏢</div>
+          <h4 className="text-[var(--text-primary)] text-lg font-medium mb-2">No hay espacios de trabajo</h4>
+          <p className="text-[var(--text-muted)] text-sm mb-6">No se encontraron espacios de trabajo en el sistema.</p>
           <button 
             onClick={loadEspaciosTrabajo}
-            className="bg-[#00b894] hover:bg-[#00a085] text-white px-6 py-3 rounded-lg font-medium transition-colors"
+            className="bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] text-white px-6 py-3 rounded-lg font-medium transition-colors"
           >
             Recargar espacios de trabajo
           </button>

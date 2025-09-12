@@ -88,7 +88,9 @@ export interface Etiqueta {
   nombre: string;
   color: string;
   descripcion?: string;
-  activa: boolean;
+  activa?: boolean;
+  creado_por?: number;
+  creado_en?: string;
   created_at?: string;
 }
 
@@ -250,7 +252,7 @@ export interface MensajeResponse {
   creado_en: string;
   enviado_en?: string;
   leido?: boolean;
-  tipo?: string;
+  tipo?: string; // Tipo de canal (whatsapp, email, telegram, etc.) - viene del API
   estado?: string;
 }
 
@@ -373,11 +375,66 @@ export class SupabaseService {
   }
 
   /**
-   * Obtiene todos los usuarios creados por el usuario logueado
+   * Registra un nuevo usuario externamente (sin autenticación requerida)
+   */
+  async registerExternalUser(userData: UsuarioData): Promise<ApiResponse> {
+    try {
+      // Preparar los datos con valores por defecto para registro externo
+      const dataToSend = {
+        nombre_agencia: userData.nombre_agencia || 'N/A',
+        tipo_empresa: userData.tipo_empresa || 'N/A',
+        nombre_usuario: userData.nombre_usuario,
+        correo_electronico: userData.correo_electronico,
+        telefono: userData.telefono,
+        codigo_pais: userData.codigo_pais,
+        contrasena: userData.contrasena,
+        rol: userData.rol || 'Cliente',
+        activo: userData.activo !== undefined ? userData.activo : true
+      };
+
+      const response = await fetch(apiEndpoints.usuarios, {
+        method: 'POST',
+        headers: {
+          'apikey': supabaseConfig.serviceRoleKey,
+          'Authorization': `Bearer ${supabaseConfig.serviceRoleKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(dataToSend)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        
+        return {
+          success: false,
+          error: `Error del servidor: ${response.status} ${response.statusText}`,
+          details: errorData
+        };
+      }
+
+      const data = await this.handleResponse(response);
+      
+      return {
+        success: true,
+        data
+      };
+
+    } catch (error) {
+      console.error('Error registering external user:', error);
+      return {
+        success: false,
+        error: 'Error de conexión al registrar usuario',
+        details: error instanceof Error ? error.message : 'Error desconocido'
+      };
+    }
+  }
+
+  /**
+   * Obtiene todos los usuarios del sistema (incluyendo clientes registrados externamente)
    */
   async getAllUsuarios(): Promise<ApiResponse<UsuarioResponse[]>> {
     try {
-      // Obtener el ID del usuario logueado
+      // Obtener el ID del usuario logueado para verificar autenticación
       const userId = this.getCurrentUserId();
       if (!userId) {
         return {
@@ -386,8 +443,8 @@ export class SupabaseService {
         };
       }
 
-      // Filtrar usuarios por creado_por (usuarios creados por el usuario logueado)
-      const response = await fetch(`${apiEndpoints.usuarios}?creado_por=eq.${userId}`, {
+      // Obtener TODOS los usuarios sin filtrar por creado_por
+      const response = await fetch(`${apiEndpoints.usuarios}`, {
         method: 'GET',
         headers: this.getHeaders()
       });
@@ -1608,6 +1665,224 @@ export class SupabaseService {
     }
   }
 
+  // ===== MÉTODOS PARA ETIQUETAS =====
+
+  /**
+   * Obtiene todas las etiquetas del usuario logueado
+   */
+  async getAllEtiquetas(): Promise<ApiResponse<Etiqueta[]>> {
+    try {
+      // Obtener el ID del usuario logueado
+      const userId = this.getCurrentUserId();
+      if (!userId) {
+        return {
+          success: false,
+          error: 'Usuario no autenticado'
+        };
+      }
+
+      // Obtener etiquetas filtradas por creado_por (usuario logueado)
+      const response = await fetch(`${apiEndpoints.etiquetas}?creado_por=eq.${userId}&order=creado_en.desc`, {
+        headers: this.getHeaders(),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+      
+      const data = await this.handleResponse(response);
+      
+      // Transformar los datos para mantener compatibilidad con la interfaz existente
+      const etiquetas = Array.isArray(data) ? data.map((etiqueta: any) => ({
+        id: etiqueta.id,
+        nombre: etiqueta.nombre || '', // Asegurar que siempre tenga nombre
+        color: etiqueta.color || '#00b894', // Color por defecto si no existe
+        descripcion: etiqueta.descripcion || '', // Descripción vacía si no existe
+        activa: true, // Por defecto las etiquetas están activas
+        creado_por: etiqueta.creado_por,
+        creado_en: etiqueta.creado_en,
+        created_at: etiqueta.creado_en // Mapear fecha para compatibilidad
+      })).filter(etiqueta => etiqueta.nombre && etiqueta.id) : []; // Filtrar etiquetas inválidas
+      
+      return { success: true, data: etiquetas };
+    } catch (error) {
+      console.error('Error al obtener etiquetas:', error);
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Error desconocido' 
+      };
+    }
+  }
+
+  /**
+   * Crea una nueva etiqueta
+   */
+  async createEtiqueta(etiquetaData: Omit<Etiqueta, 'id' | 'creado_por' | 'creado_en' | 'created_at'>): Promise<ApiResponse<Etiqueta>> {
+    try {
+      // Obtener el ID del usuario logueado como creador
+      const currentUserId = this.getCurrentUserId();
+      if (!currentUserId) {
+        return {
+          success: false,
+          error: 'Usuario no autenticado'
+        };
+      }
+
+      const dataToSend = {
+        nombre: etiquetaData.nombre,
+        color: etiquetaData.color,
+        descripcion: etiquetaData.descripcion || '',
+        creado_por: currentUserId
+      };
+
+      const response = await fetch(apiEndpoints.etiquetas, {
+        method: 'POST',
+        headers: this.getHeaders(),
+        body: JSON.stringify(dataToSend),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        return {
+          success: false,
+          error: `Error del servidor: ${response.status} ${response.statusText}`,
+          details: errorData
+        };
+      }
+
+      const data = await this.handleResponse(response);
+      
+      // Asegurar que la respuesta tenga la estructura correcta
+      const etiquetaCreada: Etiqueta = {
+        id: data.id,
+        nombre: data.nombre || '',
+        color: data.color || '#00b894',
+        descripcion: data.descripcion || '',
+        activa: true,
+        creado_por: data.creado_por,
+        creado_en: data.creado_en,
+        created_at: data.creado_en
+      };
+      
+      return {
+        success: true,
+        data: etiquetaCreada
+      };
+
+    } catch (error) {
+      console.error('Error al crear etiqueta:', error);
+      return { 
+        success: false, 
+        error: 'Error de conexión al crear etiqueta',
+        details: error instanceof Error ? error.message : 'Error desconocido'
+      };
+    }
+  }
+
+  /**
+   * Actualiza una etiqueta existente
+   */
+  async updateEtiqueta(id: number, etiquetaData: Partial<Omit<Etiqueta, 'id' | 'creado_por' | 'creado_en' | 'created_at'>>): Promise<ApiResponse<Etiqueta>> {
+    try {
+      // Obtener el ID del usuario logueado
+      const userId = this.getCurrentUserId();
+      if (!userId) {
+        return {
+          success: false,
+          error: 'Usuario no autenticado'
+        };
+      }
+
+      const dataToSend: any = {};
+      if (etiquetaData.nombre) dataToSend.nombre = etiquetaData.nombre;
+      if (etiquetaData.color) dataToSend.color = etiquetaData.color;
+      if (etiquetaData.descripcion !== undefined) dataToSend.descripcion = etiquetaData.descripcion;
+
+      // Actualizar solo si pertenece al usuario logueado
+      const response = await fetch(`${apiEndpoints.etiquetas}?id=eq.${id}&creado_por=eq.${userId}`, {
+        method: 'PATCH',
+        headers: this.getHeaders(),
+        body: JSON.stringify(dataToSend),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        return {
+          success: false,
+          error: `Error del servidor: ${response.status} ${response.statusText}`,
+          details: errorData
+        };
+      }
+
+      const data = await this.handleResponse(response);
+      
+      // Asegurar que la respuesta tenga la estructura correcta
+      const etiquetaActualizada: Etiqueta = {
+        id: data.id,
+        nombre: data.nombre || '',
+        color: data.color || '#00b894',
+        descripcion: data.descripcion || '',
+        activa: true,
+        creado_por: data.creado_por,
+        creado_en: data.creado_en,
+        created_at: data.creado_en
+      };
+      
+      return {
+        success: true,
+        data: etiquetaActualizada
+      };
+
+    } catch (error) {
+      console.error('Error al actualizar etiqueta:', error);
+      return { 
+        success: false, 
+        error: 'Error de conexión al actualizar etiqueta',
+        details: error instanceof Error ? error.message : 'Error desconocido'
+      };
+    }
+  }
+
+  /**
+   * Elimina una etiqueta por ID
+   */
+  async deleteEtiqueta(id: number): Promise<ApiResponse<void>> {
+    try {
+      // Obtener el ID del usuario logueado
+      const userId = this.getCurrentUserId();
+      if (!userId) {
+        return {
+          success: false,
+          error: 'Usuario no autenticado'
+        };
+      }
+
+      // Eliminar etiqueta por ID
+      const response = await fetch(`${apiEndpoints.etiquetas}?id=eq.${id}`, {
+        method: 'DELETE',
+        headers: this.getHeaders(),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        return {
+          success: false,
+          error: `Error del servidor: ${response.status} ${response.statusText}`,
+          details: errorData
+        };
+      }
+
+      return { success: true };
+    } catch (error) {
+      console.error('Error al eliminar etiqueta:', error);
+      return { 
+        success: false, 
+        error: 'Error de conexión al eliminar etiqueta',
+        details: error instanceof Error ? error.message : 'Error desconocido'
+      };
+    }
+  }
+
   // ==================== MÉTODOS PARA CANALES ====================
 
   /**
@@ -2242,7 +2517,8 @@ export class SupabaseService {
   }
 
   /**
-   * Obtiene todos los mensajes
+   * Obtiene todos los mensajes con información de tipo de canal
+   * El tipo de canal debe venir directamente desde el backend mediante JOIN con tabla canales
    */
   async getAllMensajes(): Promise<ApiResponse<MensajeResponse[]>> {
     try {
@@ -2262,8 +2538,9 @@ export class SupabaseService {
       
       const data = await response.json();
       
-      console.log('Mensajes obtenidos:', data);
+      console.log('📦 Mensajes obtenidos del API:', data);
       
+      // Los mensajes vienen sin tipo de canal, se enriquecerá en el frontend
       return { success: true, data: Array.isArray(data) ? data : [] };
     } catch (error) {
       console.error('Error al obtener mensajes:', error);
@@ -2374,6 +2651,1017 @@ export class SupabaseService {
       return { 
         success: false, 
         error: 'Error de conexión al eliminar mensaje',
+        details: error instanceof Error ? error.message : 'Error desconocido'
+      };
+    }
+  }
+
+  // ================================
+  // MÉTODOS PARA TAREAS
+  // ================================
+
+  /**
+   * Obtiene todas las tareas
+   */
+  async getAllTareas(): Promise<ApiResponse<any[]>> {
+    try {
+      console.log('Obteniendo todas las tareas');
+
+      const response = await fetch('https://dkrdphnnsgndrqmgdvxp.supabase.co/rest/v1/tareas', {
+        method: 'GET',
+        headers: {
+          'apikey': supabaseConfig.serviceRoleKey,
+          'Authorization': `Bearer ${supabaseConfig.serviceRoleKey}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      console.log('Response status:', response.status);
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error('Error response body:', errorData);
+        return {
+          success: false,
+          error: `Error del servidor: ${response.status} ${response.statusText}`,
+          details: errorData
+        };
+      }
+
+      const data = await response.json();
+      console.log('Tareas obtenidas:', data);
+
+      return { 
+        success: true, 
+        data: data 
+      };
+    } catch (error) {
+      console.error('Error al obtener tareas:', error);
+      return { 
+        success: false, 
+        error: 'Error de conexión al obtener tareas',
+        details: error instanceof Error ? error.message : 'Error desconocido'
+      };
+    }
+  }
+
+  /**
+   * Crea una nueva tarea
+   */
+  async createTarea(tareaData: any): Promise<ApiResponse<any>> {
+    try {
+      console.log('Creando nueva tarea:', tareaData);
+
+      const response = await fetch('https://dkrdphnnsgndrqmgdvxp.supabase.co/rest/v1/tareas', {
+        method: 'POST',
+        headers: {
+          'apikey': supabaseConfig.serviceRoleKey,
+          'Authorization': `Bearer ${supabaseConfig.serviceRoleKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(tareaData)
+      });
+
+      console.log('Response status:', response.status);
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error('Error response body:', errorData);
+        return {
+          success: false,
+          error: `Error del servidor: ${response.status} ${response.statusText}`,
+          details: errorData
+        };
+      }
+
+      // Manejar respuesta vacía o no-JSON
+      let data = null;
+      const contentType = response.headers.get('content-type');
+      const responseText = await response.text();
+      
+      if (responseText && contentType && contentType.includes('application/json')) {
+        try {
+          data = JSON.parse(responseText);
+        } catch (jsonError) {
+          console.warn('No se pudo parsear JSON, pero la operación fue exitosa:', responseText);
+          data = { success: true, message: 'Tarea creada exitosamente' };
+        }
+      } else {
+        console.log('Respuesta exitosa sin JSON:', responseText);
+        data = { success: true, message: 'Tarea creada exitosamente' };
+      }
+
+      console.log('Tarea creada exitosamente:', data);
+
+      return { 
+        success: true, 
+        data: data 
+      };
+    } catch (error) {
+      console.error('Error al crear tarea:', error);
+      return { 
+        success: false, 
+        error: 'Error de conexión al crear tarea',
+        details: error instanceof Error ? error.message : 'Error desconocido'
+      };
+    }
+  }
+
+  /**
+   * Actualiza una tarea existente
+   */
+  async updateTarea(tareaId: number, tareaData: any): Promise<ApiResponse<any>> {
+    try {
+      console.log('Actualizando tarea:', tareaId, tareaData);
+
+      const response = await fetch(`https://dkrdphnnsgndrqmgdvxp.supabase.co/rest/v1/tareas?id=eq.${tareaId}`, {
+        method: 'PATCH',
+        headers: {
+          'apikey': supabaseConfig.serviceRoleKey,
+          'Authorization': `Bearer ${supabaseConfig.serviceRoleKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(tareaData)
+      });
+
+      console.log('Response status:', response.status);
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error('Error response body:', errorData);
+        return {
+          success: false,
+          error: `Error del servidor: ${response.status} ${response.statusText}`,
+          details: errorData
+        };
+      }
+
+      // Manejar respuesta vacía o no-JSON
+      let data = null;
+      const contentType = response.headers.get('content-type');
+      const responseText = await response.text();
+      
+      if (responseText && contentType && contentType.includes('application/json')) {
+        try {
+          data = JSON.parse(responseText);
+        } catch (jsonError) {
+          console.warn('No se pudo parsear JSON, pero la operación fue exitosa:', responseText);
+          data = { success: true, message: 'Tarea actualizada exitosamente' };
+        }
+      } else {
+        console.log('Respuesta exitosa sin JSON:', responseText);
+        data = { success: true, message: 'Tarea actualizada exitosamente' };
+      }
+
+      console.log('Tarea actualizada exitosamente:', data);
+
+      return { 
+        success: true, 
+        data: data 
+      };
+    } catch (error) {
+      console.error('Error al actualizar tarea:', error);
+      return { 
+        success: false, 
+        error: 'Error de conexión al actualizar tarea',
+        details: error instanceof Error ? error.message : 'Error desconocido'
+      };
+    }
+  }
+
+  /**
+   * Elimina una tarea
+   */
+  async deleteTarea(tareaId: number): Promise<ApiResponse<any>> {
+    try {
+      console.log('Eliminando tarea:', tareaId);
+
+      const response = await fetch(`https://dkrdphnnsgndrqmgdvxp.supabase.co/rest/v1/tareas?id=eq.${tareaId}`, {
+        method: 'DELETE',
+        headers: {
+          'apikey': supabaseConfig.serviceRoleKey,
+          'Authorization': `Bearer ${supabaseConfig.serviceRoleKey}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      console.log('Response status:', response.status);
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error('Error response body:', errorData);
+        return {
+          success: false,
+          error: `Error del servidor: ${response.status} ${response.statusText}`,
+          details: errorData
+        };
+      }
+
+      console.log('Tarea eliminada exitosamente');
+
+      return { 
+        success: true, 
+        data: { message: 'Tarea eliminada exitosamente' }
+      };
+    } catch (error) {
+      console.error('Error al eliminar tarea:', error);
+      return { 
+        success: false, 
+        error: 'Error de conexión al eliminar tarea',
+        details: error instanceof Error ? error.message : 'Error desconocido'
+      };
+    }
+  }
+
+  // ================================
+  // MÉTODOS PARA CHAT INTERNO
+  // ================================
+
+  /**
+   * Crea una nueva conversación de chat interno para soporte al cliente
+   */
+  async createChatInternoConversation(clienteId: number): Promise<ApiResponse<any>> {
+    try {
+      console.log('Creando conversación de chat interno para cliente:', clienteId);
+
+      const conversationData = {
+        cliente_id: clienteId,
+        estado: 'PENDIENTE'
+      };
+
+      const response = await fetch('https://dkrdphnnsgndrqmgdvxp.supabase.co/rest/v1/chat_interno', {
+        method: 'POST',
+        headers: {
+          'apikey': supabaseConfig.serviceRoleKey,
+          'Authorization': `Bearer ${supabaseConfig.serviceRoleKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(conversationData)
+      });
+
+      console.log('Response status:', response.status);
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error('Error response body:', errorData);
+        return {
+          success: false,
+          error: `Error del servidor: ${response.status} ${response.statusText}`,
+          details: errorData
+        };
+      }
+
+      // Manejar respuesta vacía o no-JSON
+      let data = null;
+      const contentType = response.headers.get('content-type');
+      const responseText = await response.text();
+      
+      if (responseText && contentType && contentType.includes('application/json')) {
+        try {
+          data = JSON.parse(responseText);
+        } catch (jsonError) {
+          console.warn('No se pudo parsear JSON, pero la operación fue exitosa:', responseText);
+          data = { success: true, message: 'Conversación creada exitosamente' };
+        }
+      } else {
+        console.log('Respuesta exitosa sin JSON:', responseText);
+        data = { success: true, message: 'Conversación creada exitosamente' };
+      }
+
+      console.log('Conversación de chat interno creada exitosamente:', data);
+
+      return { 
+        success: true, 
+        data: data 
+      };
+    } catch (error) {
+      console.error('Error al crear conversación de chat interno:', error);
+      return { 
+        success: false, 
+        error: 'Error de conexión al crear conversación de chat interno',
+        details: error instanceof Error ? error.message : 'Error desconocido'
+      };
+    }
+  }
+
+  /**
+   * Verifica si ya existe una conversación de chat interno para un cliente
+   */
+  async checkExistingChatInternoConversation(clienteId: number): Promise<ApiResponse<boolean>> {
+    try {
+      console.log('Verificando conversación existente para cliente:', clienteId);
+
+      const response = await fetch(`https://dkrdphnnsgndrqmgdvxp.supabase.co/rest/v1/chat_interno?cliente_id=eq.${clienteId}`, {
+        method: 'GET',
+        headers: {
+          'apikey': supabaseConfig.serviceRoleKey,
+          'Authorization': `Bearer ${supabaseConfig.serviceRoleKey}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      console.log('Response status:', response.status);
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error('Error response body:', errorData);
+        return {
+          success: false,
+          error: `Error del servidor: ${response.status} ${response.statusText}`,
+          details: errorData
+        };
+      }
+
+      const data = await response.json();
+      console.log('Conversaciones existentes:', data);
+
+      // Si hay conversaciones existentes, retorna true
+      const hasExistingConversation = Array.isArray(data) && data.length > 0;
+
+      return { 
+        success: true, 
+        data: hasExistingConversation 
+      };
+    } catch (error) {
+      console.error('Error al verificar conversación existente:', error);
+      return { 
+        success: false, 
+        error: 'Error de conexión al verificar conversación existente',
+        details: error instanceof Error ? error.message : 'Error desconocido'
+      };
+    }
+  }
+
+  /**
+   * Obtiene la conversación de chat interno para un cliente específico
+   */
+  async getChatInternoConversation(clienteId: number): Promise<ApiResponse<any>> {
+    try {
+      console.log('Obteniendo conversación de chat interno para cliente:', clienteId);
+
+      // Buscar solo conversaciones activas (no FINALIZADAS) ordenadas por fecha de creación descendente
+      const response = await fetch(`https://dkrdphnnsgndrqmgdvxp.supabase.co/rest/v1/chat_interno?cliente_id=eq.${clienteId}&estado=neq.FINALIZADO&order=created_at.desc`, {
+        method: 'GET',
+        headers: {
+          'apikey': supabaseConfig.serviceRoleKey,
+          'Authorization': `Bearer ${supabaseConfig.serviceRoleKey}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      console.log('Response status:', response.status);
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error('Error response body:', errorData);
+        return {
+          success: false,
+          error: `Error del servidor: ${response.status} ${response.statusText}`,
+          details: errorData
+        };
+      }
+
+      const data = await response.json();
+      console.log('Conversaciones activas encontradas:', data);
+
+      // Retorna la conversación más reciente (primera en el array ordenado)
+      const conversation = Array.isArray(data) && data.length > 0 ? data[0] : null;
+
+      return { 
+        success: true, 
+        data: conversation 
+      };
+    } catch (error) {
+      console.error('Error al obtener conversación:', error);
+      return { 
+        success: false, 
+        error: 'Error de conexión al obtener conversación',
+        details: error instanceof Error ? error.message : 'Error desconocido'
+      };
+    }
+  }
+
+  /**
+   * Obtiene todas las conversaciones de chat interno
+   */
+  async getAllChatInternoConversations(): Promise<ApiResponse<any[]>> {
+    try {
+      console.log('Obteniendo todas las conversaciones de chat interno');
+
+      const response = await fetch('https://dkrdphnnsgndrqmgdvxp.supabase.co/rest/v1/chat_interno', {
+        method: 'GET',
+        headers: {
+          'apikey': supabaseConfig.serviceRoleKey,
+          'Authorization': `Bearer ${supabaseConfig.serviceRoleKey}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      console.log('Response status:', response.status);
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error('Error response body:', errorData);
+        return {
+          success: false,
+          error: `Error del servidor: ${response.status} ${response.statusText}`,
+          details: errorData
+        };
+      }
+
+      const data = await response.json();
+      console.log('Conversaciones de chat interno obtenidas:', data);
+
+      return { 
+        success: true, 
+        data: Array.isArray(data) ? data : []
+      };
+    } catch (error) {
+      console.error('Error al obtener conversaciones de chat interno:', error);
+      return { 
+        success: false, 
+        error: 'Error de conexión al obtener conversaciones de chat interno',
+        details: error instanceof Error ? error.message : 'Error desconocido'
+      };
+    }
+  }
+
+  /**
+   * Obtiene todos los mensajes de una conversación de chat interno específica
+   */
+  async getMensajesInternosByConversation(chatInternoId: number): Promise<ApiResponse<any[]>> {
+    try {
+      console.log('Obteniendo mensajes para conversación:', chatInternoId);
+
+      const response = await fetch(`https://dkrdphnnsgndrqmgdvxp.supabase.co/rest/v1/mensajes_internos?chat_interno_id=eq.${chatInternoId}&order=created_at.asc`, {
+        method: 'GET',
+        headers: {
+          'apikey': supabaseConfig.serviceRoleKey,
+          'Authorization': `Bearer ${supabaseConfig.serviceRoleKey}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      console.log('Response status:', response.status);
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error('Error response body:', errorData);
+        return {
+          success: false,
+          error: `Error del servidor: ${response.status} ${response.statusText}`,
+          details: errorData
+        };
+      }
+
+      const data = await response.json();
+      console.log('Mensajes obtenidos para conversación:', data);
+
+      return { 
+        success: true, 
+        data: Array.isArray(data) ? data : []
+      };
+    } catch (error) {
+      console.error('Error al obtener mensajes de conversación:', error);
+      return { 
+        success: false, 
+        error: 'Error de conexión al obtener mensajes de conversación',
+        details: error instanceof Error ? error.message : 'Error desconocido'
+      };
+    }
+  }
+
+  /**
+   * Actualiza una conversación de chat interno (asigna operador)
+   */
+  async updateChatInternoConversation(chatInternoId: number, operadorId: number): Promise<ApiResponse<any>> {
+    try {
+      console.log('Actualizando conversación de chat interno:', { chatInternoId, operadorId });
+
+      const updateData = {
+        operador_id: operadorId,
+        estado: 'EN CURSO'
+      };
+
+      const response = await fetch(`https://dkrdphnnsgndrqmgdvxp.supabase.co/rest/v1/chat_interno?id=eq.${chatInternoId}`, {
+        method: 'PATCH',
+        headers: {
+          'apikey': supabaseConfig.serviceRoleKey,
+          'Authorization': `Bearer ${supabaseConfig.serviceRoleKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(updateData)
+      });
+
+      console.log('Response status:', response.status);
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error('Error response body:', errorData);
+        return {
+          success: false,
+          error: `Error del servidor: ${response.status} ${response.statusText}`,
+          details: errorData
+        };
+      }
+
+      // Manejar respuesta vacía o no-JSON
+      let data = null;
+      const contentType = response.headers.get('content-type');
+      const responseText = await response.text();
+      
+      if (responseText && contentType && contentType.includes('application/json')) {
+        try {
+          data = JSON.parse(responseText);
+        } catch (jsonError) {
+          console.warn('No se pudo parsear JSON, pero la operación fue exitosa:', responseText);
+          data = { success: true, message: 'Conversación actualizada exitosamente' };
+        }
+      } else {
+        console.log('Respuesta exitosa sin JSON:', responseText);
+        data = { success: true, message: 'Conversación actualizada exitosamente' };
+      }
+
+      console.log('Conversación de chat interno actualizada exitosamente:', data);
+
+      return { 
+        success: true, 
+        data: data 
+      };
+    } catch (error) {
+      console.error('Error al actualizar conversación de chat interno:', error);
+      return { 
+        success: false, 
+        error: 'Error de conexión al actualizar conversación de chat interno',
+        details: error instanceof Error ? error.message : 'Error desconocido'
+      };
+    }
+  }
+
+  /**
+   * Marca los mensajes del cliente como leídos cuando el operador responde
+   */
+  async markMensajesInternosAsRead(chatInternoId: number): Promise<ApiResponse<any>> {
+    try {
+      console.log('Marcando mensajes como leídos para conversación:', chatInternoId);
+
+      const updateData = {
+        leido: true
+      };
+
+      const response = await fetch(`https://dkrdphnnsgndrqmgdvxp.supabase.co/rest/v1/mensajes_internos?chat_interno_id=eq.${chatInternoId}&emisor=eq.cliente`, {
+        method: 'PATCH',
+        headers: {
+          'apikey': supabaseConfig.serviceRoleKey,
+          'Authorization': `Bearer ${supabaseConfig.serviceRoleKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(updateData)
+      });
+
+      console.log('Response status:', response.status);
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error('Error response body:', errorData);
+        return {
+          success: false,
+          error: `Error del servidor: ${response.status} ${response.statusText}`,
+          details: errorData
+        };
+      }
+
+      // Manejar respuesta vacía o no-JSON
+      let data = null;
+      const contentType = response.headers.get('content-type');
+      const responseText = await response.text();
+      
+      if (responseText && contentType && contentType.includes('application/json')) {
+        try {
+          data = JSON.parse(responseText);
+        } catch (jsonError) {
+          console.warn('No se pudo parsear JSON, pero la operación fue exitosa:', responseText);
+          data = { success: true, message: 'Mensajes marcados como leídos exitosamente' };
+        }
+      } else {
+        console.log('Respuesta exitosa sin JSON:', responseText);
+        data = { success: true, message: 'Mensajes marcados como leídos exitosamente' };
+      }
+
+      console.log('Mensajes marcados como leídos exitosamente:', data);
+
+      return { 
+        success: true, 
+        data: data 
+      };
+    } catch (error) {
+      console.error('Error al marcar mensajes como leídos:', error);
+      return { 
+        success: false, 
+        error: 'Error de conexión al marcar mensajes como leídos',
+        details: error instanceof Error ? error.message : 'Error desconocido'
+      };
+    }
+  }
+
+  /**
+   * Obtiene el conteo total de mensajes por conversación
+   */
+  async getTotalMessagesCounts(): Promise<ApiResponse<any[]>> {
+    try {
+      console.log('Obteniendo conteo total de mensajes por conversación');
+
+      const response = await fetch('https://dkrdphnnsgndrqmgdvxp.supabase.co/rest/v1/mensajes_internos?select=chat_interno_id', {
+        method: 'GET',
+        headers: {
+          'apikey': supabaseConfig.serviceRoleKey,
+          'Authorization': `Bearer ${supabaseConfig.serviceRoleKey}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      console.log('Response status:', response.status);
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error('Error response body:', errorData);
+        return {
+          success: false,
+          error: `Error del servidor: ${response.status} ${response.statusText}`,
+          details: errorData
+        };
+      }
+
+      const data = await response.json();
+      console.log('Mensajes totales obtenidos:', data);
+
+      // Contar mensajes por conversación
+      const counts: { [key: number]: number } = {};
+      if (Array.isArray(data)) {
+        data.forEach((message: any) => {
+          const chatId = message.chat_interno_id;
+          counts[chatId] = (counts[chatId] || 0) + 1;
+        });
+      }
+
+      return { 
+        success: true, 
+        data: counts 
+      };
+    } catch (error) {
+      console.error('Error al obtener conteo total de mensajes:', error);
+      return { 
+        success: false, 
+        error: 'Error de conexión al obtener conteo total de mensajes',
+        details: error instanceof Error ? error.message : 'Error desconocido'
+      };
+    }
+  }
+
+  /**
+   * Obtiene el conteo de mensajes no leídos por conversación
+   */
+  async getUnreadMessagesCounts(): Promise<ApiResponse<any[]>> {
+    try {
+      console.log('Obteniendo conteo de mensajes no leídos');
+
+      const response = await fetch('https://dkrdphnnsgndrqmgdvxp.supabase.co/rest/v1/mensajes_internos?select=chat_interno_id&emisor=eq.cliente&leido=eq.false', {
+        method: 'GET',
+        headers: {
+          'apikey': supabaseConfig.serviceRoleKey,
+          'Authorization': `Bearer ${supabaseConfig.serviceRoleKey}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      console.log('Response status:', response.status);
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error('Error response body:', errorData);
+        return {
+          success: false,
+          error: `Error del servidor: ${response.status} ${response.statusText}`,
+          details: errorData
+        };
+      }
+
+      const data = await response.json();
+      console.log('Mensajes no leídos obtenidos:', data);
+
+      // Contar mensajes por conversación
+      const counts: { [key: number]: number } = {};
+      if (Array.isArray(data)) {
+        data.forEach((message: any) => {
+          const chatId = message.chat_interno_id;
+          counts[chatId] = (counts[chatId] || 0) + 1;
+        });
+      }
+
+      return { 
+        success: true, 
+        data: counts 
+      };
+    } catch (error) {
+      console.error('Error al obtener conteo de mensajes no leídos:', error);
+      return { 
+        success: false, 
+        error: 'Error de conexión al obtener conteo de mensajes no leídos',
+        details: error instanceof Error ? error.message : 'Error desconocido'
+      };
+    }
+  }
+
+  /**
+   * Verifica si el cliente tiene una conversación de chat interno activa
+   */
+  async checkClientChatInternoConversation(clienteId: number): Promise<ApiResponse<any>> {
+    try {
+      console.log('Verificando conversación de chat interno para cliente:', clienteId);
+
+      // Buscar todas las conversaciones ordenadas por fecha de creación descendente (más reciente primero)
+      const response = await fetch(`https://dkrdphnnsgndrqmgdvxp.supabase.co/rest/v1/chat_interno?cliente_id=eq.${clienteId}&order=created_at.desc`, {
+        method: 'GET',
+        headers: {
+          'apikey': supabaseConfig.serviceRoleKey,
+          'Authorization': `Bearer ${supabaseConfig.serviceRoleKey}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      console.log('Response status:', response.status);
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error('Error response body:', errorData);
+        return {
+          success: false,
+          error: `Error del servidor: ${response.status} ${response.statusText}`,
+          details: errorData
+        };
+      }
+
+      const data = await response.json();
+      console.log('Conversaciones de cliente obtenidas (ordenadas por fecha):', data);
+
+      // Retorna la conversación más reciente (primera en el array ordenado) o null
+      const conversation = Array.isArray(data) && data.length > 0 ? data[0] : null;
+
+      return { 
+        success: true, 
+        data: conversation 
+      };
+    } catch (error) {
+      console.error('Error al verificar conversación del cliente:', error);
+      return { 
+        success: false, 
+        error: 'Error de conexión al verificar conversación del cliente',
+        details: error instanceof Error ? error.message : 'Error desconocido'
+      };
+    }
+  }
+
+  /**
+   * Obtiene todos los mensajes de una conversación de chat interno para el cliente
+   */
+  async getClientMensajesInternos(chatInternoId: number): Promise<ApiResponse<any[]>> {
+    try {
+      console.log('Obteniendo mensajes de chat interno para conversación:', chatInternoId);
+
+      const response = await fetch(`https://dkrdphnnsgndrqmgdvxp.supabase.co/rest/v1/mensajes_internos?chat_interno_id=eq.${chatInternoId}&order=created_at.asc`, {
+        method: 'GET',
+        headers: {
+          'apikey': supabaseConfig.serviceRoleKey,
+          'Authorization': `Bearer ${supabaseConfig.serviceRoleKey}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      console.log('Response status:', response.status);
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error('Error response body:', errorData);
+        return {
+          success: false,
+          error: `Error del servidor: ${response.status} ${response.statusText}`,
+          details: errorData
+        };
+      }
+
+      const data = await response.json();
+      console.log('Mensajes del cliente obtenidos:', data);
+
+      return { 
+        success: true, 
+        data: Array.isArray(data) ? data : []
+      };
+    } catch (error) {
+      console.error('Error al obtener mensajes del cliente:', error);
+      return { 
+        success: false, 
+        error: 'Error de conexión al obtener mensajes del cliente',
+        details: error instanceof Error ? error.message : 'Error desconocido'
+      };
+    }
+  }
+
+  /**
+   * Marca los mensajes del operador como leídos cuando el cliente los ve
+   */
+  async markOperatorMessagesAsRead(chatInternoId: number): Promise<ApiResponse<any>> {
+    try {
+      console.log('Marcando mensajes del operador como leídos para conversación:', chatInternoId);
+
+      const updateData = {
+        leido: true
+      };
+
+      const response = await fetch(`https://dkrdphnnsgndrqmgdvxp.supabase.co/rest/v1/mensajes_internos?chat_interno_id=eq.${chatInternoId}&emisor=eq.operador&leido=eq.false`, {
+        method: 'PATCH',
+        headers: {
+          'apikey': supabaseConfig.serviceRoleKey,
+          'Authorization': `Bearer ${supabaseConfig.serviceRoleKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(updateData)
+      });
+
+      console.log('Response status:', response.status);
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error('Error response body:', errorData);
+        return {
+          success: false,
+          error: `Error del servidor: ${response.status} ${response.statusText}`,
+          details: errorData
+        };
+      }
+
+      // Manejar respuesta vacía o no-JSON
+      let data = null;
+      const contentType = response.headers.get('content-type');
+      const responseText = await response.text();
+      
+      if (responseText && contentType && contentType.includes('application/json')) {
+        try {
+          data = JSON.parse(responseText);
+        } catch (jsonError) {
+          console.warn('No se pudo parsear JSON, pero la operación fue exitosa:', responseText);
+          data = { success: true, message: 'Mensajes del operador marcados como leídos exitosamente' };
+        }
+      } else {
+        console.log('Respuesta exitosa sin JSON:', responseText);
+        data = { success: true, message: 'Mensajes del operador marcados como leídos exitosamente' };
+      }
+
+      console.log('Mensajes del operador marcados como leídos exitosamente:', data);
+
+      return { 
+        success: true, 
+        data: data 
+      };
+    } catch (error) {
+      console.error('Error al marcar mensajes del operador como leídos:', error);
+      return { 
+        success: false, 
+        error: 'Error de conexión al marcar mensajes del operador como leídos',
+        details: error instanceof Error ? error.message : 'Error desconocido'
+      };
+    }
+  }
+
+  /**
+   * Finaliza una conversación de chat interno cambiando su estado a FINALIZADO
+   */
+  async finalizeChatInternoConversation(chatInternoId: number): Promise<ApiResponse<any>> {
+    try {
+      console.log('Finalizando conversación de chat interno:', chatInternoId);
+
+      const updateData = {
+        estado: 'FINALIZADO'
+      };
+
+      const response = await fetch(`https://dkrdphnnsgndrqmgdvxp.supabase.co/rest/v1/chat_interno?id=eq.${chatInternoId}`, {
+        method: 'PATCH',
+        headers: {
+          'apikey': supabaseConfig.serviceRoleKey,
+          'Authorization': `Bearer ${supabaseConfig.serviceRoleKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(updateData)
+      });
+
+      console.log('Response status:', response.status);
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error('Error response body:', errorData);
+        return {
+          success: false,
+          error: `Error del servidor: ${response.status} ${response.statusText}`,
+          details: errorData
+        };
+      }
+
+      // Manejar respuesta vacía o no-JSON
+      let data = null;
+      const contentType = response.headers.get('content-type');
+      const responseText = await response.text();
+      
+      if (responseText && contentType && contentType.includes('application/json')) {
+        try {
+          data = JSON.parse(responseText);
+        } catch (jsonError) {
+          console.warn('No se pudo parsear JSON, pero la operación fue exitosa:', responseText);
+          data = { success: true, message: 'Conversación finalizada exitosamente' };
+        }
+      } else {
+        console.log('Respuesta exitosa sin JSON:', responseText);
+        data = { success: true, message: 'Conversación finalizada exitosamente' };
+      }
+
+      console.log('Conversación finalizada exitosamente:', data);
+
+      return { 
+        success: true, 
+        data: data 
+      };
+    } catch (error) {
+      console.error('Error al finalizar conversación:', error);
+      return { 
+        success: false, 
+        error: 'Error de conexión al finalizar conversación',
+        details: error instanceof Error ? error.message : 'Error desconocido'
+      };
+    }
+  }
+
+  /**
+   * Crea un mensaje interno en una conversación de chat interno
+   */
+  async createMensajeInterno(chatInternoId: number, mensaje: string, emisor: 'cliente' | 'operador' = 'cliente'): Promise<ApiResponse<any>> {
+    try {
+      console.log('Creando mensaje interno para conversación:', chatInternoId);
+
+      const messageData = {
+        chat_interno_id: chatInternoId,
+        mensaje: mensaje,
+        leido: false,
+        emisor: emisor
+      };
+
+      const response = await fetch('https://dkrdphnnsgndrqmgdvxp.supabase.co/rest/v1/mensajes_internos', {
+        method: 'POST',
+        headers: {
+          'apikey': supabaseConfig.serviceRoleKey,
+          'Authorization': `Bearer ${supabaseConfig.serviceRoleKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(messageData)
+      });
+
+      console.log('Response status:', response.status);
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error('Error response body:', errorData);
+        return {
+          success: false,
+          error: `Error del servidor: ${response.status} ${response.statusText}`,
+          details: errorData
+        };
+      }
+
+      // Manejar respuesta vacía o no-JSON
+      let data = null;
+      const contentType = response.headers.get('content-type');
+      const responseText = await response.text();
+      
+      if (responseText && contentType && contentType.includes('application/json')) {
+        try {
+          data = JSON.parse(responseText);
+        } catch (jsonError) {
+          console.warn('No se pudo parsear JSON, pero la operación fue exitosa:', responseText);
+          data = { success: true, message: 'Mensaje interno creado exitosamente' };
+        }
+      } else {
+        console.log('Respuesta exitosa sin JSON:', responseText);
+        data = { success: true, message: 'Mensaje interno creado exitosamente' };
+      }
+
+      console.log('Mensaje interno creado exitosamente:', data);
+
+      return { 
+        success: true, 
+        data: data 
+      };
+    } catch (error) {
+      console.error('Error al crear mensaje interno:', error);
+      return { 
+        success: false, 
+        error: 'Error de conexión al crear mensaje interno',
         details: error instanceof Error ? error.message : 'Error desconocido'
       };
     }

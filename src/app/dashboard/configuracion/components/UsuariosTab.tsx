@@ -149,15 +149,27 @@ export default function UsuariosTab() {
   };
 
   const getRoleBadge = (rol: string) => {
-    if (rol === 'Admin') {
+    if (rol === 'Admin' || rol === 'Administrador') {
       return (
         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
           👑 {rol}
         </span>
       );
-    } else {
+    } else if (rol === 'Cliente') {
+      return (
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+          👤 {rol}
+        </span>
+      );
+    } else if (rol === 'Comercial') {
       return (
         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+          👤 {rol}
+        </span>
+      );
+    } else {
+      return (
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
           👤 {rol}
         </span>
       );
@@ -167,8 +179,8 @@ export default function UsuariosTab() {
   if (isLoading) {
     return (
       <div className="p-6 flex items-center justify-center h-64">
-        <div className="text-white">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#00b894] mx-auto mb-4"></div>
+        <div className="text-[var(--text-primary)]">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--accent-primary)] mx-auto mb-4"></div>
           <p>Cargando usuarios...</p>
         </div>
       </div>
@@ -199,8 +211,8 @@ export default function UsuariosTab() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h3 className="text-white text-lg font-medium">Usuarios</h3>
-          <p className="text-gray-400 text-sm">
+          <h3 className="text-[var(--text-primary)] text-lg font-medium">Usuarios</h3>
+          <p className="text-[var(--text-muted)] text-sm">
             Gestión de usuarios del sistema ({usuarios.length} usuarios)
           </p>
         </div>
@@ -214,7 +226,7 @@ export default function UsuariosTab() {
           </button>
           <button 
             onClick={() => setShowNuevoUsuarioModal(true)}
-            className="flex items-center space-x-2 bg-[#00b894] hover:bg-[#00a085] text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+            className="flex items-center space-x-2 bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
           >
             <span>➕</span>
             <span>Nuevo Usuario</span>
@@ -224,69 +236,69 @@ export default function UsuariosTab() {
 
       {/* Tabla de Usuarios */}
       {usuarios.length > 0 ? (
-        <div className="bg-[#2a2d35] border border-[#3a3d45] rounded-lg overflow-hidden">
+        <div className="bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-lg overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-[#1a1d23] border-b border-[#3a3d45]">
+              <thead className="bg-[var(--bg-primary)] border-b border-[var(--border-primary)]">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">
                     Usuario
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">
                     Agencia
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">
                     Tipo Empresa
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">
                     Rol
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">
                     Teléfono
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">
                     Estado
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">
                     Fecha Alta
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">
                     Acciones
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#3a3d45]">
+              <tbody className="divide-y divide-[var(--border-primary)]">
                 {usuarios.map((usuario) => (
-                  <tr key={usuario.id} className="hover:bg-[#1a1d23] transition-colors">
+                  <tr key={usuario.id} className="hover:bg-[var(--bg-primary)] transition-colors">
                     <td className="px-6 py-4">
                       <div>
-                        <div className="text-white font-medium">{usuario.nombre_usuario}</div>
-                        <div className="text-gray-400 text-sm">{usuario.correo_electronico}</div>
+                        <div className="text-[var(--text-primary)] font-medium">{usuario.nombre_usuario}</div>
+                        <div className="text-[var(--text-muted)] text-sm">{usuario.correo_electronico}</div>
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="text-white text-sm">{usuario.nombre_agencia}</div>
+                      <div className="text-[var(--text-primary)] text-sm">{usuario.nombre_agencia}</div>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="text-gray-300 text-sm">{usuario.tipo_empresa}</div>
+                      <div className="text-[var(--text-secondary)] text-sm">{usuario.tipo_empresa}</div>
                     </td>
                     <td className="px-6 py-4">
                       {getRoleBadge(usuario.rol)}
                     </td>
-                    <td className="px-6 py-4 text-gray-300 text-sm">
+                    <td className="px-6 py-4 text-[var(--text-secondary)] text-sm">
                       +{usuario.codigo_pais} {usuario.telefono}
                     </td>
                     <td className="px-6 py-4">
                       {getStatusBadge(usuario.activo)}
                     </td>
-                    <td className="px-6 py-4 text-gray-300 text-sm">
+                    <td className="px-6 py-4 text-[var(--text-secondary)] text-sm">
                       {formatDate(usuario.fecha_alta)}
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center space-x-3">
                         <button 
                           onClick={() => handleEditUser(usuario)}
-                          className="text-gray-400 hover:text-blue-400 text-sm transition-colors"
+                          className="text-[var(--text-muted)] hover:text-blue-400 text-sm transition-colors"
                           title="Editar usuario"
                         >
                           ✏️
@@ -294,7 +306,7 @@ export default function UsuariosTab() {
                         {usuario.activo ? (
                           <button 
                             onClick={() => handleDeactivateUser(usuario)}
-                            className="text-gray-400 hover:text-red-400 text-sm transition-colors"
+                            className="text-[var(--text-muted)] hover:text-red-400 text-sm transition-colors"
                             title="Dar de baja usuario"
                           >
                             ⬇️
@@ -302,7 +314,7 @@ export default function UsuariosTab() {
                         ) : (
                           <button 
                             onClick={() => handleActivateUser(usuario)}
-                            className="text-gray-400 hover:text-green-400 text-sm transition-colors"
+                            className="text-[var(--text-muted)] hover:text-green-400 text-sm transition-colors"
                             title="Dar de alta usuario"
                           >
                             ⬆️
@@ -318,12 +330,12 @@ export default function UsuariosTab() {
         </div>
       ) : (
         <div className="text-center py-12">
-          <div className="text-gray-400 text-6xl mb-4">👥</div>
-          <h4 className="text-white text-lg font-medium mb-2">No hay usuarios</h4>
-          <p className="text-gray-400 text-sm mb-6">No se encontraron usuarios en el sistema.</p>
+          <div className="text-[var(--text-muted)] text-6xl mb-4">👥</div>
+          <h4 className="text-[var(--text-primary)] text-lg font-medium mb-2">No hay usuarios</h4>
+          <p className="text-[var(--text-muted)] text-sm mb-6">No se encontraron usuarios en el sistema.</p>
           <button 
             onClick={loadUsuarios}
-            className="bg-[#00b894] hover:bg-[#00a085] text-white px-6 py-3 rounded-lg font-medium transition-colors"
+            className="bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] text-white px-6 py-3 rounded-lg font-medium transition-colors"
           >
             Recargar usuarios
           </button>

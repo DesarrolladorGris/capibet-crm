@@ -9,8 +9,7 @@ import ConfirmarEliminarModal from './components/ConfirmarEliminarModal';
 import ConfirmarEliminacionMasivaModal from './components/ConfirmarEliminacionMasivaModal';
 import { supabaseService, ContactResponse, ContactData } from '@/services/supabaseService';
 import { isUserAuthenticated, getCurrentUserId } from '@/utils/auth';
-import { useExportContacts } from '@/hooks/useExportContacts';
-import { useImportContacts } from '@/hooks/useImportContacts';
+import RoleProtection from '@/components/RoleProtection';
 
 export default function ContactosPage() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -18,8 +17,6 @@ export default function ContactosPage() {
   const [contacts, setContacts] = useState<ContactResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [showError, setShowError] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -48,42 +45,6 @@ export default function ContactosPage() {
       setLoading(false);
     }
   };
-
-  const { isExporting, error: exportError, exportContacts } = useExportContacts();
-  const { isImporting, error: importError, successMessage, importErrors, importContacts } = useImportContacts(fetchContacts);
-
-  const closeError = () => {
-    setShowError(false);
-    setError(null);
-  };
-
-  const closeSuccess = () => {
-    setShowSuccess(false);
-  };
-
-  // Cierre automatico del modal de errores despues de 30 segundos
-  useEffect(() => {
-    if (error || exportError || importError) {
-      setShowError(true);
-      const timer = setTimeout(() => {
-        setShowError(false);
-      }, 30000);
-
-      return () => clearTimeout(timer);
-    }
-  }, [error, exportError, importError]);
-
-  // Cierre automatico del modal de éxito despues de 30 segundos
-  useEffect(() => {
-    if (successMessage) {
-      setShowSuccess(true);
-      const timer = setTimeout(() => {
-        setShowSuccess(false);
-      }, 30000);
-
-      return () => clearTimeout(timer);
-    }
-  }, [successMessage]);
 
   // Función para agregar nuevo contacto
   const handleAddContact = async (contactData: ContactData) => {
@@ -247,8 +208,6 @@ export default function ContactosPage() {
     await fetchContacts(); // Recargar contactos
   };
 
-
-
   const handleSelectAll = () => {
     if (selectedContacts.length === contacts.length) {
       setSelectedContacts([]);
@@ -310,52 +269,45 @@ export default function ContactosPage() {
 
   if (!userId) {
     return (
-      <div className="min-h-screen bg-[#1a1d23] flex items-center justify-center">
-        <div className="text-white">Cargando...</div>
+      <div className="min-h-screen bg-[var(--bg-primary)] flex items-center justify-center">
+        <div className="text-[var(--text-primary)]">Cargando...</div>
       </div>
     );
   }
 
   return (
-    <div className="flex-1 flex flex-col">
+    <RoleProtection requiredRoles={['Administrador', 'Admin']}>
+      <div className="flex-1 flex flex-col">
       {/* Header de Contactos */}
-      <div className="bg-[#1a1d23] border-b border-[#3a3d45] px-6 py-4">
+      <div className="bg-[var(--bg-primary)] border-b border-[var(--border-primary)] px-6 py-4">
         <div className="flex items-center justify-between">
           {/* Left Section */}
           <div className="flex items-center space-x-4">
             {/* Page Title */}
-            <h1 className="text-white font-semibold text-2xl">Contactos</h1>
+            <h1 className="text-[var(--text-primary)] font-semibold text-2xl">Contactos</h1>
           </div>
 
           {/* Right Section */}
           <div className="flex items-center space-x-4">
             {/* Action Buttons */}
-            <button 
-              onClick={importContacts}
-              disabled={isImporting}
-              className="flex items-center space-x-2 bg-[#00b894] hover:bg-[#00a085] disabled:bg-gray-500 disabled:cursor-not-allowed text-white px-4 py-2 rounded text-sm font-medium transition-colors"
-            >
+            <button className="flex items-center space-x-2 bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] text-white px-4 py-2 rounded text-sm font-medium transition-colors">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
               </svg>
-              <span>{isImporting ? 'Importando...' : 'Importar'}</span>
+              <span>Importar</span>
             </button>
 
-            <button 
-              onClick={exportContacts}
-              disabled={isExporting}
-              className="flex items-center space-x-2 bg-[#00b894] hover:bg-[#00a085] disabled:bg-gray-500 disabled:cursor-not-allowed text-white px-4 py-2 rounded text-sm font-medium transition-colors"
-            >
+            <button className="flex items-center space-x-2 bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] text-white px-4 py-2 rounded text-sm font-medium transition-colors">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
               </svg>
-              <span>{isExporting ? 'Exportando...' : 'Exportar'}</span>
+              <span>Exportar</span>
             </button>
 
             {/* Botón Agregar Contacto */}
             <button 
               onClick={() => setShowAddModal(true)}
-              className="flex items-center space-x-2 bg-[#00b894] hover:bg-[#00a085] text-white px-4 py-2 rounded text-sm font-medium transition-colors"
+              className="flex items-center space-x-2 bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] text-white px-4 py-2 rounded text-sm font-medium transition-colors"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -364,7 +316,7 @@ export default function ContactosPage() {
             </button>
 
             {/* Filter */}
-            <button className="text-gray-400 hover:text-white p-2 rounded">
+            <button className="text-[var(--text-muted)] hover:text-[var(--text-primary)] p-2 rounded">
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.414A1 1 0 013 6.707V4z" />
               </svg>
@@ -377,9 +329,9 @@ export default function ContactosPage() {
                 placeholder="Buscar"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="bg-[#2a2d35] border border-[#3a3d45] rounded px-3 py-2 pl-9 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#00b894] focus:border-[#00b894] w-48"
+                className="bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded px-3 py-2 pl-9 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-primary)] focus:border-[var(--accent-primary)] w-48"
               />
-              <svg className="w-4 h-4 text-gray-400 absolute left-3 top-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="w-4 h-4 text-[var(--text-muted)] absolute left-3 top-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
             </div>
@@ -387,70 +339,25 @@ export default function ContactosPage() {
         </div>
       </div>
 
-        {/* Main Content */}
-       <div className={`flex-1 bg-[#1a1d23] p-6 ${selectedContacts.length > 0 ? 'mb-24' : ''}`}>
+             {/* Main Content */}
+       <div className={`flex-1 bg-[var(--bg-primary)] p-6 ${selectedContacts.length > 0 ? 'mb-24' : ''}`}>
         {/* Error Message */}
-        {showError && (error || exportError || importError) && (
-          <div className="mb-4 p-4 bg-red-600 text-white rounded-lg relative">
-            <div className="flex justify-between items-start">
-              <div className="flex-1 pr-4">
-                <div className="font-medium mb-2">{error || exportError || importError}</div>
-                {importErrors.length > 0 && (
-                  <div className="mt-2">
-                    <div className="text-sm font-medium mb-1">Errores encontrados:</div>
-                    <ul className="text-sm space-y-1">
-                      {importErrors.map((error, index) => (
-                        <li key={index} className="bg-red-700 p-2 rounded text-xs">
-                          {error}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
-              <button
-                onClick={closeError}
-                className="text-white hover:text-gray-200 transition-colors duration-200 flex-shrink-0"
-                aria-label="Cerrar mensaje de error"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Success Message */}
-        {showSuccess && successMessage && (
-          <div className="mb-4 p-4 bg-green-600 text-white rounded-lg relative">
-            <div className="flex justify-between items-start">
-              <div className="flex-1 pr-4">
-                {successMessage}
-              </div>
-              <button
-                onClick={closeSuccess}
-                className="text-white hover:text-gray-200 transition-colors duration-200 flex-shrink-0"
-                aria-label="Cerrar mensaje de éxito"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
+        {error && (
+          <div className="mb-4 p-4 bg-red-600 text-white rounded-lg">
+            {error}
           </div>
         )}
 
         {/* Table */}
-        <div className="bg-[#2a2d35] rounded-lg border border-[#3a3d45]">
+        <div className="bg-[var(--bg-secondary)] rounded-lg border border-[var(--border-primary)]">
           {/* Table Header */}
-          <div className="grid grid-cols-8 gap-4 p-4 border-b border-[#3a3d45] text-gray-400 text-sm font-medium">
+          <div className="grid grid-cols-8 gap-4 p-4 border-b border-[var(--border-primary)] text-[var(--text-muted)] text-sm font-medium">
             <div className="flex items-center">
               <input
                 type="checkbox"
                 checked={selectedContacts.length === filteredContacts.length && filteredContacts.length > 0}
                 onChange={handleSelectAll}
-                className="w-4 h-4 text-[#00b894] bg-[#1a1d23] border-[#3a3d45] rounded focus:ring-[#00b894] focus:ring-2"
+                className="w-4 h-4 text-[var(--accent-primary)] bg-[var(--bg-primary)] border-[var(--border-primary)] rounded focus:ring-[var(--accent-primary)] focus:ring-2"
               />
             </div>
             <div>Nombre</div>
@@ -465,47 +372,47 @@ export default function ContactosPage() {
           {/* Table Body */}
           {loading ? (
             <div className="p-12 text-center">
-              <div className="text-gray-400 text-lg mb-2">Cargando...</div>
+              <div className="text-[var(--text-muted)] text-lg mb-2">Cargando...</div>
             </div>
           ) : filteredContacts.length > 0 ? (
             filteredContacts.map((contact) => (
               <div
                 key={contact.id}
-                className="grid grid-cols-8 gap-4 p-4 border-b border-[#3a3d45] hover:bg-[#3a3d45] transition-colors"
+                className="grid grid-cols-8 gap-4 p-4 border-b border-[var(--border-primary)] hover:bg-[var(--bg-tertiary)] transition-colors"
               >
                 <div className="flex items-center">
                   <input
                     type="checkbox"
                     checked={selectedContacts.includes(contact.id)}
                     onChange={() => handleSelectContact(contact.id)}
-                    className="w-4 h-4 text-[#00b894] bg-[#1a1d23] border-[#3a3d45] rounded focus:ring-[#00b894] focus:ring-2"
+                    className="w-4 h-4 text-[var(--accent-primary)] bg-[var(--bg-primary)] border-[var(--border-primary)] rounded focus:ring-[var(--accent-primary)] focus:ring-2"
                   />
                 </div>
-                <div className="text-white font-medium">{getFullName(contact)}</div>
-                <div className="text-gray-300">{contact.empresa || '-'}</div>
-                <div className="text-gray-300">{contact.telefono}</div>
-                <div className="text-gray-300">{contact.correo}</div>
+                <div className="text-[var(--text-primary)] font-medium">{getFullName(contact)}</div>
+                <div className="text-[var(--text-secondary)]">{contact.empresa || '-'}</div>
+                <div className="text-[var(--text-secondary)]">{contact.telefono}</div>
+                <div className="text-[var(--text-secondary)]">{contact.correo}</div>
                 <div>
                   {contact.etiqueta && (
-                    <span className="px-2 py-1 bg-[#00b894] text-white text-xs rounded-full">
+                    <span className="px-2 py-1 bg-[var(--accent-primary)] text-white text-xs rounded-full">
                       {contact.etiqueta}
                     </span>
                   )}
                 </div>
-                <div className="text-gray-300 text-sm">
+                <div className="text-[var(--text-secondary)] text-sm">
                   {formatDate(contact.creado_en)}
                 </div>
                 <div className="flex items-center space-x-3">
                   <button 
                     onClick={() => handleEditContact(contact)}
-                    className="text-gray-400 hover:text-blue-400 text-sm transition-colors"
+                    className="text-[var(--text-muted)] hover:text-blue-400 text-sm transition-colors"
                     title="Editar contacto"
                   >
                     ✏️
                   </button>
                   <button 
                     onClick={() => handleDeleteContact(contact)}
-                    className="text-gray-400 hover:text-red-400 text-sm transition-colors"
+                    className="text-[var(--text-muted)] hover:text-red-400 text-sm transition-colors"
                     title="Eliminar contacto"
                   >
                     🗑️
@@ -516,32 +423,32 @@ export default function ContactosPage() {
           ) : (
             /* Empty State */
             <div className="p-12 text-center">
-              <div className="text-gray-400 text-lg mb-2">Sin datos</div>
-              <div className="text-gray-500 text-sm">Página 1 de 0</div>
+              <div className="text-[var(--text-muted)] text-lg mb-2">Sin datos</div>
+              <div className="text-[var(--text-muted)] text-sm">Página 1 de 0</div>
             </div>
           )}
         </div>
 
         {/* Pagination */}
         <div className="flex justify-center mt-6 space-x-4">
-          <button className="px-4 py-2 text-gray-500 bg-[#2a2d35] border border-[#3a3d45] rounded cursor-not-allowed">
+          <button className="px-4 py-2 text-[var(--text-muted)] bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded cursor-not-allowed">
             ANTERIOR
           </button>
-          <button className="px-4 py-2 text-gray-500 bg-[#2a2d35] border border-[#3a3d45] rounded cursor-not-allowed">
+          <button className="px-4 py-2 text-[var(--text-muted)] bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded cursor-not-allowed">
             SIGUIENTE
           </button>
         </div>
 
                  {/* Selected Contacts Info */}
          {selectedContacts.length > 0 && (
-           <div className="fixed bottom-0 left-0 right-0 bg-[#2a2d35] border-t border-[#3a3d45] p-4 z-40">
+           <div className="fixed bottom-0 left-0 right-0 bg-[var(--bg-secondary)] border-t border-[var(--border-primary)] p-4 z-40">
              <div className="flex items-center justify-between max-w-7xl mx-auto">
                <div className="flex items-center space-x-3">
-                 <div className="flex items-center space-x-2 bg-[#00b894] text-white px-3 py-2 rounded-full">
+                 <div className="flex items-center space-x-2 bg-[var(--accent-primary)] text-white px-3 py-2 rounded-full">
                    <span className="text-sm font-medium">{selectedContacts.length}</span>
                    <span className="text-xs">Seleccionado{selectedContacts.length !== 1 ? 's' : ''}</span>
                  </div>
-                 <span className="text-gray-300 text-sm">
+                 <span className="text-[var(--text-secondary)] text-sm">
                    {selectedContacts.length} contacto{selectedContacts.length !== 1 ? 's' : ''} seleccionado{selectedContacts.length !== 1 ? 's' : ''}
                  </span>
                </div>
@@ -601,6 +508,7 @@ export default function ContactosPage() {
         onConfirm={handleConfirmBulkDelete}
         contactCount={selectedContacts.length}
       />
-    </div>
+      </div>
+    </RoleProtection>
   );
 }

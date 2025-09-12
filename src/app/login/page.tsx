@@ -71,8 +71,12 @@ export default function LoginPage() {
         
         console.log('Login exitoso:', userData);
         
-        // Redireccionar al dashboard
-        router.push('/dashboard');
+        // Redireccionar según el rol del usuario
+        if (userData.rol === 'Cliente') {
+          router.push('/cliente');
+        } else {
+          router.push('/dashboard');
+        }
         
       } else {
         setError(result.error || 'Email o contraseña incorrectos');
@@ -92,9 +96,9 @@ export default function LoginPage() {
       <div className="lg:hidden flex justify-center py-8 px-4">
         <div className="text-center">
           <div className="w-16 h-16 mx-auto bg-[#00b894] rounded-full flex items-center justify-center border-2 border-[#00a085] shadow-lg mb-4">
-            <div className="text-white font-bold text-2xl transform -rotate-12">⚡</div>
+            <div className="text-white font-bold text-2xl">🎲</div>
           </div>
-          <h1 className="text-white text-2xl font-bold">BEAST</h1>
+          <h1 className="text-white text-2xl font-bold">CAPIBET</h1>
           <div className="flex items-center justify-center gap-2 mt-1">
             <div className="h-0.5 w-8 bg-[#00b894]"></div>
             <span className="text-[#00b894] text-sm font-medium tracking-wider">CRM</span>
@@ -191,12 +195,12 @@ export default function LoginPage() {
           <div className="mb-8">
             {/* Beast Logo Circle */}
             <div className="w-32 h-32 mx-auto bg-white/20 rounded-full flex items-center justify-center border-4 border-white/30 shadow-2xl">
-              <div className="text-white font-bold text-6xl transform -rotate-12">
-                ⚡
+              <div className="text-white font-bold text-6xl">
+                🎲
               </div>
             </div>
           </div>
-          <h1 className="text-white text-6xl font-bold mb-2">BEAST</h1>
+          <h1 className="text-white text-6xl font-bold mb-2">CAPIBET</h1>
           <div className="flex items-center justify-center gap-4">
             <div className="h-1 w-16 bg-white/50"></div>
             <span className="text-white text-xl font-medium tracking-wider">CRM</span>
