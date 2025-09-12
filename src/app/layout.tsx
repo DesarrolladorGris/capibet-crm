@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { HydrationHandler } from "./components/HydrationHandler";
-import { AuthProvider } from "@/contexts/AuthContext";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Beast CRM - Capibet",
-  description: "Sistema de gestión de relaciones con clientes para Capibet",
+  title: "Beast CRM - CAPIBET",
+  description: "Sistema de gestión de relaciones con clientes para CAPIBET",
 };
 
 export default function RootLayout({
@@ -30,10 +30,10 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         suppressHydrationWarning={true}
       >
-        <HydrationHandler />
-        <AuthProvider>
+        <ThemeProvider>
+          <HydrationHandler />
           {children}
-        </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

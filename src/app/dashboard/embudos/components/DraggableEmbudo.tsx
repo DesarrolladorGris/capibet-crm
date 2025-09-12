@@ -25,17 +25,17 @@ export default function DraggableEmbudo({ embudo, index, mensajes, onEdit, onDel
   return (
     <div
       ref={setNodeRef}
-      className={`bg-[#1a1d23] border-2 border-[#ff8c00] rounded-lg p-4 hover:border-[#00b894] transition-colors group relative flex flex-col h-full min-h-80 ${
-        isOver ? 'border-[#00b894] bg-[#00b894]/10' : ''
+      className={`bg-[var(--bg-primary)] border-2 border-[#ff8c00] rounded-lg p-4 hover:border-[var(--accent-primary)] transition-colors group relative flex flex-col h-full min-h-80 ${
+        isOver ? 'border-[var(--accent-primary)] bg-[var(--accent-primary)]/10' : ''
       }`}
     >
       {/* Header del embudo */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center space-x-2">
-          <span className="text-gray-400 text-sm font-medium">
+          <span className="text-[var(--text-muted)] text-sm font-medium">
             {index}
           </span>
-          <span className="text-white text-sm font-medium">
+          <span className="text-[var(--text-primary)] text-sm font-medium">
             {embudo.nombre.toUpperCase()}
           </span>
         </div>
@@ -48,7 +48,7 @@ export default function DraggableEmbudo({ embudo, index, mensajes, onEdit, onDel
               e.stopPropagation();
               onEdit(embudo);
             }}
-            className="text-gray-400 hover:text-white text-xs p-1" 
+            className="text-[var(--text-muted)] hover:text-[var(--text-primary)] text-xs p-1" 
             title="Editar embudo"
           >
             <Edit className="w-4 h-4" />
@@ -58,7 +58,7 @@ export default function DraggableEmbudo({ embudo, index, mensajes, onEdit, onDel
               e.stopPropagation();
               onDelete(embudo);
             }}
-            className="text-gray-400 hover:text-red-400 text-xs p-1" 
+            className="text-[var(--text-muted)] hover:text-[var(--error)] text-xs p-1" 
             title="Eliminar embudo"
           >
             <Trash2 className="w-4 h-4" />
@@ -68,33 +68,31 @@ export default function DraggableEmbudo({ embudo, index, mensajes, onEdit, onDel
 
       {/* Descripción */}
       {embudo.descripcion && (
-        <p className="text-gray-400 text-xs mb-3">{embudo.descripcion}</p>
+        <p className="text-[var(--text-muted)] text-xs mb-3">{embudo.descripcion}</p>
       )}
 
       {/* Área de contenido del embudo - Más alta para futuros chats */}
-      <div className={`flex-1 min-h-64 bg-[#2a2d35] rounded border border-[#3a3d45] flex flex-col relative ${
-        isOver ? 'ring-2 ring-[#00b894] ring-opacity-75' : ''
+      <div className={`flex-1 min-h-64 bg-[var(--bg-secondary)] rounded border border-[var(--border-primary)] flex flex-col relative ${
+        isOver ? 'ring-2 ring-[var(--accent-primary)] ring-opacity-75' : ''
       }`}>
         {/* Indicador visual de drop zone */}
         {isOver && (
-          <div className="absolute inset-0 bg-[#00b894]/20 rounded flex items-center justify-center z-10 pointer-events-none">
-            <div className="text-[#00b894] text-lg font-bold">
+          <div className="absolute inset-0 bg-[var(--accent-primary)]/20 rounded flex items-center justify-center z-10 pointer-events-none">
+            <div className="text-[var(--accent-primary)] text-lg font-bold">
               📥 Soltar mensaje aquí
             </div>
           </div>
         )}
         
         {/* Header del área de contenido */}
-        <div className="p-3 border-b border-[#3a3d45] flex items-center justify-between">
+        <div className="p-3 border-b border-[var(--border-primary)] flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <MessageCircle className="w-3 h-3 text-gray-400" />
-            <span className="text-gray-300 text-xs font-medium">
+            <span className="text-[var(--text-muted)] text-xs">💬</span>
+            <span className="text-[var(--text-secondary)] text-xs font-medium">
               {mensajes.length} mensaje{mensajes.length !== 1 ? 's' : ''}
             </span>
           </div>
-          <div className="text-gray-500 text-xs">
-            <BarChart3 className="w-3 h-3" />
-          </div>
+          <div className="text-[var(--text-muted)] text-xs">📊</div>
         </div>
         
         {/* Área principal para mensajes */}
@@ -109,7 +107,7 @@ export default function DraggableEmbudo({ embudo, index, mensajes, onEdit, onDel
                 />
               ))}
               {mensajes.length > 5 && (
-                <div className="text-center text-gray-400 text-xs py-2">
+                <div className="text-center text-[var(--text-muted)] text-xs py-2">
                   +{mensajes.length - 5} mensajes más
                 </div>
               )}
@@ -117,9 +115,9 @@ export default function DraggableEmbudo({ embudo, index, mensajes, onEdit, onDel
           ) : (
             <div className="flex items-center justify-center h-full">
               <div className="text-center">
-                <div className="text-gray-500 text-3xl mb-3">💬</div>
-                <div className="text-gray-400 text-sm mb-2">Sin mensajes</div>
-                <div className="text-gray-500 text-xs">Arrastra mensajes aquí o crea nuevos</div>
+                <div className="text-[var(--text-muted)] text-3xl mb-3">💬</div>
+                <div className="text-[var(--text-muted)] text-sm mb-2">Sin mensajes</div>
+                <div className="text-[var(--text-muted)] text-xs">Arrastra mensajes aquí o crea nuevos</div>
               </div>
             </div>
           )}
@@ -127,7 +125,7 @@ export default function DraggableEmbudo({ embudo, index, mensajes, onEdit, onDel
       </div>
 
       {/* Footer con información */}
-      <div className="text-xs text-gray-500 mt-3">
+      <div className="text-xs text-[var(--text-muted)] mt-3">
         ID: {embudo.id} • {new Date(embudo.creado_en).toLocaleDateString('es-ES')}
       </div>
 

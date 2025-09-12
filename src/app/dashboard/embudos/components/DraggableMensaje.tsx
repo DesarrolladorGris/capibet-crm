@@ -3,6 +3,34 @@
 import { useDraggable } from '@dnd-kit/core';
 import { MensajeResponse } from '@/services/mensajesServices';
 
+// Mapeo de tipos de canal a iconos y nombres
+const getChannelInfoByType = (tipo: string): { name: string; icon: string } => {
+  const typeMap: { [key: string]: { name: string; icon: string } } = {
+    'whatsapp': { name: 'WhatsApp', icon: '📱' },
+    'whatsapp-api': { name: 'WhatsApp API', icon: '📱' },
+    'instagram': { name: 'Instagram', icon: '📷' },
+    'messenger': { name: 'Messenger', icon: '💬' },
+    'telegram': { name: 'Telegram', icon: '✈️' },
+    'telegram-bot': { name: 'Telegram Bot', icon: '🤖' },
+    'web-chat': { name: 'Web Chat', icon: '💬' },
+    'email': { name: 'Email', icon: '📧' },
+    'sms': { name: 'SMS', icon: '📱' },
+    'facebook': { name: 'Facebook', icon: '📘' },
+    'twitter': { name: 'Twitter', icon: '🐦' },
+    'linkedin': { name: 'LinkedIn', icon: '💼' }
+  };
+  
+  const normalizedType = tipo.toLowerCase().trim();
+  
+  if (typeMap[normalizedType]) {
+    return typeMap[normalizedType];
+  }
+  
+  // Fallback: capitalizar primera letra del tipo
+  const capitalizedType = tipo.charAt(0).toUpperCase() + tipo.slice(1).toLowerCase();
+  return { name: capitalizedType, icon: '📢' };
+};
+
 interface DraggableMensajeProps {
   mensaje: MensajeResponse;
   onMensajeClick: (mensaje: MensajeResponse) => void;
@@ -49,8 +77,20 @@ export default function DraggableMensaje({ mensaje, onMensajeClick }: DraggableM
       <div className="text-white text-xs font-medium mb-1 line-clamp-2">
         {mensaje.contenido}
       </div>
-      <div className="text-gray-400 text-xs">
-        ID: {mensaje.id} • {new Date(mensaje.creado_en).toLocaleDateString('es-ES')}
+      <div className="text-gray-400 text-xs flex items-center space-x-1">
+        {mensaje.tipo ? (
+          <>
+            <span>{getChannelInfoByType(mensaje.tipo).icon}</span>
+            <span>{getChannelInfoByType(mensaje.tipo).name}</span>
+          </>
+        ) : (
+          <>
+            <span>📢</span>
+            <span>Canal</span>
+          </>
+        )}
+        <span>•</span>
+        <span>{new Date(mensaje.creado_en).toLocaleDateString('es-ES')}</span>
       </div>
 
       {/* Botón para ver detalles (separado del drag) */}

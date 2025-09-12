@@ -10,7 +10,7 @@ const respuestasPrueba: RespuestaRapida[] = [
   {
     id: 1,
     titulo: 'Bienvenida',
-    contenido: '¡Hola! Bienvenido a Capibet Casino. ¿En qué puedo ayudarte hoy?',
+    contenido: '¡Hola! Bienvenido a CAPIBET Casino. ¿En qué puedo ayudarte hoy?',
     categoria: 'General',
     activa: true,
     created_at: '2024-12-28T10:00:00Z'

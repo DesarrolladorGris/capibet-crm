@@ -79,36 +79,19 @@ export default function MetricsCard({ title, value, change, changeType, icon }: 
   };
 
   return (
-    <div className="bg-[#2a2d35] rounded-lg border border-[#3a3d45] p-6 relative">
-      {/* Ícono de información con tooltip */}
-      <div className="absolute top-4 right-4 group">
-        <div className="w-5 h-5 bg-gray-600 rounded-full flex items-center justify-center cursor-pointer hover:bg-gray-500">
-          <Info className="w-3 h-3 text-white" />
-        </div>
-        {/* Tooltip */}
-        <div className="absolute bottom-full right-0 mb-2 w-72 p-4 bg-gray-800 text-white text-sm rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
-          <div className="relative">
-            <p className="text-sm leading-relaxed">{getTooltipDescription()}</p>
-            <div className="absolute top-full right-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800"></div>
-          </div>
-        </div>
-      </div>
-      
+    <div className="bg-[var(--bg-secondary)] rounded-lg border border-[var(--border-primary)] p-6">
       <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-3">
-          <div className={`w-10 h-10 ${getIconBackgroundColor()} rounded-lg flex items-center justify-center`}>
-            {renderIcon()}
-          </div>
-          <div>
-            <p className="text-gray-400 text-sm font-medium">{title}</p>
-            <p className="text-white text-2xl font-bold">{value}</p>
-          </div>
+        <div>
+          <p className="text-[var(--text-muted)] text-sm font-medium">{title}</p>
+          <p className="text-[var(--text-primary)] text-2xl font-bold">{value}</p>
+        </div>
+        <div className="w-12 h-12 bg-[var(--bg-tertiary)] rounded-lg flex items-center justify-center">
+          <span className="text-2xl">{icon}</span>
         </div>
       </div>
-      
-      <div className="mt-4 flex items-center">
-        <span className={`text-sm font-medium flex items-center ${
-          changeType === 'positive' ? 'text-green-500' : 'text-red-500'
+      <div className="mt-4">
+        <span className={`text-sm font-medium ${
+          changeType === 'positive' ? 'text-[var(--success)]' : 'text-[var(--error)]'
         }`}>
           {changeType === 'positive' ? (
             <TrendingUp className="w-5 h-5 mr-1" />
@@ -117,6 +100,7 @@ export default function MetricsCard({ title, value, change, changeType, icon }: 
           )}
           <span className={`text-md font-medium ${changeType === 'positive' ? 'text-green-500' : 'text-red-500'}`}>{change}</span>
         </span>
+        <span className="text-[var(--text-muted)] text-sm ml-1">desde el mes pasado</span>
       </div>
     </div>
   );

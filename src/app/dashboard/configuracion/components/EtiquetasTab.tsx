@@ -1,84 +1,190 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Edit, Trash2 } from 'lucide-react';
+import { supabaseService } from '@/services/supabaseService';
 
-interface Etiqueta {
-  id: number;
+// Importar la interfaz del servicio
+import type { Etiqueta } from '@/services/supabaseService';
+
+interface EtiquetaFormData {
   nombre: string;
   color: string;
   descripcion: string;
-  activa: boolean;
 }
 
 // Datos de prueba
 const etiquetasPrueba: Etiqueta[] = [
-  { id: 1, nombre: 'Urgente', color: '#ff4757', descripcion: 'Para casos urgentes', activa: true },
-  { id: 2, nombre: 'Seguimiento', color: '#3742fa', descripcion: 'Requiere seguimiento', activa: true },
-  { id: 3, nombre: 'Resuelto', color: '#2ed573', descripcion: 'Caso resuelto', activa: true },
-  { id: 4, nombre: 'En proceso', color: '#ffa502', descripcion: 'En proceso de resolución', activa: false },
+  {
+    id: 1,
+    nombre: 'Cliente VIP',
+    color: '#00b894',
+    descripcion: 'Clientes de alto valor',
+    activa: true,
+    created_at: '2024-12-28T10:00:00Z'
+  },
+  {
+    id: 2,
+    nombre: 'Urgente',
+    color: '#d63031',
+    descripcion: 'Tareas prioritarias',
+    activa: true,
+    created_at: '2024-12-28T10:00:00Z'
+  },
+  {
+    id: 3,
+    nombre: 'Nuevo',
+    color: '#0984e3',
+    descripcion: 'Elementos recientes',
+    activa: true,
+    created_at: '2024-12-28T10:00:00Z'
+  },
+  {
+    id: 4,
+    nombre: 'Oferta',
+    color: '#fd79a8',
+    descripcion: 'Promociones activas',
+    activa: false,
+    created_at: '2024-12-28T10:00:00Z'
+  }
 ];
 
-export default function EtiquetasTab() {
+interface EtiquetasTabProps {
+  onEtiquetasCountChange?: (count: number) => void;
+}
+
+export default function EtiquetasTab({ onEtiquetasCountChange }: EtiquetasTabProps = {}) {
   const [etiquetas, setEtiquetas] = useState<Etiqueta[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [editingEtiqueta, setEditingEtiqueta] = useState<Etiqueta | null>(null);
-  const [formData, setFormData] = useState({
+  const [etiquetaToDelete, setEtiquetaToDelete] = useState<Etiqueta | null>(null);
+  const [formData, setFormData] = useState<EtiquetaFormData>({
     nombre: '',
     color: '#00b894',
     descripcion: ''
   });
   const [searchTerm, setSearchTerm] = useState('');
 
+  // Colores predefinidos para las etiquetas
+  const coloresPredefinidos = [
+    '#00b894', '#00cec9', '#0984e3', '#6c5ce7', '#fd79a8',
+    '#fdcb6e', '#e17055', '#d63031', '#2d3436', '#636e72'
+  ];
+
+  // Función para recargar etiquetas desde la base de datos
+  const recargarEtiquetas = async () => {
+    try {
+      const response = await supabaseService.getAllEtiquetas();
+      
+      if (response.success && response.data) {
+        console.log('Etiquetas recargadas exitosamente:', response.data);
+        setEtiquetas(response.data);
+        // Notificar el cambio de contador al componente padre
+        onEtiquetasCountChange?.(response.data.length);
+      } else {
+        console.error('Error al recargar etiquetas:', response.error);
+        // En caso de error, usar datos de prueba como fallback
+        setEtiquetas(etiquetasPrueba);
+        onEtiquetasCountChange?.(etiquetasPrueba.length);
+      }
+    } catch (error) {
+      console.error('Error al recargar etiquetas:', error);
+      // En caso de error, usar datos de prueba como fallback
+      setEtiquetas(etiquetasPrueba);
+      onEtiquetasCountChange?.(etiquetasPrueba.length);
+    }
+  };
+
   useEffect(() => {
-    setEtiquetas(etiquetasPrueba);
-    setLoading(false);
+    const cargarEtiquetasIniciales = async () => {
+      console.log('EtiquetasTab: Componente montado, cargando etiquetas desde Supabase...');
+      setLoading(true);
+      
+      await recargarEtiquetas();
+      
+      setLoading(false);
+    };
+
+    cargarEtiquetasIniciales();
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!formData.nombre.trim()) {
+      alert('El nombre de la etiqueta es obligatorio');
+      return;
+    }
 
     try {
-      if (editingEtiqueta) {
+      if (editingEtiqueta && editingEtiqueta.id) {
         // Actualizar etiqueta existente
-        const etiquetaActualizada = {
-          ...editingEtiqueta,
-          ...formData
-        };
-        setEtiquetas(etiquetas.map(e => e.id === editingEtiqueta.id ? etiquetaActualizada : e));
+        const response = await supabaseService.updateEtiqueta(editingEtiqueta.id, {
+          nombre: formData.nombre,
+          color: formData.color,
+          descripcion: formData.descripcion
+        });
+
+        if (response.success && response.data) {
+          cerrarModal();
+          // Recargar todas las etiquetas desde la base de datos
+          await recargarEtiquetas();
+        } else {
+          throw new Error(response.error || 'Error al actualizar etiqueta');
+        }
       } else {
         // Crear nueva etiqueta
-        const nuevaEtiqueta: Etiqueta = {
-          id: Date.now(),
-          ...formData,
-          activa: true,
-        };
-        setEtiquetas([...etiquetas, nuevaEtiqueta]);
+        const response = await supabaseService.createEtiqueta({
+          nombre: formData.nombre,
+          color: formData.color,
+          descripcion: formData.descripcion
+        });
+
+        if (response.success && response.data) {
+          cerrarModal();
+          // Recargar todas las etiquetas desde la base de datos
+          await recargarEtiquetas();
+        } else {
+          throw new Error(response.error || 'Error al crear etiqueta');
+        }
       }
-      cerrarModal();
     } catch (error) {
       console.error('Error al guardar etiqueta:', error);
-      alert('Error al guardar la etiqueta');
+      alert(`Error al guardar la etiqueta: ${error instanceof Error ? error.message : 'Error desconocido'}`);
     }
   };
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = (etiqueta: Etiqueta) => {
+    setEtiquetaToDelete(etiqueta);
+    setShowDeleteModal(true);
+  };
+
+  const confirmarEliminacion = async () => {
+    if (!etiquetaToDelete?.id) return;
+    
     try {
-      setEtiquetas(etiquetas.filter(e => e.id !== id));
+      const response = await supabaseService.deleteEtiqueta(etiquetaToDelete.id);
+      
+      if (response.success) {
+        setShowDeleteModal(false);
+        setEtiquetaToDelete(null);
+        // Recargar todas las etiquetas desde la base de datos
+        await recargarEtiquetas();
+      } else {
+        throw new Error(response.error || 'Error al eliminar etiqueta');
+      }
     } catch (error) {
       console.error('Error al eliminar etiqueta:', error);
+      alert(`Error al eliminar la etiqueta: ${error instanceof Error ? error.message : 'Error desconocido'}`);
     }
   };
 
-  const handleToggleStatus = async (etiqueta: Etiqueta) => {
-    try {
-      const etiquetaActualizada = { ...etiqueta, activa: !etiqueta.activa };
-      setEtiquetas(etiquetas.map(e => e.id === etiqueta.id ? etiquetaActualizada : e));
-    } catch (error) {
-      console.error('Error al cambiar estado:', error);
-    }
+  const cancelarEliminacion = () => {
+    setShowDeleteModal(false);
+    setEtiquetaToDelete(null);
   };
+
 
   const abrirModal = (etiqueta?: Etiqueta) => {
     if (etiqueta) {
@@ -86,7 +192,7 @@ export default function EtiquetasTab() {
       setFormData({
         nombre: etiqueta.nombre,
         color: etiqueta.color,
-        descripcion: etiqueta.descripcion
+        descripcion: etiqueta.descripcion || ''
       });
     } else {
       setEditingEtiqueta(null);
@@ -109,15 +215,26 @@ export default function EtiquetasTab() {
     });
   };
 
-  const etiquetasFiltradas = etiquetas.filter(etiqueta =>
-    etiqueta.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    etiqueta.descripcion.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const etiquetasFiltradas = etiquetas.filter(etiqueta => {
+    // Validar que la etiqueta tenga nombre antes de filtrar
+    if (!etiqueta || !etiqueta.nombre) {
+      console.warn('Etiqueta sin nombre encontrada:', etiqueta);
+      return false;
+    }
+    
+    const nombreMatch = etiqueta.nombre.toLowerCase().includes(searchTerm.toLowerCase());
+    const descripcionMatch = etiqueta.descripcion?.toLowerCase().includes(searchTerm.toLowerCase()) || false;
+    
+    return nombreMatch || descripcionMatch;
+  });
 
   if (loading) {
     return (
-      <div className="p-6 flex items-center justify-center h-64">
-        <div className="text-white">Cargando etiquetas...</div>
+      <div className="p-6">
+        <div className="flex items-center justify-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#00b894]"></div>
+          <span className="ml-3 text-gray-400">Cargando etiquetas...</span>
+        </div>
       </div>
     );
   }
@@ -125,173 +242,232 @@ export default function EtiquetasTab() {
   return (
     <div className="p-6">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex justify-between items-center mb-6">
         <div>
-          <h2 className="text-white text-xl font-semibold mb-2">Gestión de Etiquetas</h2>
-          <p className="text-gray-400 text-sm">Organiza y categoriza tus conversaciones</p>
+          <h3 className="text-white text-xl font-semibold mb-2">Gestión de Etiquetas</h3>
+          <p className="text-gray-400">Organiza y categoriza tu contenido con etiquetas personalizadas</p>
+          <p className="text-gray-500 text-sm mt-1">Total de etiquetas: {etiquetas.length}</p>
         </div>
         <button
           onClick={() => abrirModal()}
-          className="flex items-center space-x-2 bg-[#00b894] hover:bg-[#00a085] text-white px-4 py-2 rounded font-medium transition-colors"
+          className="bg-[#00b894] hover:bg-[#00a085] text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center space-x-2"
         >
           <span>🏷️</span>
           <span>Nueva Etiqueta</span>
         </button>
       </div>
 
-      {/* Búsqueda */}
+      {/* Barra de búsqueda */}
       <div className="mb-6">
-        <input
-          type="text"
-          placeholder="Buscar etiquetas..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full bg-[#2a2d35] border border-[#3a3d45] rounded px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-[#00b894]"
-        />
-      </div>
-
-      {/* Lista de Etiquetas */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {etiquetasFiltradas.map((etiqueta) => (
-          <div
-            key={etiqueta.id}
-            className="bg-[#2a2d35] border border-[#3a3d45] rounded-lg p-4 hover:border-[#00b894] transition-colors"
-          >
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center space-x-3">
-                <div
-                  className="w-4 h-4 rounded-full"
-                  style={{ backgroundColor: etiqueta.color }}
-                ></div>
-                <span className="text-white font-medium">{etiqueta.nombre}</span>
-              </div>
-              <div className="flex items-center space-x-1">
-                <button
-                  onClick={() => abrirModal(etiqueta)}
-                  className="text-gray-400 hover:text-white p-1 rounded"
-                  title="Editar"
-                >
-                  <Edit className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => handleToggleStatus(etiqueta)}
-                  className={`p-1 rounded ${etiqueta.activa ? 'text-green-400' : 'text-gray-500'}`}
-                  title={etiqueta.activa ? 'Desactivar' : 'Activar'}
-                >
-                  {etiqueta.activa ? '✓' : '○'}
-                </button>
-                <button
-                  onClick={() => handleDelete(etiqueta.id)}
-                  className="text-gray-400 hover:text-red-400 p-1 rounded"
-                  title="Eliminar"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-            <p className="text-gray-400 text-sm">{etiqueta.descripcion}</p>
-            <div className="mt-2">
-              <span className={`text-xs px-2 py-1 rounded ${etiqueta.activa ? 'bg-green-500/20 text-green-400' : 'bg-gray-500/20 text-gray-400'}`}>
-                {etiqueta.activa ? 'Activa' : 'Inactiva'}
-              </span>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {etiquetasFiltradas.length === 0 && (
-        <div className="text-center py-12">
-          <div className="text-gray-400 text-6xl mb-4">🏷️</div>
-          <div className="text-gray-400 text-lg mb-2">No se encontraron etiquetas</div>
-          <div className="text-gray-500 text-sm">
-            {searchTerm ? 'Prueba con otros términos de búsqueda' : 'Crea tu primera etiqueta para comenzar'}
-          </div>
+        <div className="relative">
+          <input
+            type="text"
+            placeholder="Buscar etiquetas..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full bg-[#2a2d35] border border-[#3a3d45] rounded-lg px-4 py-3 pl-10 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#00b894] focus:border-transparent"
+          />
+          <span className="absolute left-3 top-3 text-gray-400">🔍</span>
         </div>
-      )}
+      </div>
 
-      {/* Modal */}
+      {/* Lista de etiquetas */}
+      <div className="grid gap-4">
+        {etiquetasFiltradas.length === 0 ? (
+          <div className="text-center py-12">
+            <span className="text-4xl mb-4 block">🏷️</span>
+            <p className="text-gray-400 text-lg mb-2">
+              {searchTerm ? 'No se encontraron etiquetas' : 'No hay etiquetas creadas'}
+            </p>
+            <p className="text-gray-500">
+              {searchTerm ? 'Intenta con otros términos de búsqueda' : 'Crea tu primera etiqueta para empezar'}
+            </p>
+          </div>
+        ) : (
+          etiquetasFiltradas.map((etiqueta) => (
+            <div
+              key={etiqueta.id}
+              className={`bg-[#2a2d35] border border-[#3a3d45] rounded-lg p-4 transition-all hover:border-[#00b894] ${
+                !etiqueta.activa ? 'opacity-60' : ''
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <div
+                    className="w-4 h-4 rounded-full border-2 border-white"
+                    style={{ backgroundColor: etiqueta.color }}
+                  ></div>
+                  <div>
+                    <h4 className={`text-white font-medium ${!etiqueta.activa ? 'line-through' : ''}`}>
+                      {etiqueta.nombre}
+                    </h4>
+                    {etiqueta.descripcion && (
+                      <p className="text-gray-400 text-sm mt-1">{etiqueta.descripcion}</p>
+                    )}
+                    <div className="flex items-center space-x-4 mt-2 text-xs text-gray-500">
+                      <span>Color: {etiqueta.color}</span>
+                      {etiqueta.created_at && (
+                        <span>Creada: {new Date(etiqueta.created_at).toLocaleDateString('es-ES')}</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={() => abrirModal(etiqueta)}
+                    className="bg-[#0984e3] hover:bg-[#0873c4] text-white px-3 py-1 rounded text-xs font-medium transition-colors"
+                  >
+                    ✏️ Editar
+                  </button>
+                  
+                  <button
+                    onClick={() => handleDelete(etiqueta)}
+                    className="bg-[#d63031] hover:bg-[#c0392b] text-white px-3 py-1 rounded text-xs font-medium transition-colors"
+                  >
+                    🗑️ Eliminar
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Modal para crear/editar etiqueta */}
       {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-[#2a2d35] rounded-lg border border-[#3a3d45] w-full max-w-md">
-            <div className="flex items-center justify-between p-6 border-b border-[#3a3d45]">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-[#2a2d35] border border-[#3a3d45] rounded-lg p-6 w-full max-w-md mx-4">
+            <div className="flex justify-between items-center mb-4">
               <h3 className="text-white text-lg font-semibold">
                 {editingEtiqueta ? 'Editar Etiqueta' : 'Nueva Etiqueta'}
               </h3>
               <button
                 onClick={cerrarModal}
-                className="text-gray-400 hover:text-white transition-colors"
+                className="text-gray-400 hover:text-white text-xl"
               >
-                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                ✕
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-6 space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Nombre */}
               <div>
-                <label className="block text-gray-400 text-sm font-medium mb-1">
-                  Nombre
+                <label className="block text-white text-sm font-medium mb-2">
+                  Nombre de la etiqueta *
                 </label>
                 <input
                   type="text"
-                  required
                   value={formData.nombre}
                   onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
-                  className="w-full bg-[#1a1d23] border border-[#3a3d45] rounded px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-[#00b894]"
-                  placeholder="Nombre de la etiqueta"
+                  className="w-full bg-[#1a1d23] border border-[#3a3d45] rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#00b894] focus:border-transparent"
+                  placeholder="Ej: Cliente VIP, Urgente, etc."
+                  required
                 />
               </div>
 
+              {/* Color */}
               <div>
-                <label className="block text-gray-400 text-sm font-medium mb-1">
-                  Color
+                <label className="block text-white text-sm font-medium mb-2">
+                  Color de la etiqueta
                 </label>
-                <div className="flex items-center space-x-3">
-                  <input
-                    type="color"
-                    value={formData.color}
-                    onChange={(e) => setFormData({ ...formData, color: e.target.value })}
-                    className="w-12 h-10 bg-[#1a1d23] border border-[#3a3d45] rounded cursor-pointer"
-                  />
-                  <input
-                    type="text"
-                    value={formData.color}
-                    onChange={(e) => setFormData({ ...formData, color: e.target.value })}
-                    className="flex-1 bg-[#1a1d23] border border-[#3a3d45] rounded px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-[#00b894]"
-                    placeholder="#00b894"
-                  />
+                <div className="flex space-x-2 mb-2">
+                  {coloresPredefinidos.map((color) => (
+                    <button
+                      key={color}
+                      type="button"
+                      onClick={() => setFormData({ ...formData, color })}
+                      className={`w-8 h-8 rounded-full border-2 transition-all ${
+                        formData.color === color ? 'border-white scale-110' : 'border-gray-600'
+                      }`}
+                      style={{ backgroundColor: color }}
+                    ></button>
+                  ))}
                 </div>
+                <input
+                  type="color"
+                  value={formData.color}
+                  onChange={(e) => setFormData({ ...formData, color: e.target.value })}
+                  className="w-full h-10 bg-[#1a1d23] border border-[#3a3d45] rounded-lg cursor-pointer"
+                />
               </div>
 
+              {/* Descripción */}
               <div>
-                <label className="block text-gray-400 text-sm font-medium mb-1">
-                  Descripción
+                <label className="block text-white text-sm font-medium mb-2">
+                  Descripción (opcional)
                 </label>
                 <textarea
                   value={formData.descripcion}
                   onChange={(e) => setFormData({ ...formData, descripcion: e.target.value })}
-                  className="w-full bg-[#1a1d23] border border-[#3a3d45] rounded px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-[#00b894] resize-none"
+                  className="w-full bg-[#1a1d23] border border-[#3a3d45] rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#00b894] focus:border-transparent"
+                  placeholder="Describe el propósito de esta etiqueta..."
                   rows={3}
-                  placeholder="Descripción de la etiqueta"
                 />
               </div>
 
-              <div className="flex justify-end space-x-3 pt-4">
+              {/* Botones */}
+              <div className="flex space-x-3 pt-4">
                 <button
                   type="button"
                   onClick={cerrarModal}
-                  className="px-4 py-2 text-gray-400 hover:text-white transition-colors"
+                  className="flex-1 bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="bg-[#00b894] hover:bg-[#00a085] text-white px-6 py-2 rounded font-medium transition-colors"
+                  className="flex-1 bg-[#00b894] hover:bg-[#00a085] text-white px-4 py-2 rounded-lg font-medium transition-colors"
                 >
                   {editingEtiqueta ? 'Actualizar' : 'Crear'}
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de confirmación de eliminación */}
+      {showDeleteModal && etiquetaToDelete && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-[#1a1d23] rounded-lg p-6 w-full max-w-md mx-4 border border-[#3a3d45]">
+            <div className="text-center">
+              {/* Icono de advertencia */}
+              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
+                <span className="text-2xl">⚠️</span>
+              </div>
+              
+              {/* Título */}
+              <h3 className="text-lg font-medium text-white mb-2">
+                ¿Eliminar etiqueta?
+              </h3>
+              
+              {/* Mensaje */}
+              <p className="text-gray-400 mb-2">
+                ¿Estás seguro de que quieres eliminar la etiqueta "{etiquetaToDelete.nombre}"?
+              </p>
+              <p className="text-gray-500 text-sm mb-6">
+                Esta acción no se puede deshacer.
+              </p>
+              
+              {/* Botones */}
+              <div className="flex space-x-3">
+                <button
+                  type="button"
+                  onClick={cancelarEliminacion}
+                  className="flex-1 bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={confirmarEliminacion}
+                  className="flex-1 bg-[#d63031] hover:bg-[#c0392b] text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                >
+                  Eliminar
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
