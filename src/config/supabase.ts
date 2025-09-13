@@ -16,5 +16,6 @@ export const apiEndpoints = {
   embudos: `${supabaseConfig.restUrl}/embudos`,
   canales: `${supabaseConfig.restUrl}/canales`,
   sesiones: `${supabaseConfig.restUrl}/sesiones`,
-  mensajes: `${supabaseConfig.restUrl}/mensajes`
+  mensajes: `${supabaseConfig.restUrl}/mensajes`,
+  productos: `${supabaseConfig.restUrl}/productos`
 };

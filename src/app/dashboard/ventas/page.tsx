@@ -3,8 +3,9 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { isUserAuthenticated } from '@/utils/auth';
+import { supabaseService, ProductoResponse } from '@/services/supabaseService';
 
-// Tipos para productos
+// Tipos para productos (adaptado para la UI)
 interface Product {
   id: number;
   nombre: string;
@@ -33,21 +34,49 @@ interface Sale {
   metodoPago?: string;
 }
 
-// Datos de ejemplo para productos
-const productsData: Product[] = [];
-
 // Datos de ejemplo para ventas
 const salesData: Sale[] = [];
 
+// Función para convertir ProductoResponse a Product
+const convertProductoToProduct = (producto: ProductoResponse): Product => {
+  return {
+    id: producto.id,
+    nombre: producto.nombre,
+    descripcion: producto.descripcion || '',
+    precio: producto.precio,
+    cantidad: producto.cantidad,
+    cantidadIzquierda: producto.cantidad, // Asumiendo que cantidadIzquierda es igual a cantidad inicialmente
+    moneda: producto.moneda === 'PESO' ? 'ARS' : 'USD',
+    imagen: undefined, // No hay imagen en la respuesta de Supabase
+    creador: `Usuario ${producto.creado_por}`, // Convertir ID a nombre de usuario
+    fechaCreacion: producto.created_at
+  };
+};
+
+// Función para convertir Product a ProductoData
+const convertProductToProductoData = (product: Partial<Product>, userId: number) => {
+  return {
+    nombre: product.nombre || '',
+    descripcion: product.descripcion || '',
+    precio: product.precio || 0,
+    cantidad: product.cantidad || 0,
+    moneda: product.moneda === 'ARS' ? 'PESO' : 'DOLAR',
+    creado_por: userId
+  };
+};
+
 export default function VentasPage() {
   const [activeTab, setActiveTab] = useState<'ventas' | 'productos'>('ventas');
-  const [products, setProducts] = useState<Product[]>(productsData);
+  const [products, setProducts] = useState<Product[]>([]);
   const [sales, setSales] = useState<Sale[]>(salesData);
   const [showProductModal, setShowProductModal] = useState(false);
   const [showSaleModal, setShowSaleModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [productToDelete, setProductToDelete] = useState<Product | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
   // Form state para producto
@@ -60,11 +89,34 @@ export default function VentasPage() {
     moneda: 'USD'
   });
 
+  // Cargar productos desde Supabase
+  const loadProducts = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await supabaseService.getProductos();
+      if (response.success && response.data) {
+        const convertedProducts = response.data.map(convertProductoToProduct);
+        setProducts(convertedProducts);
+      } else {
+        setError(response.error || 'Error al cargar productos');
+      }
+    } catch (err) {
+      setError('Error de conexión al cargar productos');
+      console.error('Error loading products:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (!isUserAuthenticated()) {
       router.push('/login');
       return;
     }
+    
+    // Cargar productos cuando el componente se monta
+    loadProducts();
   }, [router]);
 
   // Filtrar productos
@@ -84,7 +136,6 @@ export default function VentasPage() {
       cantidadIzquierda: '',
       moneda: 'USD'
     });
-    setSelectedImage(null);
     setShowProductModal(true);
   };
 
@@ -99,53 +150,91 @@ export default function VentasPage() {
       cantidadIzquierda: product.cantidadIzquierda.toString(),
       moneda: product.moneda
     });
-    setSelectedImage(null);
     setShowProductModal(true);
   };
 
   // Guardar producto
-  const handleSaveProduct = () => {
+  const handleSaveProduct = async () => {
     if (!productForm.nombre || !productForm.precio) {
       alert('Por favor completa los campos requeridos');
       return;
     }
 
-    const productData: Product = {
-      id: editingProduct ? editingProduct.id : Date.now(),
-      nombre: productForm.nombre,
-      descripcion: productForm.descripcion,
-      precio: parseFloat(productForm.precio),
-      cantidad: parseInt(productForm.cantidad) || 0,
-      cantidadIzquierda: parseInt(productForm.cantidadIzquierda) || 0,
-      moneda: productForm.moneda as 'USD' | 'ARS',
-      imagen: selectedImage ? URL.createObjectURL(selectedImage) : editingProduct?.imagen,
-      creador: 'Usuario Actual',
-      fechaCreacion: editingProduct ? editingProduct.fechaCreacion : new Date().toISOString()
-    };
+    setLoading(true);
+    setError(null);
 
-    if (editingProduct) {
-      setProducts(products.map(p => p.id === editingProduct.id ? productData : p));
-    } else {
-      setProducts([...products, productData]);
+    try {
+      const productData = {
+        nombre: productForm.nombre,
+        descripcion: productForm.descripcion,
+        precio: parseFloat(productForm.precio),
+        cantidad: parseInt(productForm.cantidad) || 0,
+        moneda: productForm.moneda === 'USD' ? 'DOLAR' : 'PESO',
+        creado_por: 11 // Usando el ID del usuario como en el ejemplo
+      };
+
+      let response;
+      if (editingProduct) {
+        response = await supabaseService.updateProducto(editingProduct.id, productData);
+      } else {
+        response = await supabaseService.createProducto(productData);
+      }
+
+      if (response.success) {
+        // Recargar productos después de guardar
+        await loadProducts();
+        setShowProductModal(false);
+        setProductForm({
+          nombre: '',
+          descripcion: '',
+          precio: '',
+          cantidad: '',
+          cantidadIzquierda: '',
+          moneda: 'USD'
+        });
+        setEditingProduct(null);
+      } else {
+        setError(response.error || 'Error al guardar producto');
+      }
+    } catch (err) {
+      setError('Error de conexión al guardar producto');
+      console.error('Error saving product:', err);
+    } finally {
+      setLoading(false);
     }
+  };
 
-    setShowProductModal(false);
+  // Abrir modal de confirmación de eliminación
+  const openDeleteModal = (product: Product) => {
+    setProductToDelete(product);
+    setShowDeleteModal(true);
   };
 
   // Eliminar producto
-  const handleDeleteProduct = (productId: number) => {
-    if (confirm('¿Estás seguro de que quieres eliminar este producto?')) {
-      setProducts(products.filter(p => p.id !== productId));
+  const handleDeleteProduct = async () => {
+    if (!productToDelete) return;
+
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const response = await supabaseService.deleteProducto(productToDelete.id);
+      if (response.success) {
+        // Recargar productos después de eliminar
+        await loadProducts();
+        setShowDeleteModal(false);
+        setProductToDelete(null);
+      } else {
+        setError(response.error || 'Error al eliminar producto');
+      }
+    } catch (err) {
+      setError('Error de conexión al eliminar producto');
+      console.error('Error deleting product:', err);
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Manejar subida de imagen
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      setSelectedImage(file);
-    }
-  };
 
   const formatPrice = (price: number, currency: 'USD' | 'ARS') => {
     return new Intl.NumberFormat('es-ES', {
@@ -316,23 +405,32 @@ export default function VentasPage() {
               </div>
             </div>
 
+            {/* Error message */}
+            {error && (
+              <div className="mb-4 bg-red-500/10 border border-red-500/20 rounded-lg p-3 text-red-400 text-sm">
+                {error}
+              </div>
+            )}
+
             {/* Tabla de productos */}
             <div className="bg-[var(--bg-secondary)] rounded-lg border border-[var(--border-primary)]">
               {/* Header de tabla */}
-              <div className="grid grid-cols-7 gap-4 p-4 border-b border-[var(--border-primary)] text-[var(--text-muted)] text-sm font-medium">
-                <div>Imagen</div>
+              <div className="grid grid-cols-5 gap-4 p-4 border-b border-[var(--border-primary)] text-[var(--text-muted)] text-sm font-medium">
                 <div>Nombre</div>
                 <div>Descripción</div>
-                <div>Cantidad / Cantidad Izquierda</div>
+                <div>Cantidad</div>
                 <div>Precio</div>
-                <div>Creador</div>
                 <div>Acciones</div>
               </div>
 
               {/* Contenido de tabla */}
-              {filteredProducts.length === 0 ? (
+              {loading ? (
                 <div className="p-12 text-center">
-                  <div className="text-blue-400 text-center mb-4">No data available</div>
+                  <div className="text-[var(--text-muted)] mb-4">Cargando productos...</div>
+                </div>
+              ) : filteredProducts.length === 0 ? (
+                <div className="p-12 text-center">
+                  <div className="text-blue-400 text-center mb-4">No hay productos disponibles</div>
                   <div className="flex items-center justify-between text-[var(--text-muted)] text-sm">
                     <div className="flex items-center space-x-2">
                       <span>Items per page:</span>
@@ -354,38 +452,26 @@ export default function VentasPage() {
               ) : (
                 <div className="divide-y divide-[var(--border-primary)]">
                   {filteredProducts.map((product) => (
-                    <div key={product.id} className="grid grid-cols-7 gap-4 p-4 hover:bg-[var(--bg-tertiary)] transition-colors">
-                      <div className="flex items-center">
-                        {product.imagen ? (
-                          <img 
-                            src={product.imagen} 
-                            alt={product.nombre}
-                            className="w-10 h-10 rounded object-cover"
-                          />
-                        ) : (
-                          <div className="w-10 h-10 bg-[var(--bg-primary)] rounded flex items-center justify-center">
-                            <span className="text-[var(--text-muted)] text-xs">📦</span>
-                          </div>
-                        )}
-                      </div>
+                    <div key={product.id} className="grid grid-cols-5 gap-4 p-4 hover:bg-[var(--bg-tertiary)] transition-colors">
                       <div className="text-[var(--text-primary)] font-medium">{product.nombre}</div>
                       <div className="text-[var(--text-secondary)] text-sm truncate">{product.descripcion || '-'}</div>
                       <div className="text-[var(--text-secondary)] text-sm">
-                        {product.cantidad} / {product.cantidadIzquierda}
+                        {product.cantidad}
                       </div>
                       <div className="text-[var(--text-primary)] font-medium">{formatPrice(product.precio, product.moneda)}</div>
-                      <div className="text-[var(--text-secondary)] text-sm">{product.creador}</div>
                       <div className="flex items-center space-x-2">
                         <button
                           onClick={() => openEditProductModal(product)}
-                          className="text-[var(--text-muted)] hover:text-blue-400 text-sm transition-colors"
+                          disabled={loading}
+                          className="text-[var(--text-muted)] hover:text-blue-400 text-sm transition-colors disabled:opacity-50"
                           title="Editar producto"
                         >
                           ✏️
                         </button>
                         <button
-                          onClick={() => handleDeleteProduct(product.id)}
-                          className="text-[var(--text-muted)] hover:text-red-400 text-sm transition-colors"
+                          onClick={() => openDeleteModal(product)}
+                          disabled={loading}
+                          className="text-[var(--text-muted)] hover:text-red-400 text-sm transition-colors disabled:opacity-50"
                           title="Eliminar producto"
                         >
                           🗑️
@@ -421,113 +507,75 @@ export default function VentasPage() {
 
             {/* Contenido del modal */}
             <div className="p-4">
-              <div className="grid grid-cols-2 gap-6">
-                {/* Columna izquierda */}
-                <div className="space-y-4">
-                  {/* Nombre */}
-                  <div>
-                    <label className="block text-[var(--text-muted)] text-sm mb-2">Nombre</label>
-                    <input
-                      type="text"
-                      value={productForm.nombre}
-                      onChange={(e) => setProductForm({ ...productForm, nombre: e.target.value })}
-                      placeholder="Título"
-                      className="w-full bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded px-3 py-2 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-primary)] focus:border-[var(--accent-primary)]"
-                    />
+              <div className="space-y-6">
+                {/* Campos principales en 2 columnas */}
+                <div className="grid grid-cols-2 gap-4">
+                  {/* Columna izquierda */}
+                  <div className="space-y-4">
+                    {/* Nombre */}
+                    <div>
+                      <label className="block text-[var(--text-muted)] text-sm mb-2">Nombre</label>
+                      <input
+                        type="text"
+                        value={productForm.nombre}
+                        onChange={(e) => setProductForm({ ...productForm, nombre: e.target.value })}
+                        placeholder="Título"
+                        className="w-full bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded px-3 py-2 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-primary)] focus:border-[var(--accent-primary)]"
+                      />
+                    </div>
+
+                    {/* Precio */}
+                    <div>
+                      <label className="block text-[var(--text-muted)] text-sm mb-2">Precio</label>
+                      <input
+                        type="number"
+                        value={productForm.precio}
+                        onChange={(e) => setProductForm({ ...productForm, precio: e.target.value })}
+                        placeholder="Precio"
+                        className="w-full bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded px-3 py-2 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-primary)] focus:border-[var(--accent-primary)]"
+                      />
+                    </div>
                   </div>
 
-                  {/* Moneda */}
-                  <div>
-                    <label className="block text-[var(--text-muted)] text-sm mb-2">Moneda</label>
-                    <select
-                      value={productForm.moneda}
-                      onChange={(e) => setProductForm({ ...productForm, moneda: e.target.value })}
-                      className="w-full bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded px-3 py-2 text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-primary)] focus:border-[var(--accent-primary)]"
-                    >
-                      <option value="USD">Dólares (USD)</option>
-                      <option value="ARS">Pesos (ARS)</option>
-                    </select>
-                  </div>
+                  {/* Columna derecha */}
+                  <div className="space-y-4">
+                    {/* Moneda */}
+                    <div>
+                      <label className="block text-[var(--text-muted)] text-sm mb-2">Moneda</label>
+                      <select
+                        value={productForm.moneda}
+                        onChange={(e) => setProductForm({ ...productForm, moneda: e.target.value })}
+                        className="w-full bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded px-3 py-2 text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-primary)] focus:border-[var(--accent-primary)]"
+                      >
+                        <option value="USD">Dólares (USD)</option>
+                        <option value="ARS">Pesos (ARS)</option>
+                      </select>
+                    </div>
 
-                  {/* Precio */}
-                  <div>
-                    <label className="block text-[var(--text-muted)] text-sm mb-2">Precio</label>
-                    <input
-                      type="number"
-                      value={productForm.precio}
-                      onChange={(e) => setProductForm({ ...productForm, precio: e.target.value })}
-                      placeholder="Precio"
-                      className="w-full bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded px-3 py-2 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-primary)] focus:border-[var(--accent-primary)]"
-                    />
-                  </div>
-
-                  {/* Cantidad */}
-                  <div>
-                    <label className="block text-[var(--text-muted)] text-sm mb-2">Cantidad</label>
-                    <input
-                      type="number"
-                      value={productForm.cantidad}
-                      onChange={(e) => setProductForm({ ...productForm, cantidad: e.target.value })}
-                      placeholder="Cantidad disponible"
-                      className="w-full bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded px-3 py-2 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-primary)] focus:border-[var(--accent-primary)]"
-                    />
+                    {/* Cantidad */}
+                    <div>
+                      <label className="block text-[var(--text-muted)] text-sm mb-2">Cantidad</label>
+                      <input
+                        type="number"
+                        value={productForm.cantidad}
+                        onChange={(e) => setProductForm({ ...productForm, cantidad: e.target.value })}
+                        placeholder="Cantidad disponible"
+                        className="w-full bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded px-3 py-2 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-primary)] focus:border-[var(--accent-primary)]"
+                      />
+                    </div>
                   </div>
                 </div>
 
-                {/* Columna derecha */}
-                <div className="space-y-4">
-                  {/* Descripción */}
-                  <div>
-                    <label className="block text-[var(--text-muted)] text-sm mb-2">Descripción</label>
-                    <textarea
-                      value={productForm.descripcion}
-                      onChange={(e) => setProductForm({ ...productForm, descripcion: e.target.value })}
-                      className="w-full bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded px-3 py-2 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-primary)] focus:border-[var(--accent-primary)] resize-none"
-                      rows={2}
-                      placeholder="Descripción del producto"
-                    />
-                  </div>
-
-                  {/* Imagen de Producto */}
-                  <div>
-                    <label className="block text-[var(--text-muted)] text-sm mb-2">Imagen de Producto</label>
-                    <div className="text-center">
-                      <div className="w-12 h-12 bg-[var(--bg-primary)] rounded-lg flex items-center justify-center mb-2 mx-auto">
-                        <span className="text-xl">📦</span>
-                      </div>
-                      
-                      {/* Área de subida de imagen */}
-                      <div className="border-2 border-dashed border-[var(--border-primary)] rounded-lg p-4">
-                        <div className="text-center">
-                          <div className="w-8 h-8 bg-[var(--accent-primary)] rounded-full flex items-center justify-center mx-auto mb-2">
-                            <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                            </svg>
-                          </div>
-                          <p className="text-[var(--accent-primary)] text-xs mb-1">Haga clic aquí para subir una imagen</p>
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={handleImageUpload}
-                            className="hidden"
-                            id="image-upload"
-                          />
-                          <label
-                            htmlFor="image-upload"
-                            className="cursor-pointer text-[var(--accent-primary)] hover:text-[var(--accent-hover)] transition-colors text-xs"
-                          >
-                            Seleccionar archivo
-                          </label>
-                        </div>
-                      </div>
-
-                      {selectedImage && (
-                        <div className="text-green-400 text-xs mt-2">
-                          Imagen: {selectedImage.name}
-                        </div>
-                      )}
-                    </div>
-                  </div>
+                {/* Descripción - ancho completo */}
+                <div>
+                  <label className="block text-[var(--text-muted)] text-sm mb-2">Descripción</label>
+                  <textarea
+                    value={productForm.descripcion}
+                    onChange={(e) => setProductForm({ ...productForm, descripcion: e.target.value })}
+                    className="w-full bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded px-3 py-2 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-primary)] focus:border-[var(--accent-primary)] resize-none"
+                    rows={3}
+                    placeholder="Descripción del producto"
+                  />
                 </div>
               </div>
             </div>
@@ -536,15 +584,73 @@ export default function VentasPage() {
             <div className="flex items-center justify-end space-x-3 p-4 border-t border-[var(--border-primary)]">
               <button
                 onClick={() => setShowProductModal(false)}
-                className="px-4 py-2 text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
+                disabled={loading}
+                className="px-4 py-2 text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors disabled:opacity-50"
               >
                 Cancelar
               </button>
               <button
                 onClick={handleSaveProduct}
-                className="px-4 py-2 bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] text-white rounded transition-colors"
+                disabled={loading}
+                className="px-4 py-2 bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] text-white rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
               >
-                + CREAR PRODUCTO
+                {loading && (
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                )}
+                <span>{loading ? 'Guardando...' : (editingProduct ? 'ACTUALIZAR PRODUCTO' : '+ CREAR PRODUCTO')}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Confirmación de Eliminación */}
+      {showDeleteModal && productToDelete && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-[var(--bg-secondary)] rounded-lg border border-[var(--border-primary)] w-full max-w-md mx-4">
+            {/* Header del modal */}
+            <div className="flex items-center justify-between p-4 border-b border-[var(--border-primary)]">
+              <h3 className="text-[var(--text-primary)] font-semibold">
+                Confirmar Eliminación
+              </h3>
+              <button 
+                onClick={() => setShowDeleteModal(false)}
+                className="text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Contenido del modal */}
+            <div className="p-4">
+              <p className="text-[var(--text-primary)] mb-4">
+                ¿Estás seguro de que quieres eliminar el producto <strong>"{productToDelete.nombre}"</strong>?
+              </p>
+              <p className="text-[var(--text-muted)] text-sm">
+                Esta acción no se puede deshacer.
+              </p>
+            </div>
+
+            {/* Footer del modal */}
+            <div className="flex items-center justify-end space-x-3 p-4 border-t border-[var(--border-primary)]">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                disabled={loading}
+                className="px-4 py-2 text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleDeleteProduct}
+                disabled={loading}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+              >
+                {loading && (
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                )}
+                <span>{loading ? 'Eliminando...' : 'Eliminar'}</span>
               </button>
             </div>
           </div>

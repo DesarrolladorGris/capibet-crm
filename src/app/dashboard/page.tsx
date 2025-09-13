@@ -1,13 +1,74 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
+import { supabaseService } from '@/services/supabaseService';
 import MetricsCard from './components/MetricsCard';
 
 export default function DashboardPage() {
   const { user, isLoading } = useAuth();
   const router = useRouter();
+  const [productsCount, setProductsCount] = useState(0);
+  const [loadingProducts, setLoadingProducts] = useState(false);
+  const [contactsCount, setContactsCount] = useState(0);
+  const [loadingContacts, setLoadingContacts] = useState(false);
+  const [internalMessagesCount, setInternalMessagesCount] = useState(0);
+  const [loadingInternalMessages, setLoadingInternalMessages] = useState(false);
+
+  // Función para cargar la cantidad de productos
+  const loadProductsCount = async () => {
+    setLoadingProducts(true);
+    try {
+      const response = await supabaseService.getProductos();
+      if (response.success && response.data) {
+        setProductsCount(response.data.length);
+      }
+    } catch (error) {
+      console.error('Error loading products count:', error);
+    } finally {
+      setLoadingProducts(false);
+    }
+  };
+
+  // Función para cargar la cantidad de contactos
+  const loadContactsCount = async () => {
+    setLoadingContacts(true);
+    try {
+      const response = await supabaseService.getContactosCount();
+      if (response.success && response.data !== undefined) {
+        setContactsCount(response.data);
+      }
+    } catch (error) {
+      console.error('Error loading contacts count:', error);
+    } finally {
+      setLoadingContacts(false);
+    }
+  };
+
+  // Función para cargar la cantidad de mensajes internos
+  const loadInternalMessagesCount = async () => {
+    setLoadingInternalMessages(true);
+    try {
+      const response = await fetch('https://dkrdphnnsgndrqmgdvxp.supabase.co/rest/v1/mensajes_internos?select=id', {
+        method: 'GET',
+        headers: {
+          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRrcmRwaG5uc2duZHJxbWdkdnhwIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NjIzMTQ0NSwiZXhwIjoyMDcxODA3NDQ1fQ.w9dE4zcpbfH3LUwx-XS-2GtqEo6mr7p2BJIcf77xMdg',
+          'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRrcmRwaG5uc2duZHJxbWdkdnhwIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NjIzMTQ0NSwiZXhwIjoyMDcxODA3NDQ1fQ.w9dE4zcpbfH3LUwx-XS-2GtqEo6mr7p2BJIcf77xMdg',
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setInternalMessagesCount(data.length);
+      }
+    } catch (error) {
+      console.error('Error loading internal messages count:', error);
+    } finally {
+      setLoadingInternalMessages(false);
+    }
+  };
 
   useEffect(() => {
     if (!isLoading && user) {
@@ -16,6 +77,11 @@ export default function DashboardPage() {
         router.push('/cliente');
         return;
       }
+      
+      // Cargar cantidad de productos, contactos y mensajes internos para usuarios no cliente
+      loadProductsCount();
+      loadContactsCount();
+      loadInternalMessagesCount();
     }
   }, [user, isLoading, router]);
 
@@ -109,24 +175,24 @@ export default function DashboardPage() {
           />
           <MetricsCard
             title="Contactos"
-            value="2,350"
-            change="+180.1%"
+            value={loadingContacts ? "..." : contactsCount.toString()}
+            change=""
             changeType="positive"
             icon="👥"
           />
           <MetricsCard
-            title="Chats Activos"
-            value="12"
-            change="+19%"
+            title="Mensajes Internos"
+            value={loadingInternalMessages ? "..." : internalMessagesCount.toString()}
+            change=""
             changeType="positive"
             icon="💬"
           />
           <MetricsCard
-            title="Tasa Conversión"
-            value="24.5%"
-            change="-4.3%"
-            changeType="negative"
-            icon="📈"
+            title="Productos"
+            value={loadingProducts ? "..." : productsCount.toString()}
+            change=""
+            changeType="positive"
+            icon="📦"
           />
         </div>
 

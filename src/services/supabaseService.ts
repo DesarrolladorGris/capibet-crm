@@ -76,6 +76,28 @@ export interface ContactResponse {
   empresa_id: number | null;
 }
 
+// Tipos para productos
+export interface ProductoData {
+  id?: number;
+  nombre: string;
+  descripcion?: string;
+  precio: number;
+  cantidad: number;
+  moneda: 'USD' | 'PESO' | 'DOLAR';
+  creado_por?: number;
+}
+
+export interface ProductoResponse {
+  id: number;
+  created_at: string;
+  creado_por: number;
+  nombre: string;
+  moneda: 'USD' | 'PESO' | 'DOLAR';
+  precio: number;
+  cantidad: number;
+  descripcion?: string;
+}
+
 export interface ApiResponse<T = unknown> {
   success: boolean;
   data?: T;
@@ -3662,6 +3684,221 @@ export class SupabaseService {
       return { 
         success: false, 
         error: 'Error de conexión al crear mensaje interno',
+        details: error instanceof Error ? error.message : 'Error desconocido'
+      };
+    }
+  }
+
+  // ==================== PRODUCTOS ====================
+
+  /**
+   * Obtiene todos los productos
+   */
+  async getProductos(): Promise<ApiResponse<ProductoResponse[]>> {
+    try {
+      console.log('Obteniendo productos...');
+
+      const response = await fetch(apiEndpoints.productos, {
+        method: 'GET',
+        headers: {
+          'apikey': supabaseConfig.serviceRoleKey,
+          'Authorization': `Bearer ${supabaseConfig.serviceRoleKey}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      console.log('Response status:', response.status);
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error('Error response body:', errorData);
+        return {
+          success: false,
+          error: `Error del servidor: ${response.status} ${response.statusText}`,
+          details: errorData
+        };
+      }
+
+      const data = await response.json();
+      console.log('Productos obtenidos:', data);
+
+      return {
+        success: true,
+        data: data
+      };
+    } catch (error) {
+      console.error('Error al obtener productos:', error);
+      return { 
+        success: false, 
+        error: 'Error de conexión al obtener productos',
+        details: error instanceof Error ? error.message : 'Error desconocido'
+      };
+    }
+  }
+
+  /**
+   * Crea un nuevo producto
+   */
+  async createProducto(productoData: ProductoData): Promise<ApiResponse<ProductoResponse>> {
+    try {
+      console.log('Creando producto:', productoData);
+
+      const response = await fetch(apiEndpoints.productos, {
+        method: 'POST',
+        headers: {
+          'apikey': supabaseConfig.serviceRoleKey,
+          'Authorization': `Bearer ${supabaseConfig.serviceRoleKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(productoData)
+      });
+
+      console.log('Response status:', response.status);
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error('Error response body:', errorData);
+        return {
+          success: false,
+          error: `Error del servidor: ${response.status} ${response.statusText}`,
+          details: errorData
+        };
+      }
+
+      // Manejar respuesta vacía o no-JSON
+      let data = null;
+      const contentType = response.headers.get('content-type');
+      const responseText = await response.text();
+      
+      if (responseText && contentType && contentType.includes('application/json')) {
+        try {
+          data = JSON.parse(responseText);
+        } catch (jsonError) {
+          console.warn('No se pudo parsear JSON, pero la operación fue exitosa:', responseText);
+          data = { success: true, message: 'Producto creado exitosamente' };
+        }
+      } else {
+        // Respuesta vacía (201 Created sin contenido)
+        data = { success: true, message: 'Producto creado exitosamente' };
+      }
+
+      console.log('Producto creado:', data);
+
+      return {
+        success: true,
+        data: data
+      };
+    } catch (error) {
+      console.error('Error al crear producto:', error);
+      return { 
+        success: false, 
+        error: 'Error de conexión al crear producto',
+        details: error instanceof Error ? error.message : 'Error desconocido'
+      };
+    }
+  }
+
+  /**
+   * Actualiza un producto existente
+   */
+  async updateProducto(id: number, productoData: Partial<ProductoData>): Promise<ApiResponse<ProductoResponse>> {
+    try {
+      console.log('Actualizando producto:', id, productoData);
+
+      const response = await fetch(`${apiEndpoints.productos}?id=eq.${id}`, {
+        method: 'PATCH',
+        headers: {
+          'apikey': supabaseConfig.serviceRoleKey,
+          'Authorization': `Bearer ${supabaseConfig.serviceRoleKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(productoData)
+      });
+
+      console.log('Response status:', response.status);
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error('Error response body:', errorData);
+        return {
+          success: false,
+          error: `Error del servidor: ${response.status} ${response.statusText}`,
+          details: errorData
+        };
+      }
+
+      // Manejar respuesta vacía o no-JSON
+      let data = null;
+      const contentType = response.headers.get('content-type');
+      const responseText = await response.text();
+      
+      if (responseText && contentType && contentType.includes('application/json')) {
+        try {
+          data = JSON.parse(responseText);
+        } catch (jsonError) {
+          console.warn('No se pudo parsear JSON, pero la operación fue exitosa:', responseText);
+          data = { success: true, message: 'Producto actualizado exitosamente' };
+        }
+      } else {
+        // Respuesta vacía (201 Created sin contenido)
+        data = { success: true, message: 'Producto actualizado exitosamente' };
+      }
+
+      console.log('Producto actualizado:', data);
+
+      return {
+        success: true,
+        data: data
+      };
+    } catch (error) {
+      console.error('Error al actualizar producto:', error);
+      return { 
+        success: false, 
+        error: 'Error de conexión al actualizar producto',
+        details: error instanceof Error ? error.message : 'Error desconocido'
+      };
+    }
+  }
+
+  /**
+   * Elimina un producto
+   */
+  async deleteProducto(id: number): Promise<ApiResponse<void>> {
+    try {
+      console.log('Eliminando producto:', id);
+
+      const response = await fetch(`${apiEndpoints.productos}?id=eq.${id}`, {
+        method: 'DELETE',
+        headers: {
+          'apikey': supabaseConfig.serviceRoleKey,
+          'Authorization': `Bearer ${supabaseConfig.serviceRoleKey}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      console.log('Response status:', response.status);
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error('Error response body:', errorData);
+        return {
+          success: false,
+          error: `Error del servidor: ${response.status} ${response.statusText}`,
+          details: errorData
+        };
+      }
+
+      console.log('Producto eliminado exitosamente');
+
+      return {
+        success: true,
+        data: undefined
+      };
+    } catch (error) {
+      console.error('Error al eliminar producto:', error);
+      return { 
+        success: false, 
+        error: 'Error de conexión al eliminar producto',
         details: error instanceof Error ? error.message : 'Error desconocido'
       };
     }

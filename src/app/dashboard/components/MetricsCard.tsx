@@ -20,14 +20,16 @@ export default function MetricsCard({ title, value, change, changeType, icon }: 
           <span className="text-2xl">{icon}</span>
         </div>
       </div>
-      <div className="mt-4">
-        <span className={`text-sm font-medium ${
-          changeType === 'positive' ? 'text-[var(--success)]' : 'text-[var(--error)]'
-        }`}>
-          {change}
-        </span>
-        <span className="text-[var(--text-muted)] text-sm ml-1">desde el mes pasado</span>
-      </div>
+      {change && (
+        <div className="mt-4">
+          <span className={`text-sm font-medium ${
+            changeType === 'positive' ? 'text-[var(--success)]' : 'text-[var(--error)]'
+          }`}>
+            {change}
+          </span>
+          <span className="text-[var(--text-muted)] text-sm ml-1">desde el mes pasado</span>
+        </div>
+      )}
     </div>
   );
 }
