@@ -133,7 +133,7 @@ export default function EditarEspacioModal({ isOpen, onClose, onEspacioUpdated, 
               type="text"
               value={formData.nombre}
               onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
-              className="w-full px-3 py-2 bg-[#1a1d23] border border-[#3a3d45] rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-[#00b894] focus:border-transparent"
+              className="w-full px-3 py-2 bg-[#1a1d23] border border-[#3a3d45] rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-[#F29A1F] focus:border-transparent"
               placeholder="Ej: Ventas, Marketing, Soporte..."
               disabled={isLoading}
               required
@@ -160,7 +160,7 @@ export default function EditarEspacioModal({ isOpen, onClose, onEspacioUpdated, 
             <button
               type="submit"
               disabled={isLoading || !formData.nombre.trim() || (espacio ? formData.nombre.trim() === espacio.nombre : false)}
-              className="px-4 py-2 bg-[#00b894] text-white rounded-lg hover:bg-[#00a085] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+              className="px-4 py-2 bg-[#F29A1F] text-white rounded-lg hover:bg-[#F29A1F] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
             >
               {isLoading && (
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>

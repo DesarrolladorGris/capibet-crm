@@ -414,10 +414,10 @@ export default function ClientChatPage() {
       case 'read':
         return (
           <div className="flex">
-            <svg className="w-4 h-4 text-[#00b894]" fill="currentColor" viewBox="0 0 20 20">
+            <svg className="w-4 h-4 text-[#F29A1F]" fill="currentColor" viewBox="0 0 20 20">
               <path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" />
             </svg>
-            <svg className="w-4 h-4 text-[#00b894] -ml-1" fill="currentColor" viewBox="0 0 20 20">
+            <svg className="w-4 h-4 text-[#F29A1F] -ml-1" fill="currentColor" viewBox="0 0 20 20">
               <path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" />
             </svg>
           </div>
@@ -456,7 +456,7 @@ export default function ClientChatPage() {
                     )}
                     <div className={`rounded-2xl px-4 py-3 ${
                       message.isFromClient 
-                        ? 'bg-[#00b894] text-white' 
+                        ? 'bg-[#F29A1F] text-white' 
                         : 'bg-[#2a2d35] text-white border border-[#3a3d45]'
                     }`}>
                       <p className="text-sm whitespace-pre-wrap">{message.content}</p>
@@ -503,13 +503,13 @@ export default function ClientChatPage() {
               onChange={(e) => setNewMessage(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder="Escribe tu mensaje..."
-              className="w-full bg-[#1a1d23] border border-[#3a3d45] rounded-2xl px-4 py-3 pr-12 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#00b894] focus:border-[#00b894] resize-none max-h-32 text-sm md:text-base"
+              className="w-full bg-[#1a1d23] border border-[#3a3d45] rounded-2xl px-4 py-3 pr-12 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#F29A1F] focus:border-[#F29A1F] resize-none max-h-32 text-sm md:text-base"
               rows={1}
             />
             <button
               onClick={handleSendMessage}
               disabled={!newMessage.trim() || isCreatingConversation}
-              className="absolute right-3 bottom-3 w-8 h-8 bg-[#00b894] hover:bg-[#00a085] disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-full flex items-center justify-center transition-colors"
+              className="absolute right-3 bottom-3 w-8 h-8 bg-[#F29A1F] hover:bg-[#F29A1F] disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-full flex items-center justify-center transition-colors"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
@@ -519,7 +519,7 @@ export default function ClientChatPage() {
           
           {/* Help Text */}
           {isCreatingConversation ? (
-            <p className="text-[#00b894] text-xs mt-2 text-center animate-pulse">
+            <p className="text-[#F29A1F] text-xs mt-2 text-center animate-pulse">
               📞 Conectando con soporte...
             </p>
           ) : (

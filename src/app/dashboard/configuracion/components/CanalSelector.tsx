@@ -66,7 +66,7 @@ const canalOptions: CanalOption[] = [
     id: 'web_chat', 
     nombre: 'Web Chat', 
     icon: '💬', 
-    color: '#00b894', 
+    color: '#F29A1F', 
     tipo: 'web_chat',
     description: 'Chat integrado en tu sitio web'
   },
@@ -109,8 +109,8 @@ export default function CanalSelector({
               className={`
                 relative bg-[#1a1d23] border rounded-lg p-4 text-center transition-all duration-200 group
                 ${isSelected 
-                  ? 'border-[#00b894] bg-[#00b894] bg-opacity-10' 
-                  : 'border-[#3a3d45] hover:border-[#00b894] hover:bg-[#2a2d35]'
+                  ? 'border-[#F29A1F] bg-[#F29A1F] bg-opacity-10' 
+                  : 'border-[#3a3d45] hover:border-[#F29A1F] hover:bg-[#2a2d35]'
                 }
                 ${isHovered ? 'transform scale-105' : ''}
               `}
@@ -129,7 +129,7 @@ export default function CanalSelector({
               {/* Nombre del canal */}
               <div className={`
                 font-medium text-sm transition-colors duration-200
-                ${isSelected ? 'text-[#00b894]' : 'text-white'}
+                ${isSelected ? 'text-[#F29A1F]' : 'text-white'}
               `}>
                 {option.nombre}
               </div>
@@ -143,7 +143,7 @@ export default function CanalSelector({
               
               {/* Indicador de selección */}
               {isSelected && (
-                <div className="absolute top-2 right-2 w-3 h-3 bg-[#00b894] rounded-full flex items-center justify-center">
+                <div className="absolute top-2 right-2 w-3 h-3 bg-[#F29A1F] rounded-full flex items-center justify-center">
                   <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
                 </div>
               )}

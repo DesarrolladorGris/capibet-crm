@@ -150,7 +150,7 @@ export default function DetallesMensajeModal({
             <textarea
               value={contenidoEditado}
               onChange={(e) => setContenidoEditado(e.target.value)}
-              className="w-full text-white text-sm bg-[#1a1d23] rounded p-4 border border-[#3a3d45] min-h-32 max-h-60 resize-none focus:outline-none focus:border-[#00b894] transition-colors"
+              className="w-full text-white text-sm bg-[#1a1d23] rounded p-4 border border-[#3a3d45] min-h-32 max-h-60 resize-none focus:outline-none focus:border-[#F29A1F] transition-colors"
               placeholder="Escribe el contenido del mensaje..."
               disabled={isUpdating || isDeleting}
             />
@@ -222,7 +222,7 @@ export default function DetallesMensajeModal({
               <button
                 onClick={handleUpdateClick}
                 disabled={isUpdating || isDeleting || !hasChanges}
-                className="bg-[#00b894] hover:bg-[#00a085] disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center min-w-[140px] justify-center"
+                className="bg-[#F29A1F] hover:bg-[#F29A1F] disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center min-w-[140px] justify-center"
               >
                 {isUpdating ? (
                   <>

@@ -18,7 +18,7 @@ const canalOptions: CanalOption[] = [
   { id: 'messenger', nombre: 'Messenger', icon: '💬', color: '#0084FF', tipo: 'messenger' },
   { id: 'telegram', nombre: 'Telegram', icon: '✈️', color: '#0088CC', tipo: 'telegram' },
   { id: 'telegram_bot', nombre: 'Telegram Bot', icon: '🤖', color: '#0088CC', tipo: 'telegram_bot' },
-  { id: 'web_chat', nombre: 'Web Chat', icon: '💬', color: '#00b894', tipo: 'web_chat' },
+  { id: 'web_chat', nombre: 'Web Chat', icon: '💬', color: '#F29A1F', tipo: 'web_chat' },
   { id: 'email', nombre: 'Email', icon: '✉️', color: '#EA4335', tipo: 'email' },
 ];
 
@@ -48,7 +48,7 @@ export default function SesionesList({
 
   const getCanalColor = (tipo: Canal['tipo']) => {
     const option = canalOptions.find(opt => opt.tipo === tipo);
-    return option?.color || '#00b894';
+    return option?.color || '#F29A1F';
   };
 
   const formatDate = (dateString: string) => {
@@ -127,7 +127,7 @@ export default function SesionesList({
             key={sesion.id}
             className={`
               bg-[#1a1d23] rounded-lg p-4 transition-all duration-200 hover:bg-[#2a2d35]
-              ${sesion.activa ? 'border-l-4 border-[#00b894]' : 'border-l-4 border-gray-600'}
+              ${sesion.activa ? 'border-l-4 border-[#F29A1F]' : 'border-l-4 border-gray-600'}
             `}
           >
             <div className="flex items-center justify-between">

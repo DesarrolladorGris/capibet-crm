@@ -110,7 +110,7 @@ export default function NuevoEmbudoModal({
         {/* Info del espacio */}
         <div className="mb-4 p-3 bg-[#1a1d23] rounded-lg border border-[#3a3d45]">
           <div className="flex items-center space-x-2">
-            <span className="text-[#00b894]">⚙️</span>
+            <span className="text-[#F29A1F]">⚙️</span>
             <span className="text-gray-300 text-sm font-medium">
               Se creará en: <span className="text-white">{espacioNombre}</span>
             </span>
@@ -136,7 +136,7 @@ export default function NuevoEmbudoModal({
               id="nombre"
               value={nombre}
               onChange={(e) => setNombre(e.target.value)}
-              className="w-full px-3 py-2 bg-[#1a1d23] border border-[#3a3d45] rounded-lg text-white focus:ring-2 focus:ring-[#00b894] focus:border-transparent"
+              className="w-full px-3 py-2 bg-[#1a1d23] border border-[#3a3d45] rounded-lg text-white focus:ring-2 focus:ring-[#F29A1F] focus:border-transparent"
               placeholder="Ej: Prospectos, Clientes, Ventas..."
               required
               disabled={isLoading}
@@ -151,7 +151,7 @@ export default function NuevoEmbudoModal({
               id="descripcion"
               value={descripcion}
               onChange={(e) => setDescripcion(e.target.value)}
-              className="w-full px-3 py-2 bg-[#1a1d23] border border-[#3a3d45] rounded-lg text-white focus:ring-2 focus:ring-[#00b894] focus:border-transparent resize-none"
+              className="w-full px-3 py-2 bg-[#1a1d23] border border-[#3a3d45] rounded-lg text-white focus:ring-2 focus:ring-[#F29A1F] focus:border-transparent resize-none"
               placeholder="Descripción opcional del embudo..."
               rows={3}
               disabled={isLoading}
@@ -180,7 +180,7 @@ export default function NuevoEmbudoModal({
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-[#00b894] text-white rounded-lg hover:bg-[#00a085] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+              className="px-4 py-2 bg-[#F29A1F] text-white rounded-lg hover:bg-[#F29A1F] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
               disabled={isLoading}
             >
               {isLoading && (

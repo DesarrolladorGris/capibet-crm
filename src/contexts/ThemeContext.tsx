@@ -51,8 +51,8 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
       root.style.setProperty('--text-muted', '#9CA3AF');
       root.style.setProperty('--border-primary', '#3A3D45');
       root.style.setProperty('--border-secondary', '#4B5563');
-      root.style.setProperty('--accent-primary', '#00B894');
-      root.style.setProperty('--accent-hover', '#00A085');
+      root.style.setProperty('--accent-primary', '#F29A1F');
+      root.style.setProperty('--accent-hover', '#F29A1F');
       root.style.setProperty('--success', '#10B981');
       root.style.setProperty('--warning', '#F59E0B');
       root.style.setProperty('--error', '#EF4444');
@@ -67,8 +67,8 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
       root.style.setProperty('--text-muted', '#6B7280');
       root.style.setProperty('--border-primary', '#E5E7EB');
       root.style.setProperty('--border-secondary', '#D1D5DB');
-      root.style.setProperty('--accent-primary', '#00B894');
-      root.style.setProperty('--accent-hover', '#00A085');
+      root.style.setProperty('--accent-primary', '#F29A1F');
+      root.style.setProperty('--accent-hover', '#F29A1F');
       root.style.setProperty('--success', '#10B981');
       root.style.setProperty('--warning', '#F59E0B');
       root.style.setProperty('--error', '#EF4444');

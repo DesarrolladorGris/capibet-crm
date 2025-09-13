@@ -178,16 +178,18 @@ export default function RegisterPage() {
         <div className="text-center mb-8">
           {/* Beast Logo */}
           <div className="mb-6">
-            <div className="w-16 h-16 mx-auto bg-[#00b894] rounded-full flex items-center justify-center border-2 border-[#00a085] shadow-lg">
-              <div className="text-slate-900 font-bold text-2xl">
-                🎲
-              </div>
+            <div className="w-16 h-16 mx-auto bg-[#F29A1F] rounded-full flex items-center justify-center border-2 border-[#F29A1F] shadow-lg overflow-hidden">
+              <img 
+                src="https://pbs.twimg.com/profile_images/1118644090420322304/5SFmHCl-_400x400.jpg" 
+                alt="CAPIBET Logo"
+                className="w-full h-full object-cover rounded-full"
+              />
             </div>
             <h1 className="text-white text-2xl font-bold mt-2">CAPIBET</h1>
             <div className="flex items-center justify-center gap-2 mt-1">
-              <div className="h-0.5 w-8 bg-[#00b894]"></div>
-              <span className="text-[#00b894] text-sm font-medium tracking-wider">CRM</span>
-              <div className="h-0.5 w-8 bg-[#00b894]"></div>
+              <div className="h-0.5 w-8 bg-[#F29A1F]"></div>
+              <span className="text-[#F29A1F] text-sm font-medium tracking-wider">CRM</span>
+              <div className="h-0.5 w-8 bg-[#F29A1F]"></div>
             </div>
           </div>
           
@@ -213,7 +215,7 @@ export default function RegisterPage() {
                 value={formData.name}
                 onChange={handleInputChange}
                 placeholder="Mi nombre"
-                className="w-full pl-10 pr-4 py-3 bg-[#2a2d35] border border-[#3a3d45] rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#00b894] focus:border-[#00b894] text-base"
+                className="w-full pl-10 pr-4 py-3 bg-[#2a2d35] border border-[#3a3d45] rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#F29A1F] focus:border-[#F29A1F] text-base"
                 required
               />
             </div>
@@ -231,7 +233,7 @@ export default function RegisterPage() {
                 value={formData.email}
                 onChange={handleInputChange}
                 placeholder="Correo electrónico"
-                className="w-full pl-10 pr-4 py-3 bg-[#2a2d35] border border-[#3a3d45] rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#00b894] focus:border-[#00b894] text-base"
+                className="w-full pl-10 pr-4 py-3 bg-[#2a2d35] border border-[#3a3d45] rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#F29A1F] focus:border-[#F29A1F] text-base"
                 required
               />
             </div>
@@ -244,7 +246,7 @@ export default function RegisterPage() {
                   <button
                     type="button"
                     onClick={() => setShowCountryDropdown(!showCountryDropdown)}
-                    className="flex items-center space-x-2 px-3 py-4 bg-[#2a2d35] border border-[#3a3d45] border-r-0 rounded-l-lg text-white hover:bg-slate-700/70 focus:outline-none focus:ring-2 focus:ring-[#00b894] focus:border-[#00b894] min-w-[100px]"
+                    className="flex items-center space-x-2 px-3 py-4 bg-[#2a2d35] border border-[#3a3d45] border-r-0 rounded-l-lg text-white hover:bg-slate-700/70 focus:outline-none focus:ring-2 focus:ring-[#F29A1F] focus:border-[#F29A1F] min-w-[100px]"
                   >
                     <Image 
                       src={selectedCountry.flag} 
@@ -292,7 +294,7 @@ export default function RegisterPage() {
                   value={formData.phone}
                   onChange={handleInputChange}
                   placeholder=""
-                  className="flex-1 px-4 py-4 bg-[#2a2d35] border border-[#3a3d45] rounded-r-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#00b894] focus:border-[#00b894] text-base"
+                  className="flex-1 px-4 py-4 bg-[#2a2d35] border border-[#3a3d45] rounded-r-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#F29A1F] focus:border-[#F29A1F] text-base"
                   required
                 />
               </div>
@@ -311,7 +313,7 @@ export default function RegisterPage() {
                 value={formData.password}
                 onChange={handleInputChange}
                 placeholder="Contraseña"
-                className="w-full pl-10 pr-12 py-4 bg-[#2a2d35] border border-[#3a3d45] rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#00b894] focus:border-[#00b894] text-base"
+                className="w-full pl-10 pr-12 py-4 bg-[#2a2d35] border border-[#3a3d45] rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#F29A1F] focus:border-[#F29A1F] text-base"
                 required
               />
               <button
@@ -344,7 +346,7 @@ export default function RegisterPage() {
                 value={formData.confirmPassword}
                 onChange={handleInputChange}
                 placeholder="Repetir contraseña"
-                className="w-full pl-10 pr-12 py-4 bg-[#2a2d35] border border-[#3a3d45] rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#00b894] focus:border-[#00b894] text-base"
+                className="w-full pl-10 pr-12 py-4 bg-[#2a2d35] border border-[#3a3d45] rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#F29A1F] focus:border-[#F29A1F] text-base"
                 required
               />
               <button
@@ -396,7 +398,7 @@ export default function RegisterPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-[#00b894] hover:bg-[#00a085] disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-medium py-4 px-4 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#00b894] focus:ring-offset-2 focus:ring-offset-[#1a1d23] mt-6 text-base"
+              className="w-full bg-[#F29A1F] hover:bg-[#F29A1F] disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-medium py-4 px-4 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#F29A1F] focus:ring-offset-2 focus:ring-offset-[#1a1d23] mt-6 text-base"
             >
               {isLoading ? 'REGISTRANDO...' : 'REGISTRAR'}
             </button>
@@ -406,7 +408,7 @@ export default function RegisterPage() {
         {/* Login Link */}
         <p className="mt-6 text-center text-gray-400">
           ¿Ya tienes una cuenta?{' '}
-          <Link href="/login" className="text-[#00b894] hover:text-[#00a085] font-medium">
+          <Link href="/login" className="text-[#F29A1F] hover:text-[#F29A1F] font-medium">
             Iniciar sesión
           </Link>
         </p>

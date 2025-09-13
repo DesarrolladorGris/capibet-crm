@@ -95,14 +95,18 @@ export default function LoginPage() {
       {/* Mobile Logo - Only visible on small screens */}
       <div className="lg:hidden flex justify-center py-8 px-4">
         <div className="text-center">
-          <div className="w-16 h-16 mx-auto bg-[#00b894] rounded-full flex items-center justify-center border-2 border-[#00a085] shadow-lg mb-4">
-            <div className="text-white font-bold text-2xl">🎲</div>
+          <div className="w-16 h-16 mx-auto bg-[#F29A1F] rounded-full flex items-center justify-center border-2 border-[#F29A1F] shadow-lg mb-4 overflow-hidden">
+            <img 
+              src="https://pbs.twimg.com/profile_images/1118644090420322304/5SFmHCl-_400x400.jpg" 
+              alt="CAPIBET Logo"
+              className="w-full h-full object-cover rounded-full"
+            />
           </div>
           <h1 className="text-white text-2xl font-bold">CAPIBET</h1>
           <div className="flex items-center justify-center gap-2 mt-1">
-            <div className="h-0.5 w-8 bg-[#00b894]"></div>
-            <span className="text-[#00b894] text-sm font-medium tracking-wider">CRM</span>
-            <div className="h-0.5 w-8 bg-[#00b894]"></div>
+            <div className="h-0.5 w-8 bg-[#F29A1F]"></div>
+            <span className="text-[#F29A1F] text-sm font-medium tracking-wider">CRM</span>
+            <div className="h-0.5 w-8 bg-[#F29A1F]"></div>
           </div>
         </div>
       </div>
@@ -125,7 +129,7 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Email"
-                className="w-full pl-10 pr-4 py-4 bg-[#2a2d35] border border-[#3a3d45] rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#00b894] focus:border-[#00b894] text-base"
+                className="w-full pl-10 pr-4 py-4 bg-[#2a2d35] border border-[#3a3d45] rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#F29A1F] focus:border-[#F29A1F] text-base"
                 required
               />
             </div>
@@ -142,7 +146,7 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Contraseña"
-                className="w-full pl-10 pr-12 py-4 bg-[#2a2d35] border border-[#3a3d45] rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#00b894] focus:border-[#00b894] text-base"
+                className="w-full pl-10 pr-12 py-4 bg-[#2a2d35] border border-[#3a3d45] rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#F29A1F] focus:border-[#F29A1F] text-base"
                 required
               />
               <button
@@ -173,7 +177,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-[#00b894] hover:bg-[#00a085] disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-semibold py-4 px-4 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#00b894] focus:ring-offset-2 focus:ring-offset-[#1a1d23] text-base"
+              className="w-full bg-[#F29A1F] hover:bg-[#F29A1F] disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-semibold py-4 px-4 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#F29A1F] focus:ring-offset-2 focus:ring-offset-[#1a1d23] text-base"
             >
               {isLoading ? 'Iniciando sesión...' : 'INICIAR SESIÓN'}
             </button>
@@ -182,7 +186,7 @@ export default function LoginPage() {
           {/* Register Link */}
           <p className="mt-6 text-center text-gray-400">
             ¿No tienes una cuenta?{' '}
-            <Link href="/register" className="text-[#00b894] hover:text-[#00a085] font-medium">
+            <Link href="/register" className="text-[#F29A1F] hover:text-[#F29A1F] font-medium">
               Regístrate
             </Link>
           </p>
@@ -190,14 +194,16 @@ export default function LoginPage() {
       </div>
 
       {/* Right side - Beast CRM Logo */}
-      <div className="hidden lg:flex flex-1 items-center justify-center bg-gradient-to-br from-[#00b894] via-[#00a085] to-[#1e2b2c] relative overflow-hidden">
+      <div className="hidden lg:flex flex-1 items-center justify-center bg-gradient-to-br from-[#F29A1F] via-[#F29A1F] to-[#1e2b2c] relative overflow-hidden">
         <div className="text-center z-10">
           <div className="mb-8">
             {/* Beast Logo Circle */}
-            <div className="w-32 h-32 mx-auto bg-white/20 rounded-full flex items-center justify-center border-4 border-white/30 shadow-2xl">
-              <div className="text-white font-bold text-6xl">
-                🎲
-              </div>
+            <div className="w-32 h-32 mx-auto bg-white/20 rounded-full flex items-center justify-center border-4 border-white/30 shadow-2xl overflow-hidden">
+              <img 
+                src="https://pbs.twimg.com/profile_images/1118644090420322304/5SFmHCl-_400x400.jpg" 
+                alt="CAPIBET Logo"
+                className="w-full h-full object-cover rounded-full"
+              />
             </div>
           </div>
           <h1 className="text-white text-6xl font-bold mb-2">CAPIBET</h1>

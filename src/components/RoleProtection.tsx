@@ -39,8 +39,12 @@ export default function RoleProtection({
     return (
       <div className="min-h-screen bg-[#1a1d23] flex items-center justify-center">
         <div className="text-center">
-          <div className="w-8 h-8 bg-[#00b894] rounded-full flex items-center justify-center mb-4 mx-auto animate-pulse">
-            <div className="text-white font-bold text-sm">🎲</div>
+          <div className="w-8 h-8 bg-[#F29A1F] rounded-full flex items-center justify-center mb-4 mx-auto animate-pulse overflow-hidden">
+            <img 
+              src="https://pbs.twimg.com/profile_images/1118644090420322304/5SFmHCl-_400x400.jpg" 
+              alt="CAPIBET Logo"
+              className="w-full h-full object-cover rounded-full"
+            />
           </div>
           <p className="text-gray-400">Verificando permisos...</p>
         </div>
@@ -68,11 +72,11 @@ export default function RoleProtection({
             No tienes permisos para acceder a esta sección. Esta área está restringida a usuarios con rol: {requiredRoles.join(', ')}.
           </p>
           <p className="text-gray-500 text-sm mb-8">
-            Tu rol actual: <span className="text-[#00b894] font-medium">{user.rol}</span>
+            Tu rol actual: <span className="text-[#F29A1F] font-medium">{user.rol}</span>
           </p>
           <button
             onClick={() => router.push(fallbackPath)}
-            className="bg-[#00b894] hover:bg-[#00a085] text-white px-6 py-3 rounded-lg font-medium transition-colors"
+            className="bg-[#F29A1F] hover:bg-[#F29A1F] text-white px-6 py-3 rounded-lg font-medium transition-colors"
           >
             Volver al Dashboard
           </button>

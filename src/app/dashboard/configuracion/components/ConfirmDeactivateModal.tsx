@@ -56,10 +56,12 @@ export default function ConfirmDeactivateModal({
         <div className="p-6">
           <div className="mb-6">
             <div className="flex items-center space-x-4 mb-4">
-              <div className="w-12 h-12 bg-[#00b894] rounded-full flex items-center justify-center">
-                <span className="text-white font-bold text-lg">
-                  {usuario.nombre_usuario.charAt(0).toUpperCase()}
-                </span>
+              <div className="w-12 h-12 rounded-full overflow-hidden">
+                <img 
+                  src="https://pbs.twimg.com/profile_images/1118644090420322304/5SFmHCl-_400x400.jpg" 
+                  alt="User Avatar"
+                  className="w-full h-full object-cover"
+                />
               </div>
               <div>
                 <h3 className="text-white font-medium">{usuario.nombre_usuario}</h3>

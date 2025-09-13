@@ -23,7 +23,7 @@ const canalOptions: CanalOption[] = [
   { id: 'messenger', nombre: 'Messenger', icon: '💬', color: '#0084FF', tipo: 'messenger' },
   { id: 'telegram', nombre: 'Telegram', icon: '✈️', color: '#0088CC', tipo: 'telegram' },
   { id: 'telegramBot', nombre: 'Telegram Bot', icon: '🤖', color: '#0088CC', tipo: 'telegramBot' },
-  { id: 'webChat', nombre: 'Web Chat', icon: '💬', color: '#00b894', tipo: 'webChat' },
+  { id: 'webChat', nombre: 'Web Chat', icon: '💬', color: '#F29A1F', tipo: 'webChat' },
 ];
 
 export default function SesionesTab() {
@@ -272,7 +272,7 @@ export default function SesionesTab() {
 
   const getCanalColor = (tipo: Canal['tipo']) => {
     const option = canalOptions.find(opt => opt.tipo === tipo);
-    return option?.color || '#00b894';
+    return option?.color || '#F29A1F';
   };
 
   // Funciones para manejar sesiones
@@ -394,7 +394,7 @@ export default function SesionesTab() {
           <h3 className="text-white text-lg font-medium">Canales</h3>
           <button
             onClick={() => setShowAddCanal(true)}
-            className="bg-[#00b894] hover:bg-[#00a085] text-white px-4 py-2 rounded-lg font-medium transition-colors"
+            className="bg-[#F29A1F] hover:bg-[#F29A1F] text-white px-4 py-2 rounded-lg font-medium transition-colors"
           >
             + Añadir canal
           </button>
@@ -560,7 +560,7 @@ export default function SesionesTab() {
                                  <select
                    value={formData.tipo}
                    onChange={(e) => setFormData({ ...formData, tipo: e.target.value as Canal['tipo'] })}
-                   className="w-full bg-[#1a1d23] border border-[#3a3d45] rounded-lg px-3 py-2 text-white focus:outline-none focus:border-[#00b894]"
+                   className="w-full bg-[#1a1d23] border border-[#3a3d45] rounded-lg px-3 py-2 text-white focus:outline-none focus:border-[#F29A1F]"
                  >
                    <option value="">Seleccionar tipo</option>
                    {canalOptions.map((option) => (
@@ -580,7 +580,7 @@ export default function SesionesTab() {
                   type="text"
                   value={formData.descripcion}
                   onChange={(e) => setFormData({ ...formData, descripcion: e.target.value })}
-                  className="w-full bg-[#1a1d23] border border-[#3a3d45] rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-[#00b894]"
+                  className="w-full bg-[#1a1d23] border border-[#3a3d45] rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-[#F29A1F]"
                   placeholder="Ej: WhatsApp Principal"
                 />
               </div>
@@ -593,7 +593,7 @@ export default function SesionesTab() {
                 <select
                   value={formData.usuario_id}
                   onChange={(e) => setFormData({ ...formData, usuario_id: e.target.value })}
-                  className="w-full bg-[#1a1d23] border border-[#3a3d45] rounded-lg px-3 py-2 text-white focus:outline-none focus:border-[#00b894]"
+                  className="w-full bg-[#1a1d23] border border-[#3a3d45] rounded-lg px-3 py-2 text-white focus:outline-none focus:border-[#F29A1F]"
                 >
                   <option value="">Seleccionar usuario</option>
                   {usuarios.map((usuario) => (
@@ -612,7 +612,7 @@ export default function SesionesTab() {
                 <select
                   value={formData.espacio_id}
                   onChange={(e) => setFormData({ ...formData, espacio_id: e.target.value })}
-                  className="w-full bg-[#1a1d23] border border-[#3a3d45] rounded-lg px-3 py-2 text-white focus:outline-none focus:border-[#00b894]"
+                  className="w-full bg-[#1a1d23] border border-[#3a3d45] rounded-lg px-3 py-2 text-white focus:outline-none focus:border-[#F29A1F]"
                 >
                   <option value="">Seleccionar espacio</option>
                   {espaciosTrabajo.map((espacio) => (
@@ -634,7 +634,7 @@ export default function SesionesTab() {
                 <button
                   onClick={handleCreateCanal}
                   disabled={!formData.tipo || !formData.descripcion || !formData.usuario_id || !formData.espacio_id || loading}
-                  className="flex-1 bg-[#00b894] hover:bg-[#00a085] disabled:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors"
+                  className="flex-1 bg-[#F29A1F] hover:bg-[#F29A1F] disabled:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors"
                 >
                   {loading ? 'Creando...' : 'Crear Canal'}
                 </button>
@@ -669,7 +669,7 @@ export default function SesionesTab() {
                   type="text"
                   value={sesionFormData.nombre}
                   onChange={(e) => setSesionFormData({ ...sesionFormData, nombre: e.target.value })}
-                  className="w-full bg-[#1a1d23] border border-[#3a3d45] rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-[#00b894]"
+                  className="w-full bg-[#1a1d23] border border-[#3a3d45] rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-[#F29A1F]"
                   placeholder="Ej: Ventas por WhatsApp"
                 />
               </div>
@@ -681,7 +681,7 @@ export default function SesionesTab() {
                 <select
                   value={sesionFormData.usuario_id}
                   onChange={(e) => setSesionFormData({ ...sesionFormData, usuario_id: e.target.value })}
-                  className="w-full bg-[#1a1d23] border border-[#3a3d45] rounded-lg px-3 py-2 text-white focus:outline-none focus:border-[#00b894]"
+                  className="w-full bg-[#1a1d23] border border-[#3a3d45] rounded-lg px-3 py-2 text-white focus:outline-none focus:border-[#F29A1F]"
                 >
                   <option value="">Seleccionar usuario</option>
                   {usuarios.map((usuario) => (
@@ -699,7 +699,7 @@ export default function SesionesTab() {
                 <select
                   value={sesionFormData.estado}
                   onChange={(e) => setSesionFormData({ ...sesionFormData, estado: e.target.value as 'activo' | 'desconectado' | 'expirado' })}
-                  className="w-full bg-[#1a1d23] border border-[#3a3d45] rounded-lg px-3 py-2 text-white focus:outline-none focus:border-[#00b894]"
+                  className="w-full bg-[#1a1d23] border border-[#3a3d45] rounded-lg px-3 py-2 text-white focus:outline-none focus:border-[#F29A1F]"
                 >
                   <option value="activo">Activo</option>
                   <option value="desconectado">Desconectado</option>
@@ -719,7 +719,7 @@ export default function SesionesTab() {
                         type="email"
                         value={sesionFormData.email_user}
                         onChange={(e) => setSesionFormData({ ...sesionFormData, email_user: e.target.value })}
-                        className="w-full bg-[#1a1d23] border border-[#3a3d45] rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-[#00b894]"
+                        className="w-full bg-[#1a1d23] border border-[#3a3d45] rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-[#F29A1F]"
                         placeholder="usuario@dominio.com"
                       />
                     </div>
@@ -731,7 +731,7 @@ export default function SesionesTab() {
                         type="password"
                         value={sesionFormData.email_password}
                         onChange={(e) => setSesionFormData({ ...sesionFormData, email_password: e.target.value })}
-                        className="w-full bg-[#1a1d23] border border-[#3a3d45] rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-[#00b894]"
+                        className="w-full bg-[#1a1d23] border border-[#3a3d45] rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-[#F29A1F]"
                         placeholder="••••••••"
                       />
                     </div>
@@ -745,7 +745,7 @@ export default function SesionesTab() {
                         type="text"
                         value={sesionFormData.smtp_host}
                         onChange={(e) => setSesionFormData({ ...sesionFormData, smtp_host: e.target.value })}
-                        className="w-full bg-[#1a1d23] border border-[#3a3d45] rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-[#00b894]"
+                        className="w-full bg-[#1a1d23] border border-[#3a3d45] rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-[#F29A1F]"
                         placeholder="smtp.gmail.com"
                       />
                     </div>
@@ -757,7 +757,7 @@ export default function SesionesTab() {
                         type="number"
                         value={sesionFormData.smtp_port}
                         onChange={(e) => setSesionFormData({ ...sesionFormData, smtp_port: e.target.value })}
-                        className="w-full bg-[#1a1d23] border border-[#3a3d45] rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-[#00b894]"
+                        className="w-full bg-[#1a1d23] border border-[#3a3d45] rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-[#F29A1F]"
                         placeholder="587"
                       />
                     </div>
@@ -775,7 +775,7 @@ export default function SesionesTab() {
                       type="text"
                       value={sesionFormData.api_key}
                       onChange={(e) => setSesionFormData({ ...sesionFormData, api_key: e.target.value })}
-                      className="w-full bg-[#1a1d23] border border-[#3a3d45] rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-[#00b894]"
+                      className="w-full bg-[#1a1d23] border border-[#3a3d45] rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-[#F29A1F]"
                       placeholder="Ingresa tu API Key"
                     />
                   </div>
@@ -787,7 +787,7 @@ export default function SesionesTab() {
                       type="text"
                       value={sesionFormData.phone_number}
                       onChange={(e) => setSesionFormData({ ...sesionFormData, phone_number: e.target.value })}
-                      className="w-full bg-[#1a1d23] border border-[#3a3d45] rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-[#00b894]"
+                      className="w-full bg-[#1a1d23] border border-[#3a3d45] rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-[#F29A1F]"
                       placeholder="+1234567890"
                     />
                   </div>
@@ -803,7 +803,7 @@ export default function SesionesTab() {
                     type="text"
                     value={sesionFormData.access_token}
                     onChange={(e) => setSesionFormData({ ...sesionFormData, access_token: e.target.value })}
-                    className="w-full bg-[#1a1d23] border border-[#3a3d45] rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-[#00b894]"
+                    className="w-full bg-[#1a1d23] border border-[#3a3d45] rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-[#F29A1F]"
                     placeholder="Ingresa tu Access Token"
                   />
                 </div>
@@ -819,7 +819,7 @@ export default function SesionesTab() {
                 <button
                   onClick={handleCreateSesion}
                   disabled={!sesionFormData.nombre || !sesionFormData.usuario_id || loading}
-                  className="flex-1 bg-[#00b894] hover:bg-[#00a085] disabled:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors"
+                  className="flex-1 bg-[#F29A1F] hover:bg-[#F29A1F] disabled:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors"
                 >
                   {loading ? 'Creando...' : 'Crear Sesión'}
                 </button>

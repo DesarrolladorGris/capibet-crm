@@ -44,8 +44,12 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
     return (
       <div className="min-h-screen bg-[#1a1d23] flex items-center justify-center">
         <div className="text-center">
-          <div className="w-8 h-8 bg-[#00b894] rounded-full flex items-center justify-center mb-4 mx-auto animate-pulse">
-            <div className="text-white font-bold text-sm">🎲</div>
+          <div className="w-8 h-8 bg-[#F29A1F] rounded-full flex items-center justify-center mb-4 mx-auto animate-pulse overflow-hidden">
+            <img 
+              src="https://pbs.twimg.com/profile_images/1118644090420322304/5SFmHCl-_400x400.jpg" 
+              alt="CAPIBET Logo"
+              className="w-full h-full object-cover rounded-full"
+            />
           </div>
           <p className="text-gray-400">Cargando...</p>
         </div>
@@ -70,8 +74,12 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
             <div className="flex items-center space-x-6">
               {/* Logo CAPIBET CRM */}
               <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-[#00b894] rounded-full flex items-center justify-center">
-                  <div className="text-white font-bold text-sm">🎲</div>
+                <div className="w-8 h-8 bg-[#F29A1F] rounded-full flex items-center justify-center overflow-hidden">
+                  <img 
+                    src="https://pbs.twimg.com/profile_images/1118644090420322304/5SFmHCl-_400x400.jpg" 
+                    alt="CAPIBET Logo"
+                    className="w-full h-full object-cover rounded-full"
+                  />
                 </div>
                 <div>
                   <h1 className="text-white font-bold text-lg">CAPIBET CRM</h1>
@@ -84,7 +92,7 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
 
               {/* Info de Soporte */}
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-[#00b894] rounded-full flex items-center justify-center">
+                <div className="w-10 h-10 bg-[#F29A1F] rounded-full flex items-center justify-center">
                   <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192L5.636 18.364M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
                   </svg>
@@ -148,8 +156,12 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
           {/* Primera fila: Logo y botón logout */}
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-[#00b894] rounded-full flex items-center justify-center">
-                <div className="text-white font-bold text-sm">🎲</div>
+              <div className="w-8 h-8 bg-[#F29A1F] rounded-full flex items-center justify-center overflow-hidden">
+                <img 
+                  src="https://pbs.twimg.com/profile_images/1118644090420322304/5SFmHCl-_400x400.jpg" 
+                  alt="CAPIBET Logo"
+                  className="w-full h-full object-cover rounded-full"
+                />
               </div>
               <div>
                 <h1 className="text-white font-bold text-base">CAPIBET CRM</h1>
@@ -182,7 +194,7 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
           {/* Segunda fila: Soporte y usuario */}
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-[#00b894] rounded-full flex items-center justify-center">
+              <div className="w-8 h-8 bg-[#F29A1F] rounded-full flex items-center justify-center">
                 <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192L5.636 18.364M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
                 </svg>

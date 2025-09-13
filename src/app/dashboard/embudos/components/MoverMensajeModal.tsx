@@ -114,7 +114,7 @@ export default function MoverMensajeModal({
             <select
               value={selectedEmbudoId}
               onChange={(e) => setSelectedEmbudoId(parseInt(e.target.value))}
-              className="w-full px-3 py-2 bg-[#1a1d23] border border-[#3a3d45] rounded text-white focus:outline-none focus:ring-2 focus:ring-[#00b894] focus:border-[#00b894]"
+              className="w-full px-3 py-2 bg-[#1a1d23] border border-[#3a3d45] rounded text-white focus:outline-none focus:ring-2 focus:ring-[#F29A1F] focus:border-[#F29A1F]"
               disabled={isLoading}
             >
               <option value={0}>Seleccionar embudo destino</option>
@@ -154,7 +154,7 @@ export default function MoverMensajeModal({
           <button
             onClick={handleMove}
             disabled={isLoading || !selectedEmbudoId || embudosDisponibles.length === 0}
-            className="bg-[#00b894] hover:bg-[#00a085] disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-6 py-2 rounded font-medium transition-colors flex items-center space-x-2"
+            className="bg-[#F29A1F] hover:bg-[#F29A1F] disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-6 py-2 rounded font-medium transition-colors flex items-center space-x-2"
           >
             {isLoading && (
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>

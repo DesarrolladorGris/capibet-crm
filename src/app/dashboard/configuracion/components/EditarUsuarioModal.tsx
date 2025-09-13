@@ -230,7 +230,7 @@ export default function EditarUsuarioModal({ isOpen, onClose, onUserUpdated, usu
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-[#3a3d45]">
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-[#00b894] rounded-full flex items-center justify-center">
+            <div className="w-8 h-8 bg-[#F29A1F] rounded-full flex items-center justify-center">
               <span className="text-white font-bold text-sm">✏️</span>
             </div>
             <div>
@@ -270,7 +270,7 @@ export default function EditarUsuarioModal({ isOpen, onClose, onUserUpdated, usu
                       value={formData.agencyName}
                       onChange={handleInputChange}
                       placeholder="Nombre de la agencia"
-                      className="w-full pl-10 pr-4 py-3 bg-[#2a2d35] border border-[#3a3d45] rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#00b894] focus:border-[#00b894] text-sm"
+                      className="w-full pl-10 pr-4 py-3 bg-[#2a2d35] border border-[#3a3d45] rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#F29A1F] focus:border-[#F29A1F] text-sm"
                       required
                     />
                   </div>
@@ -291,7 +291,7 @@ export default function EditarUsuarioModal({ isOpen, onClose, onUserUpdated, usu
                       value={formData.companyType}
                       onChange={handleInputChange}
                       placeholder="Tipo de empresa"
-                      className="w-full pl-10 pr-4 py-3 bg-[#2a2d35] border border-[#3a3d45] rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#00b894] focus:border-[#00b894] text-sm"
+                      className="w-full pl-10 pr-4 py-3 bg-[#2a2d35] border border-[#3a3d45] rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#F29A1F] focus:border-[#F29A1F] text-sm"
                       required
                     />
                   </div>
@@ -312,7 +312,7 @@ export default function EditarUsuarioModal({ isOpen, onClose, onUserUpdated, usu
                   type="button"
                   onClick={handleNextStep}
                   disabled={!formData.agencyName || !formData.companyType || isLoading}
-                  className="bg-[#00b894] hover:bg-[#00a085] disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg font-medium transition-colors"
+                  className="bg-[#F29A1F] hover:bg-[#F29A1F] disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg font-medium transition-colors"
                 >
                   Siguiente
                 </button>
@@ -334,7 +334,7 @@ export default function EditarUsuarioModal({ isOpen, onClose, onUserUpdated, usu
                   value={formData.name}
                   onChange={handleInputChange}
                   placeholder="Nombre completo"
-                  className="w-full pl-10 pr-4 py-3 bg-[#2a2d35] border border-[#3a3d45] rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#00b894] focus:border-[#00b894] text-sm"
+                  className="w-full pl-10 pr-4 py-3 bg-[#2a2d35] border border-[#3a3d45] rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#F29A1F] focus:border-[#F29A1F] text-sm"
                   required
                 />
               </div>
@@ -352,7 +352,7 @@ export default function EditarUsuarioModal({ isOpen, onClose, onUserUpdated, usu
                   value={formData.email}
                   onChange={handleInputChange}
                   placeholder="Correo electrónico"
-                  className="w-full pl-10 pr-4 py-3 bg-[#2a2d35] border border-[#3a3d45] rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#00b894] focus:border-[#00b894] text-sm"
+                  className="w-full pl-10 pr-4 py-3 bg-[#2a2d35] border border-[#3a3d45] rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#F29A1F] focus:border-[#F29A1F] text-sm"
                   required
                 />
               </div>
@@ -365,7 +365,7 @@ export default function EditarUsuarioModal({ isOpen, onClose, onUserUpdated, usu
                     <button
                       type="button"
                       onClick={() => setShowCountryDropdown(!showCountryDropdown)}
-                      className="flex items-center space-x-2 px-3 py-3 bg-[#2a2d35] border border-[#3a3d45] border-r-0 rounded-l-lg text-white hover:bg-slate-700/70 focus:outline-none focus:ring-2 focus:ring-[#00b894] focus:border-[#00b894] min-w-[90px]"
+                      className="flex items-center space-x-2 px-3 py-3 bg-[#2a2d35] border border-[#3a3d45] border-r-0 rounded-l-lg text-white hover:bg-slate-700/70 focus:outline-none focus:ring-2 focus:ring-[#F29A1F] focus:border-[#F29A1F] min-w-[90px]"
                     >
                       <Image 
                         src={selectedCountry.flag} 
@@ -412,7 +412,7 @@ export default function EditarUsuarioModal({ isOpen, onClose, onUserUpdated, usu
                     value={formData.phone}
                     onChange={handleInputChange}
                     placeholder="Número de teléfono"
-                    className="flex-1 px-4 py-3 bg-[#2a2d35] border border-[#3a3d45] rounded-r-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#00b894] focus:border-[#00b894] text-sm"
+                    className="flex-1 px-4 py-3 bg-[#2a2d35] border border-[#3a3d45] rounded-r-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#F29A1F] focus:border-[#F29A1F] text-sm"
                     required
                   />
                 </div>
@@ -429,7 +429,7 @@ export default function EditarUsuarioModal({ isOpen, onClose, onUserUpdated, usu
                   name="rol"
                   value={formData.rol}
                   onChange={handleInputChange}
-                  className="w-full pl-10 pr-4 py-3 bg-[#2a2d35] border border-[#3a3d45] rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-[#00b894] focus:border-[#00b894] text-sm"
+                  className="w-full pl-10 pr-4 py-3 bg-[#2a2d35] border border-[#3a3d45] rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-[#F29A1F] focus:border-[#F29A1F] text-sm"
                   required
                 >
                   <option value="Operador">Operador</option>
@@ -450,7 +450,7 @@ export default function EditarUsuarioModal({ isOpen, onClose, onUserUpdated, usu
                   value={formData.password}
                   onChange={handleInputChange}
                   placeholder="Nueva contraseña (opcional)"
-                  className="w-full pl-10 pr-12 py-3 bg-[#2a2d35] border border-[#3a3d45] rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#00b894] focus:border-[#00b894] text-sm"
+                  className="w-full pl-10 pr-12 py-3 bg-[#2a2d35] border border-[#3a3d45] rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#F29A1F] focus:border-[#F29A1F] text-sm"
                 />
                 <button
                   type="button"
@@ -483,7 +483,7 @@ export default function EditarUsuarioModal({ isOpen, onClose, onUserUpdated, usu
                     value={formData.confirmPassword}
                     onChange={handleInputChange}
                     placeholder="Repetir nueva contraseña"
-                    className="w-full pl-10 pr-12 py-3 bg-[#2a2d35] border border-[#3a3d45] rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#00b894] focus:border-[#00b894] text-sm"
+                    className="w-full pl-10 pr-12 py-3 bg-[#2a2d35] border border-[#3a3d45] rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#F29A1F] focus:border-[#F29A1F] text-sm"
                     required
                   />
                   <button
@@ -531,7 +531,7 @@ export default function EditarUsuarioModal({ isOpen, onClose, onUserUpdated, usu
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="bg-[#00b894] hover:bg-[#00a085] disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg font-medium transition-colors"
+                  className="bg-[#F29A1F] hover:bg-[#F29A1F] disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg font-medium transition-colors"
                 >
                   {isLoading ? 'Guardando...' : 'Guardar Cambios'}
                 </button>

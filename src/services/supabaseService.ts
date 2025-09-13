@@ -105,6 +105,33 @@ export interface ApiResponse<T = unknown> {
   details?: string;
 }
 
+// Tipos para ventas de fichas digitales
+export interface VentaFichasDigitales {
+  id: number;
+  cliente_id: number;
+  vendedor_id: number;
+  monto_compra: number;
+  fichas_otorgadas: number;
+  valor_ficha: number;
+  metodo_pago: 'EFECTIVO' | 'DEBITO' | 'CREDITO' | 'TRANSFERENCIA' | 'CRIPTO';
+  estado: 'PENDIENTE' | 'COMPLETADA' | 'CANCELADA';
+  codigo_venta: string;
+  fecha_venta: string;
+}
+
+export interface VentaFichasDigitalesData {
+  id?: number;
+  cliente_id: number;
+  vendedor_id: number;
+  monto_compra: number;
+  fichas_otorgadas: number;
+  valor_ficha: number;
+  metodo_pago: 'EFECTIVO' | 'DEBITO' | 'CREDITO' | 'TRANSFERENCIA' | 'CRIPTO';
+  estado?: 'PENDIENTE' | 'COMPLETADA' | 'CANCELADA';
+  codigo_venta: string;
+  fecha_venta?: string;
+}
+
 export interface Etiqueta {
   id?: number;
   nombre: string;
@@ -1718,7 +1745,7 @@ export class SupabaseService {
       const etiquetas = Array.isArray(data) ? data.map((etiqueta: any) => ({
         id: etiqueta.id,
         nombre: etiqueta.nombre || '', // Asegurar que siempre tenga nombre
-        color: etiqueta.color || '#00b894', // Color por defecto si no existe
+        color: etiqueta.color || '#F29A1F', // Color por defecto si no existe
         descripcion: etiqueta.descripcion || '', // Descripción vacía si no existe
         activa: true, // Por defecto las etiquetas están activas
         creado_por: etiqueta.creado_por,
@@ -1778,7 +1805,7 @@ export class SupabaseService {
       const etiquetaCreada: Etiqueta = {
         id: data.id,
         nombre: data.nombre || '',
-        color: data.color || '#00b894',
+        color: data.color || '#F29A1F',
         descripcion: data.descripcion || '',
         activa: true,
         creado_por: data.creado_por,
@@ -1842,7 +1869,7 @@ export class SupabaseService {
       const etiquetaActualizada: Etiqueta = {
         id: data.id,
         nombre: data.nombre || '',
-        color: data.color || '#00b894',
+        color: data.color || '#F29A1F',
         descripcion: data.descripcion || '',
         activa: true,
         creado_por: data.creado_por,
@@ -3899,6 +3926,256 @@ export class SupabaseService {
       return { 
         success: false, 
         error: 'Error de conexión al eliminar producto',
+        details: error instanceof Error ? error.message : 'Error desconocido'
+      };
+    }
+  }
+
+  // ===== MÉTODOS PARA VENTAS DE FICHAS DIGITALES =====
+
+  /**
+   * Obtiene todas las ventas de fichas digitales
+   */
+  async getAllVentasFichasDigitales(): Promise<ApiResponse<VentaFichasDigitales[]>> {
+    try {
+      console.log('🚀 Obteniendo todas las ventas de fichas digitales...');
+      
+      const response = await fetch(`${apiEndpoints.ventasFichasDigitales}?select=*&order=fecha_venta.desc`, {
+        method: 'GET',
+        headers: {
+          'apikey': supabaseConfig.serviceRoleKey,
+          'Authorization': `Bearer ${supabaseConfig.serviceRoleKey}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error('Error response body:', errorData);
+        return {
+          success: false,
+          error: `Error del servidor: ${response.status} ${response.statusText}`,
+          details: errorData
+        };
+      }
+
+      const data: VentaFichasDigitales[] = await response.json();
+      console.log('✅ Ventas de fichas digitales obtenidas:', data.length);
+
+      return {
+        success: true,
+        data: data
+      };
+    } catch (error) {
+      console.error('❌ Error al obtener ventas de fichas digitales:', error);
+      return { 
+        success: false, 
+        error: 'Error de conexión al obtener ventas de fichas digitales',
+        details: error instanceof Error ? error.message : 'Error desconocido'
+      };
+    }
+  }
+
+  /**
+   * Obtiene una venta específica por ID
+   */
+  async getVentaFichasDigitalesById(id: number): Promise<ApiResponse<VentaFichasDigitales>> {
+    try {
+      console.log('🚀 Obteniendo venta de fichas digitales por ID:', id);
+      
+      const response = await fetch(`${apiEndpoints.ventasFichasDigitales}?id=eq.${id}&select=*`, {
+        method: 'GET',
+        headers: {
+          'apikey': supabaseConfig.serviceRoleKey,
+          'Authorization': `Bearer ${supabaseConfig.serviceRoleKey}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error('Error response body:', errorData);
+        return {
+          success: false,
+          error: `Error del servidor: ${response.status} ${response.statusText}`,
+          details: errorData
+        };
+      }
+
+      const data: VentaFichasDigitales[] = await response.json();
+      
+      if (data.length === 0) {
+        return {
+          success: false,
+          error: 'Venta no encontrada'
+        };
+      }
+
+      console.log('✅ Venta de fichas digitales obtenida:', data[0]);
+
+      return {
+        success: true,
+        data: data[0]
+      };
+    } catch (error) {
+      console.error('❌ Error al obtener venta de fichas digitales:', error);
+      return { 
+        success: false, 
+        error: 'Error de conexión al obtener venta de fichas digitales',
+        details: error instanceof Error ? error.message : 'Error desconocido'
+      };
+    }
+  }
+
+  /**
+   * Crea una nueva venta de fichas digitales
+   */
+  async createVentaFichasDigitales(ventaData: VentaFichasDigitalesData): Promise<ApiResponse<VentaFichasDigitales>> {
+    try {
+      console.log('🚀 Creando nueva venta de fichas digitales:', ventaData);
+      
+      const response = await fetch(apiEndpoints.ventasFichasDigitales, {
+        method: 'POST',
+        headers: {
+          'apikey': supabaseConfig.serviceRoleKey,
+          'Authorization': `Bearer ${supabaseConfig.serviceRoleKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(ventaData)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error('Error response body:', errorData);
+        return {
+          success: false,
+          error: `Error del servidor: ${response.status} ${response.statusText}`,
+          details: errorData
+        };
+      }
+
+      // Verificar si hay contenido en la respuesta
+      const responseText = await response.text();
+      console.log('📄 Respuesta del servidor:', responseText);
+      
+      if (!responseText || responseText.trim() === '') {
+        console.log('✅ Venta creada exitosamente (sin contenido en respuesta)');
+        return {
+          success: true,
+          data: null
+        };
+      }
+
+      const data: VentaFichasDigitales = JSON.parse(responseText);
+      console.log('✅ Venta de fichas digitales creada:', data);
+
+      return {
+        success: true,
+        data: data
+      };
+    } catch (error) {
+      console.error('❌ Error al crear venta de fichas digitales:', error);
+      return { 
+        success: false, 
+        error: 'Error de conexión al crear venta de fichas digitales',
+        details: error instanceof Error ? error.message : 'Error desconocido'
+      };
+    }
+  }
+
+  /**
+   * Actualiza una venta de fichas digitales por ID
+   */
+  async updateVentaFichasDigitales(id: number, data: VentaFichasDigitalesData): Promise<ApiResponse<VentaFichasDigitales>> {
+    try {
+      console.log('📝 Actualizando venta de fichas digitales:', id, data);
+      
+      const response = await fetch(`${apiEndpoints.ventasFichasDigitales}?id=eq.${id}`, {
+        method: 'PATCH',
+        headers: {
+          'apikey': supabaseConfig.serviceRoleKey,
+          'Authorization': `Bearer ${supabaseConfig.serviceRoleKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error('❌ Error del servidor al actualizar venta:', errorData);
+        return {
+          success: false,
+          error: `Error del servidor: ${response.status} ${response.statusText}`,
+          details: errorData
+        };
+      }
+
+      // Verificar si hay contenido en la respuesta
+      const responseText = await response.text();
+      console.log('📄 Respuesta del servidor (actualización):', responseText);
+      
+      if (!responseText || responseText.trim() === '') {
+        console.log('✅ Venta actualizada exitosamente (sin contenido en respuesta)');
+        return {
+          success: true,
+          data: null
+        };
+      }
+
+      const updatedData: VentaFichasDigitales[] = JSON.parse(responseText);
+      console.log('✅ Venta de fichas digitales actualizada:', updatedData[0]);
+
+      return {
+        success: true,
+        data: updatedData[0]
+      };
+    } catch (error) {
+      console.error('❌ Error al actualizar venta de fichas digitales:', error);
+      return { 
+        success: false, 
+        error: 'Error de conexión al actualizar venta de fichas digitales',
+        details: error instanceof Error ? error.message : 'Error desconocido'
+      };
+    }
+  }
+
+  /**
+   * Elimina una venta de fichas digitales por ID
+   */
+  async deleteVentaFichasDigitales(id: number): Promise<ApiResponse<null>> {
+    try {
+      console.log('🗑️ Eliminando venta de fichas digitales:', id);
+      
+      const response = await fetch(`${apiEndpoints.ventasFichasDigitales}?id=eq.${id}`, {
+        method: 'DELETE',
+        headers: {
+          'apikey': supabaseConfig.serviceRoleKey,
+          'Authorization': `Bearer ${supabaseConfig.serviceRoleKey}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error('❌ Error del servidor al eliminar venta:', errorData);
+        return {
+          success: false,
+          error: `Error del servidor: ${response.status} ${response.statusText}`,
+          details: errorData
+        };
+      }
+
+      console.log('✅ Venta de fichas digitales eliminada:', id);
+
+      return {
+        success: true,
+        data: null
+      };
+    } catch (error) {
+      console.error('❌ Error al eliminar venta de fichas digitales:', error);
+      return { 
+        success: false, 
+        error: 'Error de conexión al eliminar venta de fichas digitales',
         details: error instanceof Error ? error.message : 'Error desconocido'
       };
     }

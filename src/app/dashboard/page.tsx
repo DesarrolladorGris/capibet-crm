@@ -15,6 +15,8 @@ export default function DashboardPage() {
   const [loadingContacts, setLoadingContacts] = useState(false);
   const [internalMessagesCount, setInternalMessagesCount] = useState(0);
   const [loadingInternalMessages, setLoadingInternalMessages] = useState(false);
+  const [totalVentas, setTotalVentas] = useState(0);
+  const [loadingVentas, setLoadingVentas] = useState(false);
 
   // Función para cargar la cantidad de productos
   const loadProductsCount = async () => {
@@ -70,6 +72,22 @@ export default function DashboardPage() {
     }
   };
 
+  // Función para cargar el total de ventas
+  const loadTotalVentas = async () => {
+    setLoadingVentas(true);
+    try {
+      const response = await supabaseService.getAllVentasFichasDigitales();
+      if (response.success && response.data) {
+        const total = response.data.reduce((sum, venta) => sum + venta.monto_compra, 0);
+        setTotalVentas(total);
+      }
+    } catch (error) {
+      console.error('Error loading total ventas:', error);
+    } finally {
+      setLoadingVentas(false);
+    }
+  };
+
   useEffect(() => {
     if (!isLoading && user) {
       // Si es un usuario Cliente, redirigir a su página específica
@@ -78,10 +96,11 @@ export default function DashboardPage() {
         return;
       }
       
-      // Cargar cantidad de productos, contactos y mensajes internos para usuarios no cliente
+      // Cargar cantidad de productos, contactos, mensajes internos y total de ventas para usuarios no cliente
       loadProductsCount();
       loadContactsCount();
       loadInternalMessagesCount();
+      loadTotalVentas();
     }
   }, [user, isLoading, router]);
 
@@ -168,8 +187,8 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <MetricsCard
             title="Total Ventas"
-            value="$45,231"
-            change="+20.1%"
+            value={loadingVentas ? "..." : `$${totalVentas.toLocaleString()}`}
+            change=""
             changeType="positive"
             icon="💰"
           />

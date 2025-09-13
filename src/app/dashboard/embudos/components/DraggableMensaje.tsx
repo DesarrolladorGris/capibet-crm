@@ -65,8 +65,8 @@ export default function DraggableMensaje({ mensaje, onMensajeClick }: DraggableM
         ...style,
         zIndex: isDragging ? 9999 : 'auto',
       }}
-      className={`bg-[#1a1d23] rounded p-2 border border-[#3a3d45] hover:border-[#00b894] transition-colors cursor-grab active:cursor-grabbing group relative ${
-        isDragging ? 'opacity-75 shadow-2xl rotate-2 scale-110 border-[#00b894]' : ''
+      className={`bg-[#1a1d23] rounded p-2 border border-[#3a3d45] hover:border-[#F29A1F] transition-colors cursor-grab active:cursor-grabbing group relative ${
+        isDragging ? 'opacity-75 shadow-2xl rotate-2 scale-110 border-[#F29A1F]' : ''
       }`}
       {...attributes}
       {...listeners}
@@ -111,7 +111,7 @@ export default function DraggableMensaje({ mensaje, onMensajeClick }: DraggableM
 
       {/* Indicador visual durante el arrastre */}
       {isDragging && (
-        <div className="absolute top-1 left-1 text-[#00b894] text-xs animate-bounce">
+        <div className="absolute top-1 left-1 text-[#F29A1F] text-xs animate-bounce">
           📤
         </div>
       )}

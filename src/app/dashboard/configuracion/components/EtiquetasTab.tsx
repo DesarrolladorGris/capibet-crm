@@ -17,7 +17,7 @@ const etiquetasPrueba: Etiqueta[] = [
   {
     id: 1,
     nombre: 'Cliente VIP',
-    color: '#00b894',
+    color: '#F29A1F',
     descripcion: 'Clientes de alto valor',
     activa: true,
     created_at: '2024-12-28T10:00:00Z'
@@ -61,14 +61,14 @@ export default function EtiquetasTab({ onEtiquetasCountChange }: EtiquetasTabPro
   const [etiquetaToDelete, setEtiquetaToDelete] = useState<Etiqueta | null>(null);
   const [formData, setFormData] = useState<EtiquetaFormData>({
     nombre: '',
-    color: '#00b894',
+    color: '#F29A1F',
     descripcion: ''
   });
   const [searchTerm, setSearchTerm] = useState('');
 
   // Colores predefinidos para las etiquetas
   const coloresPredefinidos = [
-    '#00b894', '#00cec9', '#0984e3', '#6c5ce7', '#fd79a8',
+    '#F29A1F', '#00cec9', '#0984e3', '#6c5ce7', '#fd79a8',
     '#fdcb6e', '#e17055', '#d63031', '#2d3436', '#636e72'
   ];
 
@@ -198,7 +198,7 @@ export default function EtiquetasTab({ onEtiquetasCountChange }: EtiquetasTabPro
       setEditingEtiqueta(null);
       setFormData({
         nombre: '',
-        color: '#00b894',
+        color: '#F29A1F',
         descripcion: ''
       });
     }
@@ -210,7 +210,7 @@ export default function EtiquetasTab({ onEtiquetasCountChange }: EtiquetasTabPro
     setEditingEtiqueta(null);
     setFormData({
       nombre: '',
-      color: '#00b894',
+      color: '#F29A1F',
       descripcion: ''
     });
   };
@@ -232,7 +232,7 @@ export default function EtiquetasTab({ onEtiquetasCountChange }: EtiquetasTabPro
     return (
       <div className="p-6">
         <div className="flex items-center justify-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#00b894]"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#F29A1F]"></div>
           <span className="ml-3 text-gray-400">Cargando etiquetas...</span>
         </div>
       </div>
@@ -250,7 +250,7 @@ export default function EtiquetasTab({ onEtiquetasCountChange }: EtiquetasTabPro
         </div>
         <button
           onClick={() => abrirModal()}
-          className="bg-[#00b894] hover:bg-[#00a085] text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center space-x-2"
+          className="bg-[#F29A1F] hover:bg-[#F29A1F] text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center space-x-2"
         >
           <span>🏷️</span>
           <span>Nueva Etiqueta</span>
@@ -265,7 +265,7 @@ export default function EtiquetasTab({ onEtiquetasCountChange }: EtiquetasTabPro
             placeholder="Buscar etiquetas..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full bg-[#2a2d35] border border-[#3a3d45] rounded-lg px-4 py-3 pl-10 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#00b894] focus:border-transparent"
+            className="w-full bg-[#2a2d35] border border-[#3a3d45] rounded-lg px-4 py-3 pl-10 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#F29A1F] focus:border-transparent"
           />
           <span className="absolute left-3 top-3 text-gray-400">🔍</span>
         </div>
@@ -287,7 +287,7 @@ export default function EtiquetasTab({ onEtiquetasCountChange }: EtiquetasTabPro
           etiquetasFiltradas.map((etiqueta) => (
             <div
               key={etiqueta.id}
-              className={`bg-[#2a2d35] border border-[#3a3d45] rounded-lg p-4 transition-all hover:border-[#00b894] ${
+              className={`bg-[#2a2d35] border border-[#3a3d45] rounded-lg p-4 transition-all hover:border-[#F29A1F] ${
                 !etiqueta.activa ? 'opacity-60' : ''
               }`}
             >
@@ -360,7 +360,7 @@ export default function EtiquetasTab({ onEtiquetasCountChange }: EtiquetasTabPro
                   type="text"
                   value={formData.nombre}
                   onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
-                  className="w-full bg-[#1a1d23] border border-[#3a3d45] rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#00b894] focus:border-transparent"
+                  className="w-full bg-[#1a1d23] border border-[#3a3d45] rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#F29A1F] focus:border-transparent"
                   placeholder="Ej: Cliente VIP, Urgente, etc."
                   required
                 />
@@ -400,7 +400,7 @@ export default function EtiquetasTab({ onEtiquetasCountChange }: EtiquetasTabPro
                 <textarea
                   value={formData.descripcion}
                   onChange={(e) => setFormData({ ...formData, descripcion: e.target.value })}
-                  className="w-full bg-[#1a1d23] border border-[#3a3d45] rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#00b894] focus:border-transparent"
+                  className="w-full bg-[#1a1d23] border border-[#3a3d45] rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#F29A1F] focus:border-transparent"
                   placeholder="Describe el propósito de esta etiqueta..."
                   rows={3}
                 />
@@ -417,7 +417,7 @@ export default function EtiquetasTab({ onEtiquetasCountChange }: EtiquetasTabPro
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 bg-[#00b894] hover:bg-[#00a085] text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                  className="flex-1 bg-[#F29A1F] hover:bg-[#F29A1F] text-white px-4 py-2 rounded-lg font-medium transition-colors"
                 >
                   {editingEtiqueta ? 'Actualizar' : 'Crear'}
                 </button>

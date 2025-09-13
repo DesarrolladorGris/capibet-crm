@@ -28,6 +28,7 @@ const menuItems: MenuItem[] = [
   { id: 'sales', icon: '🛒', label: 'Ventas', active: false },
   { id: 'bulk-sends', icon: '📤', label: 'Envíos masivos', active: false },
   { id: 'config', icon: '⚙️', label: 'Configuración', active: false, requiredRoles: ['Administrador', 'Admin'] },
+  { id: 'academy', icon: '🎓', label: 'CAPIBET Academy', active: false, requiredRoles: ['Administrador', 'Admin'] },
 ];
 
 export default function Sidebar({ isOpen }: SidebarProps) {
@@ -63,6 +64,8 @@ export default function Sidebar({ isOpen }: SidebarProps) {
       setActiveItem('contacts');
     } else if (pathname === '/dashboard/configuracion') {
       setActiveItem('config');
+    } else if (pathname === '/dashboard/academy') {
+      setActiveItem('academy');
     } else if (pathname === '/dashboard/chat-interno') {
       setActiveItem('internal-chat');
     } else if (pathname === '/dashboard/embudos') {
@@ -100,6 +103,9 @@ export default function Sidebar({ isOpen }: SidebarProps) {
       case 'config':
         router.push('/dashboard/configuracion');
         break;
+      case 'academy':
+        router.push('/dashboard/academy');
+        break;
       case 'internal-chat':
         router.push('/dashboard/chat-interno');
         break;
@@ -130,16 +136,20 @@ export default function Sidebar({ isOpen }: SidebarProps) {
       {/* Logo */}
       <div className="p-4 border-b border-[var(--border-primary)]">
         <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 bg-[#00b894] rounded-full flex items-center justify-center">
-            <div className="text-white font-bold text-sm">🎲</div>
+          <div className="w-8 h-8 bg-[#F29A1F] rounded-full flex items-center justify-center overflow-hidden">
+            <img 
+              src="https://pbs.twimg.com/profile_images/1118644090420322304/5SFmHCl-_400x400.jpg" 
+              alt="CAPIBET Logo"
+              className="w-full h-full object-cover rounded-full"
+            />
           </div>
           {isOpen && (
             <div>
               <h1 className="text-[var(--text-primary)] font-bold text-lg">CAPIBET</h1>
               <div className="flex items-center space-x-1">
-                <div className="h-0.5 w-4 bg-[#00b894]"></div>
-                <span className="text-[#00b894] text-xs font-medium">CRM</span>
-                <div className="h-0.5 w-4 bg-[#00b894]"></div>
+                <div className="h-0.5 w-4 bg-[#F29A1F]"></div>
+                <span className="text-[#F29A1F] text-xs font-medium">CRM</span>
+                <div className="h-0.5 w-4 bg-[#F29A1F]"></div>
               </div>
             </div>
           )}
@@ -154,7 +164,7 @@ export default function Sidebar({ isOpen }: SidebarProps) {
             onClick={() => handleItemClick(item.id)}
             className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-left transition-colors duration-200 mb-1 ${
               activeItem === item.id
-                ? 'bg-[#00b894] text-white'
+                ? 'bg-[#F29A1F] text-white'
                 : 'text-gray-400 hover:text-white hover:bg-[#2a2d35]'
             }`}
           >

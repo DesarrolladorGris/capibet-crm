@@ -161,7 +161,7 @@ export default function NotificacionesModal({ isOpen, onClose }: NotificacionesM
             <select
               value={filtro}
               onChange={(e) => setFiltro(e.target.value as 'todas' | 'no-leidas')}
-              className="bg-[#2a2d35] border border-[#3a3d45] text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#00b894]"
+              className="bg-[#2a2d35] border border-[#3a3d45] text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#F29A1F]"
             >
               <option value="todas">Todas</option>
               <option value="no-leidas">No leídas</option>
@@ -171,7 +171,7 @@ export default function NotificacionesModal({ isOpen, onClose }: NotificacionesM
             {notificacionesNoLeidas > 0 && (
               <button
                 onClick={marcarTodasComoLeidas}
-                className="text-[#00b894] hover:text-[#00a085] text-sm font-medium transition-colors"
+                className="text-[#F29A1F] hover:text-[#F29A1F] text-sm font-medium transition-colors"
               >
                 Marcar todas como leídas
               </button>
@@ -194,7 +194,7 @@ export default function NotificacionesModal({ isOpen, onClose }: NotificacionesM
           {isLoading ? (
             <div className="flex items-center justify-center h-64">
               <div className="text-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#00b894] mx-auto mb-4"></div>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#F29A1F] mx-auto mb-4"></div>
                 <p className="text-gray-400">Cargando notificaciones...</p>
               </div>
             </div>
@@ -259,7 +259,7 @@ export default function NotificacionesModal({ isOpen, onClose }: NotificacionesM
                         {!notificacion.leida && (
                           <button
                             onClick={() => marcarComoLeida(notificacion.id)}
-                            className="mt-2 text-xs text-[#00b894] hover:text-[#00a085] transition-colors"
+                            className="mt-2 text-xs text-[#F29A1F] hover:text-[#F29A1F] transition-colors"
                           >
                             Marcar como leída
                           </button>
@@ -284,7 +284,7 @@ export default function NotificacionesModal({ isOpen, onClose }: NotificacionesM
             </span>
             <button
               onClick={onClose}
-              className="text-[#00b894] hover:text-[#00a085] font-medium transition-colors"
+              className="text-[#F29A1F] hover:text-[#F29A1F] font-medium transition-colors"
             >
               Cerrar
             </button>

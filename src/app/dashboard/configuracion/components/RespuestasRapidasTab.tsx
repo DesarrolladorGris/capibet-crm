@@ -291,7 +291,7 @@ export default function RespuestasRapidasTab() {
            </button>
                      <button
              onClick={() => abrirModal()}
-             className="flex items-center space-x-2 bg-[#00b894] hover:bg-[#00a085] text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+             className="flex items-center space-x-2 bg-[#F29A1F] hover:bg-[#F29A1F] text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
            >
              <span>➕</span>
              <span>Nueva Respuesta</span>
@@ -458,7 +458,7 @@ export default function RespuestasRapidasTab() {
             {/* Header */}
             <div className="flex items-center justify-between p-6 border-b border-[#3a3d45]">
               <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-[#00b894] rounded-full flex items-center justify-center">
+                <div className="w-8 h-8 bg-[#F29A1F] rounded-full flex items-center justify-center">
                   <span className="text-white font-bold text-sm">💬</span>
                 </div>
                 <div>
@@ -494,7 +494,7 @@ export default function RespuestasRapidasTab() {
                       type="text"
                       value={formData.titulo}
                       onChange={(e) => setFormData({ ...formData, titulo: e.target.value })}
-                      className="w-full pl-10 pr-4 py-3 bg-[#2a2d35] border border-[#3a3d45] rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#00b894] focus:border-[#00b894] text-sm"
+                      className="w-full pl-10 pr-4 py-3 bg-[#2a2d35] border border-[#3a3d45] rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#F29A1F] focus:border-[#F29A1F] text-sm"
                       placeholder="Ej: Bienvenida, Problema de Pago..."
                       required
                     />
@@ -514,7 +514,7 @@ export default function RespuestasRapidasTab() {
                       <select
                         value={formData.categoria}
                         onChange={(e) => setFormData({ ...formData, categoria: e.target.value })}
-                        className="w-full pl-10 pr-4 py-3 bg-[#2a2d35] border border-[#3a3d45] rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-[#00b894] focus:border-[#00b894] text-sm"
+                        className="w-full pl-10 pr-4 py-3 bg-[#2a2d35] border border-[#3a3d45] rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-[#F29A1F] focus:border-[#F29A1F] text-sm"
                         required
                       >
                         {categoriasPredefinidas.map((cat) => (
@@ -525,7 +525,7 @@ export default function RespuestasRapidasTab() {
                     <button
                       type="button"
                       onClick={() => setShowCategoriaInput(!showCategoriaInput)}
-                      className="px-4 py-3 text-[#00b894] border border-[#00b894] rounded-lg hover:bg-[#00b894]/10 transition-colors"
+                      className="px-4 py-3 text-[#F29A1F] border border-[#F29A1F] rounded-lg hover:bg-[#F29A1F]/10 transition-colors"
                     >
                       +
                     </button>
@@ -538,12 +538,12 @@ export default function RespuestasRapidasTab() {
                         value={nuevaCategoria}
                         onChange={(e) => setNuevaCategoria(e.target.value)}
                         placeholder="Nueva categoría"
-                        className="flex-1 px-4 py-3 bg-[#2a2d35] border border-[#3a3d45] rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#00b894] focus:border-[#00b894] text-sm"
+                        className="flex-1 px-4 py-3 bg-[#2a2d35] border border-[#3a3d45] rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#F29A1F] focus:border-[#F29A1F] text-sm"
                       />
                       <button
                         type="button"
                         onClick={agregarCategoria}
-                        className="px-4 py-3 bg-[#00b894] text-white rounded-lg hover:bg-[#00a085] transition-colors"
+                        className="px-4 py-3 bg-[#F29A1F] text-white rounded-lg hover:bg-[#F29A1F] transition-colors"
                       >
                         Agregar
                       </button>
@@ -559,7 +559,7 @@ export default function RespuestasRapidasTab() {
                       value={formData.contenido}
                       onChange={(e) => setFormData({ ...formData, contenido: e.target.value })}
                       rows={6}
-                      className="w-full px-4 py-3 bg-[#2a2d35] border border-[#3a3d45] rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#00b894] focus:border-[#00b894] text-sm resize-none"
+                      className="w-full px-4 py-3 bg-[#2a2d35] border border-[#3a3d45] rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#F29A1F] focus:border-[#F29A1F] text-sm resize-none"
                       placeholder="Escribe la respuesta predefinida..."
                       required
                     />
@@ -580,7 +580,7 @@ export default function RespuestasRapidasTab() {
                   </button>
                   <button
                     type="submit"
-                    className="bg-[#00b894] hover:bg-[#00a085] text-white px-6 py-2 rounded-lg font-medium transition-colors"
+                    className="bg-[#F29A1F] hover:bg-[#F29A1F] text-white px-6 py-2 rounded-lg font-medium transition-colors"
                   >
                     {editingRespuesta ? 'Actualizar' : 'Crear Respuesta'}
                   </button>

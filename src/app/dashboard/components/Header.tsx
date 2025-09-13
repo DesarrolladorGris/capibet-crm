@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import NotificacionesModal from './NotificacionesModal';
 import { useTheme } from '@/contexts/ThemeContext';
 
@@ -18,6 +19,7 @@ export default function Header({ userEmail, userName, userRole, agencyName, onLo
   const [showNotifications, setShowNotifications] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const { theme, toggleTheme, isDark } = useTheme();
+  const router = useRouter();
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
@@ -35,6 +37,10 @@ export default function Header({ userEmail, userName, userRole, agencyName, onLo
 
   const handleToggleTheme = () => {
     toggleTheme();
+  };
+
+  const handleAcademyClick = () => {
+    router.push('/dashboard/academy');
   };
 
   // Detectar cuando se sale del modo pantalla completa
@@ -109,6 +115,19 @@ export default function Header({ userEmail, userName, userRole, agencyName, onLo
             )}
           </button>
 
+          {/* Academy Button */}
+          <button
+            onClick={handleAcademyClick}
+            className="p-2 text-gray-400 hover:text-white transition-colors"
+            title="CAPIBET Academy"
+          >
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l9-5-9-5-9 5 9 5z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
+            </svg>
+          </button>
+
           {/* Fullscreen Button */}
           <button
             onClick={toggleFullscreen}
@@ -137,9 +156,12 @@ export default function Header({ userEmail, userName, userRole, agencyName, onLo
             <div className="relative">
               <button
                 onClick={() => setShowUserMenu(!showUserMenu)}
-                className="w-8 h-8 bg-[#00b894] rounded-full flex items-center justify-center text-white font-medium text-sm hover:bg-[#00a085] transition-colors"
+                className="w-8 h-8 bg-[#F29A1F] rounded-full flex items-center justify-center text-white hover:bg-[#e88a1a] transition-colors"
+                title="Perfil de usuario"
               >
-                {userName ? userName.charAt(0).toUpperCase() : userEmail.charAt(0).toUpperCase()}
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
               </button>
               
               {/* User Dropdown Menu */}

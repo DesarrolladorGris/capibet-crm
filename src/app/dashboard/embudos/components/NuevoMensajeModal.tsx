@@ -216,7 +216,7 @@ export default function NuevoMensajeModal({
                   <select
                     value={canalId}
                     onChange={handleCanalChange}
-                    className="w-full px-3 py-2 bg-[#1a1d23] border border-[#3a3d45] rounded text-white focus:outline-none focus:ring-2 focus:ring-[#00b894] focus:border-[#00b894]"
+                    className="w-full px-3 py-2 bg-[#1a1d23] border border-[#3a3d45] rounded text-white focus:outline-none focus:ring-2 focus:ring-[#F29A1F] focus:border-[#F29A1F]"
                     required
                   >
                     <option value="">Seleccionar canal</option>
@@ -236,7 +236,7 @@ export default function NuevoMensajeModal({
                   <select
                     value={embudoId}
                     onChange={(e) => setEmbudoId(parseInt(e.target.value))}
-                    className="w-full px-3 py-2 bg-[#1a1d23] border border-[#3a3d45] rounded text-white focus:outline-none focus:ring-2 focus:ring-[#00b894] focus:border-[#00b894]"
+                    className="w-full px-3 py-2 bg-[#1a1d23] border border-[#3a3d45] rounded text-white focus:outline-none focus:ring-2 focus:ring-[#F29A1F] focus:border-[#F29A1F]"
                     required
                   >
                     <option value="">Seleccionar embudo</option>
@@ -256,7 +256,7 @@ export default function NuevoMensajeModal({
                   <select
                     value={sesionId}
                     onChange={(e) => setSesionId(parseInt(e.target.value))}
-                    className="w-full px-3 py-2 bg-[#1a1d23] border border-[#3a3d45] rounded text-white focus:outline-none focus:ring-2 focus:ring-[#00b894] focus:border-[#00b894]"
+                    className="w-full px-3 py-2 bg-[#1a1d23] border border-[#3a3d45] rounded text-white focus:outline-none focus:ring-2 focus:ring-[#F29A1F] focus:border-[#F29A1F]"
                     required
                     disabled={!canalId}
                   >
@@ -277,7 +277,7 @@ export default function NuevoMensajeModal({
                   <select
                     value={contactoId}
                     onChange={(e) => setContactoId(parseInt(e.target.value))}
-                    className="w-full px-3 py-2 bg-[#1a1d23] border border-[#3a3d45] rounded text-white focus:outline-none focus:ring-2 focus:ring-[#00b894] focus:border-[#00b894]"
+                    className="w-full px-3 py-2 bg-[#1a1d23] border border-[#3a3d45] rounded text-white focus:outline-none focus:ring-2 focus:ring-[#F29A1F] focus:border-[#F29A1F]"
                     required
                   >
                     <option value="">Seleccionar contacto</option>
@@ -299,7 +299,7 @@ export default function NuevoMensajeModal({
                 <textarea
                   value={contenido}
                   onChange={(e) => setContenido(e.target.value)}
-                  className="w-full px-3 py-2 bg-[#1a1d23] border border-[#3a3d45] rounded text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#00b894] focus:border-[#00b894] h-24 resize-none"
+                  className="w-full px-3 py-2 bg-[#1a1d23] border border-[#3a3d45] rounded text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#F29A1F] focus:border-[#F29A1F] h-24 resize-none"
                   placeholder="Escribe tu mensaje aquí..."
                   required
                 />
@@ -324,7 +324,7 @@ export default function NuevoMensajeModal({
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="bg-[#00b894] hover:bg-[#00a085] disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-6 py-2 rounded font-medium transition-colors"
+                  className="bg-[#F29A1F] hover:bg-[#F29A1F] disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-6 py-2 rounded font-medium transition-colors"
                 >
                   {isLoading ? 'Enviando...' : 'Enviar Mensaje'}
                 </button>

@@ -71,7 +71,7 @@ export default function AgregarContactoModal({ isOpen, onClose, onSave, userId }
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-[#3a3d45]">
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-[#00b894] rounded-full flex items-center justify-center">
+            <div className="w-8 h-8 bg-[#F29A1F] rounded-full flex items-center justify-center">
               <span className="text-white font-bold text-sm">👤</span>
             </div>
             <div>
@@ -104,7 +104,7 @@ export default function AgregarContactoModal({ isOpen, onClose, onSave, userId }
                 value={formData.nombre}
                 onChange={handleInputChange}
                 placeholder="Nombre del contacto"
-                className="w-full pl-10 pr-4 py-3 bg-[#2a2d35] border border-[#3a3d45] rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#00b894] focus:border-[#00b894] text-sm"
+                className="w-full pl-10 pr-4 py-3 bg-[#2a2d35] border border-[#3a3d45] rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#F29A1F] focus:border-[#F29A1F] text-sm"
                 required
               />
             </div>
@@ -124,7 +124,7 @@ export default function AgregarContactoModal({ isOpen, onClose, onSave, userId }
                 value={formData.correo}
                 onChange={handleInputChange}
                 placeholder="Correo electrónico"
-                className="w-full pl-10 pr-4 py-3 bg-[#2a2d35] border border-[#3a3d45] rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#00b894] focus:border-[#00b894] text-sm"
+                className="w-full pl-10 pr-4 py-3 bg-[#2a2d35] border border-[#3a3d45] rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#F29A1F] focus:border-[#F29A1F] text-sm"
                 required
               />
             </div>
@@ -142,7 +142,7 @@ export default function AgregarContactoModal({ isOpen, onClose, onSave, userId }
                 value={formData.telefono}
                 onChange={handleInputChange}
                 placeholder="Número de teléfono"
-                className="w-full pl-10 pr-4 py-3 bg-[#2a2d35] border border-[#3a3d45] rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#00b894] focus:border-[#00b894] text-sm"
+                className="w-full pl-10 pr-4 py-3 bg-[#2a2d35] border border-[#3a3d45] rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#F29A1F] focus:border-[#F29A1F] text-sm"
                 required
               />
             </div>
@@ -160,7 +160,7 @@ export default function AgregarContactoModal({ isOpen, onClose, onSave, userId }
                 value={formData.empresa}
                 onChange={handleInputChange}
                 placeholder="Nombre de la empresa"
-                className="w-full pl-10 pr-4 py-3 bg-[#2a2d35] border border-[#3a3d45] rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#00b894] focus:border-[#00b894] text-sm"
+                className="w-full pl-10 pr-4 py-3 bg-[#2a2d35] border border-[#3a3d45] rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#F29A1F] focus:border-[#F29A1F] text-sm"
               />
             </div>
 
@@ -177,7 +177,7 @@ export default function AgregarContactoModal({ isOpen, onClose, onSave, userId }
                 value={formData.cargo}
                 onChange={handleInputChange}
                 placeholder="Cargo o puesto"
-                className="w-full pl-10 pr-4 py-3 bg-[#2a2d35] border border-[#3a3d45] rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#00b894] focus:border-[#00b894] text-sm"
+                className="w-full pl-10 pr-4 py-3 bg-[#2a2d35] border border-[#3a3d45] rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#F29A1F] focus:border-[#F29A1F] text-sm"
               />
             </div>
 
@@ -192,7 +192,7 @@ export default function AgregarContactoModal({ isOpen, onClose, onSave, userId }
                 name="etiqueta"
                 value={formData.etiqueta}
                 onChange={handleInputChange}
-                className="w-full pl-10 pr-4 py-3 bg-[#2a2d35] border border-[#3a3d45] rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#00b894] focus:border-[#00b894] text-sm"
+                className="w-full pl-10 pr-4 py-3 bg-[#2a2d35] border border-[#3a3d45] rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#F29A1F] focus:border-[#F29A1F] text-sm"
               >
                 <option value="">Seleccionar etiqueta</option>
                 <option value="Prospecto">Prospecto</option>
@@ -216,7 +216,7 @@ export default function AgregarContactoModal({ isOpen, onClose, onSave, userId }
               <button
                 type="submit"
                 disabled={loading}
-                className="bg-[#00b894] hover:bg-[#00a085] disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg font-medium transition-colors"
+                className="bg-[#F29A1F] hover:bg-[#F29A1F] disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg font-medium transition-colors"
               >
                 {loading ? 'Creando...' : 'Crear Contacto'}
               </button>
