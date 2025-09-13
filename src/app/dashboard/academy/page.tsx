@@ -270,7 +270,7 @@ export default function AcademyPage() {
             <div>
               <h4 className="text-[var(--text-primary)] font-medium mb-2">Estado Actual</h4>
               <p className="text-[var(--text-muted)] text-sm">
-                El sistema CAPIBET CRM está en desarrollo activo. Los módulos marcados como "En Progreso" 
+                El sistema CAPIBET CRM está en desarrollo activo. Los módulos marcados como &quot;En Progreso&quot; 
                 tienen funcionalidades básicas implementadas y están siendo mejorados continuamente.
               </p>
             </div>

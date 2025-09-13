@@ -81,12 +81,12 @@ const ChatInternoPage = () => {
         const totalCountsResult = await supabaseService.getTotalMessagesCounts();
         const totalCounts = totalCountsResult.success ? totalCountsResult.data : {};
         
-        const enrichedConversations = result.data.map((conv: any) => {
+        const enrichedConversations = result.data.map((conv: {cliente_id: number, operador_id?: number}) => {
           // Obtener datos del cliente
-          const cliente = usuarios.find((user: any) => user.id === conv.cliente_id);
+          const cliente = usuarios.find((user: {id: number}) => user.id === conv.cliente_id);
           
           // Obtener datos del operador (si está asignado)
-          const operador = conv.operador_id ? usuarios.find((user: any) => user.id === conv.operador_id) : null;
+          const operador = conv.operador_id ? usuarios.find((user: {id: number}) => user.id === conv.operador_id) : null;
           
           return {
             ...conv,

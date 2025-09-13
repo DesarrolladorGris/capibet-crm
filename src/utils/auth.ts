@@ -88,7 +88,7 @@ export function getCurrentUserId(): number | null {
 /**
  * Obtiene los datos del usuario logueado
  */
-export function getCurrentUserData(): any | null {
+export function getCurrentUserData(): {id: number, nombre_usuario: string, correo_electronico: string, rol: string} | null {
   if (typeof window === 'undefined') return null;
   
   try {

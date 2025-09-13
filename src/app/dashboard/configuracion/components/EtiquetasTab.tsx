@@ -444,7 +444,7 @@ export default function EtiquetasTab({ onEtiquetasCountChange }: EtiquetasTabPro
               
               {/* Mensaje */}
               <p className="text-gray-400 mb-2">
-                ¿Estás seguro de que quieres eliminar la etiqueta "{etiquetaToDelete.nombre}"?
+                ¿Estás seguro de que quieres eliminar la etiqueta &quot;{etiquetaToDelete.nombre}&quot;?
               </p>
               <p className="text-gray-500 text-sm mb-6">
                 Esta acción no se puede deshacer.

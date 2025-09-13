@@ -30,7 +30,7 @@ export default function ClientChatPage() {
   const [userId, setUserId] = useState<number | null>(null);
   const [hasCreatedConversation, setHasCreatedConversation] = useState(false);
   const [isCreatingConversation, setIsCreatingConversation] = useState(false);
-  const [conversationData, setConversationData] = useState<any>(null);
+  const [conversationData, setConversationData] = useState<{id: number, estado: string} | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -62,7 +62,7 @@ export default function ClientChatPage() {
         console.log('✅ Conversación encontrada:', result.data);
         
         // Verificar si la conversación está finalizada
-        if (result.data.estado === 'FINALIZADO') {
+        if (result.data && result.data.estado === 'FINALIZADO') {
           console.log('🔒 Conversación finalizada, permitiendo crear nueva conversación');
           setHasCreatedConversation(false);
           setConversationData(null);
@@ -90,7 +90,7 @@ export default function ClientChatPage() {
       console.log('🚀 Cargando mensajes existentes para conversación:', chatInternoId);
       const result = await supabaseService.getClientMensajesInternos(chatInternoId);
       
-      if (result.success && result.data.length > 0) {
+      if (result.success && result.data && result.data.length > 0) {
         // Convertir mensajes del servidor al formato de la UI
         const convertedMessages: Message[] = result.data.map((msg: MensajeInterno) => ({
           id: msg.id,

@@ -12,6 +12,7 @@ interface Task {
   titulo: string;
   descripion?: string; // Nota: en la API viene como "descripion" (sin c)
   fecha: string;
+  hora?: string; // Hora de la tarea
   asignada?: number; // ID del usuario asignado (en la API viene como "asignada")
   creado_por?: number;
   categoria: string;
@@ -79,7 +80,7 @@ export default function CalendarioPage() {
   const loadUsuarios = async () => {
     try {
       const result = await supabaseService.getAllUsuarios();
-      if (result.success) {
+      if (result.success && result.data) {
         setUsuarios(result.data);
       } else {
         console.error('Error al cargar usuarios:', result.error);
@@ -94,18 +95,19 @@ export default function CalendarioPage() {
     setLoading(true);
     try {
       const result = await supabaseService.getAllTareas();
-      if (result.success) {
+      if (result.success && result.data) {
         // Obtener el rol del usuario actual
         const currentUserRole = localStorage.getItem('userRole');
         const currentUserId = parseInt(localStorage.getItem('userId') || '0');
         
         // Enriquecer tareas con información de usuarios y colores
-        let enrichedTasks = result.data.map((task: any) => {
+        let enrichedTasks = result.data.map((task: Task) => {
           const categoria = categorias.find(c => c.id === task.categoria);
           const usuario = usuarios.find(u => u.id === task.asignada);
           
           return {
             ...task,
+            hora: task.hora || '09:00', // Hora por defecto si no se especifica
             color: categoria?.color || '#4ecdc4',
             completada: false, // Por defecto, las tareas no están completadas
             asignado_nombre: usuario?.nombre_usuario || undefined

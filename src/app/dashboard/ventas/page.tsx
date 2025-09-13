@@ -918,7 +918,7 @@ export default function VentasPage() {
             {/* Contenido del modal */}
             <div className="p-4">
               <p className="text-[var(--text-primary)] mb-4">
-                ¿Estás seguro de que quieres eliminar el producto <strong>"{productToDelete.nombre}"</strong>?
+                ¿Estás seguro de que quieres eliminar el producto <strong>&quot;{productToDelete.nombre}&quot;</strong>?
               </p>
               <p className="text-[var(--text-muted)] text-sm">
                 Esta acción no se puede deshacer.
@@ -1077,7 +1077,7 @@ export default function VentasPage() {
                   <label className="block text-[var(--text-muted)] text-sm mb-2">Método de Pago *</label>
                   <select
                     value={ventaForm.metodo_pago}
-                    onChange={(e) => setVentaForm({ ...ventaForm, metodo_pago: e.target.value as any })}
+                    onChange={(e) => setVentaForm({ ...ventaForm, metodo_pago: e.target.value as 'EFECTIVO' | 'DEBITO' | 'CREDITO' | 'TRANSFERENCIA' | 'CRIPTO' })}
                     className="w-full bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded px-3 py-2.5 text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-primary)] focus:border-[var(--accent-primary)] h-10"
                     required
                   >
