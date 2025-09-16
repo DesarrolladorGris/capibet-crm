@@ -1,0 +1,597 @@
+{
+  "info": {
+    "name": "Capibet CRM API",
+    "description": "Colección completa de endpoints para el sistema CRM de Capibet",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "1.0.0"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string",
+      "description": "URL base de la API (cambiar por tu dominio en producción)"
+    }
+  ],
+  "item": [
+    {
+      "name": "👥 Usuarios",
+      "description": "Gestión completa de usuarios del sistema",
+      "item": [
+        {
+          "name": "Crear Usuario",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre_agencia\": \"Agencia Ejemplo\",\n  \"tipo_empresa\": \"Corporativo\",\n  \"nombre_usuario\": \"Juan Pérez\",\n  \"correo_electronico\": \"juan@ejemplo.com\",\n  \"telefono\": \"1234567890\",\n  \"codigo_pais\": \"52\",\n  \"contrasena\": \"password123\",\n  \"rol\": \"Operador\",\n  \"activo\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/usuarios",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "usuarios"]
+            }
+          }
+        },
+        {
+          "name": "Obtener Todos los Usuarios",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/usuarios",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "usuarios"]
+            }
+          }
+        },
+        {
+          "name": "Obtener Usuario por ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/usuarios/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "usuarios", "1"]
+            }
+          }
+        },
+        {
+          "name": "Actualizar Usuario",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre_usuario\": \"Juan Carlos Pérez\",\n  \"telefono\": \"0987654321\",\n  \"rol\": \"Administrador\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/usuarios/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "usuarios", "1"]
+            }
+          }
+        },
+        {
+          "name": "Eliminar Usuario",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/usuarios/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "usuarios", "1"]
+            }
+          }
+        },
+        {
+          "name": "Cambiar Estado Usuario",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"activo\": false\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/usuarios/1/toggle-status",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "usuarios", "1", "toggle-status"]
+            }
+          }
+        },
+        {
+          "name": "Verificar Email",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/usuarios/check-email?email=juan@ejemplo.com",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "usuarios", "check-email"],
+              "query": [
+                {
+                  "key": "email",
+                  "value": "juan@ejemplo.com"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Login Usuario",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"correo_electronico\": \"juan@ejemplo.com\",\n  \"contrasena\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/usuarios/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "usuarios", "login"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "📞 Contactos",
+      "description": "Gestión de contactos y clientes",
+      "item": [
+        {
+          "name": "Crear Contacto",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"María\",\n  \"apellido\": \"García\",\n  \"correo\": \"maria.garcia@email.com\",\n  \"telefono\": \"+1234567890\",\n  \"empresa\": \"Empresa XYZ\",\n  \"cargo\": \"Directora\",\n  \"notas\": \"Cliente potencial\",\n  \"direccion\": \"Av. Principal 456\",\n  \"cumpleaños\": \"1985-03-20\",\n  \"sitio_web\": \"https://empresa-xyz.com\",\n  \"etiqueta\": \"Prospecto\",\n  \"empresa_id\": 1,\n  \"creado_por\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/contactos",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "contactos"]
+            }
+          }
+        },
+        {
+          "name": "Obtener Todos los Contactos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/contactos",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "contactos"]
+            }
+          }
+        },
+        {
+          "name": "Obtener Contacto por ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/contactos/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "contactos", "1"]
+            }
+          }
+        },
+        {
+          "name": "Actualizar Contacto",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"María Elena\",\n  \"cargo\": \"CEO\",\n  \"notas\": \"Cliente VIP actualizado\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/contactos/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "contactos", "1"]
+            }
+          }
+        },
+        {
+          "name": "Eliminar Contacto",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/contactos/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "contactos", "1"]
+            }
+          }
+        },
+        {
+          "name": "Importar Contactos (CSV)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "multipart/form-data"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "contactos.csv"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/contactos/importar",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "contactos", "importar"]
+            }
+          }
+        },
+        {
+          "name": "Exportar Contactos (CSV)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/contactos/exportar",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "contactos", "exportar"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🏢 Espacios de Trabajo",
+      "description": "Gestión de espacios de trabajo y equipos",
+      "item": [
+        {
+          "name": "Crear Espacio de Trabajo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Espacio de Ventas\",\n  \"descripcion\": \"Espacio dedicado al equipo de ventas\",\n  \"activo\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/espacio_trabajos",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "espacio_trabajos"]
+            }
+          }
+        },
+        {
+          "name": "Obtener Todos los Espacios",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/espacio_trabajos",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "espacio_trabajos"]
+            }
+          }
+        },
+        {
+          "name": "Obtener Espacio por ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/espacio_trabajos/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "espacio_trabajos", "1"]
+            }
+          }
+        },
+        {
+          "name": "Actualizar Espacio de Trabajo",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Espacio de Ventas Premium\",\n  \"descripcion\": \"Espacio actualizado para el equipo de ventas premium\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/espacio_trabajos/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "espacio_trabajos", "1"]
+            }
+          }
+        },
+        {
+          "name": "Eliminar Espacio de Trabajo",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/espacio_trabajos/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "espacio_trabajos", "1"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🔄 Embudos",
+      "description": "Gestión de embudos de ventas y procesos",
+      "item": [
+        {
+          "name": "Crear Embudo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Embudo de Ventas\",\n  \"descripcion\": \"Proceso de ventas para nuevos clientes\",\n  \"creado_por\": 1,\n  \"espacio_id\": 1,\n  \"orden\": 0\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/embudos",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "embudos"]
+            }
+          }
+        },
+        {
+          "name": "Obtener Todos los Embudos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/embudos",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "embudos"]
+            }
+          }
+        },
+        {
+          "name": "Obtener Embudos por Espacio",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/embudos?espacio_id=1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "embudos"],
+              "query": [
+                {
+                  "key": "espacio_id",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Obtener Embudo por ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/embudos/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "embudos", "1"]
+            }
+          }
+        },
+        {
+          "name": "Actualizar Embudo",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Embudo de Ventas Premium\",\n  \"descripcion\": \"Proceso actualizado para clientes premium\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/embudos/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "embudos", "1"]
+            }
+          }
+        },
+        {
+          "name": "Eliminar Embudo",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/embudos/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "embudos", "1"]
+            }
+          }
+        },
+        {
+          "name": "Actualizar Orden de Embudos",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"embudos\": [\n    { \"id\": 1, \"orden\": 0 },\n    { \"id\": 2, \"orden\": 1 },\n    { \"id\": 3, \"orden\": 2 }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/embudos/update-order",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "embudos", "update-order"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "💬 Respuestas Rápidas",
+      "description": "Gestión de respuestas rápidas y plantillas",
+      "item": [
+        {
+          "name": "Crear Respuesta Rápida",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"titulo\": \"Saludo de bienvenida\",\n  \"contenido\": \"¡Hola! Bienvenido a nuestro servicio. ¿En qué puedo ayudarte hoy?\",\n  \"categoria\": \"Saludos\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/respuestas-rapidas",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "respuestas-rapidas"]
+            }
+          }
+        },
+        {
+          "name": "Obtener Todas las Respuestas Rápidas",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/respuestas-rapidas",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "respuestas-rapidas"]
+            }
+          }
+        },
+        {
+          "name": "Obtener Respuesta Rápida por ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/respuestas-rapidas/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "respuestas-rapidas", "1"]
+            }
+          }
+        },
+        {
+          "name": "Actualizar Respuesta Rápida",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"titulo\": \"Saludo personalizado\",\n  \"contenido\": \"¡Hola! Gracias por elegirnos. ¿Cómo podemos ayudarte hoy?\",\n  \"categoria\": \"Personalizado\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/respuestas-rapidas/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "respuestas-rapidas", "1"]
+            }
+          }
+        },
+        {
+          "name": "Eliminar Respuesta Rápida",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/respuestas-rapidas/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "respuestas-rapidas", "1"]
+            }
+          }
+        },
+        {
+          "name": "Cambiar Estado Respuesta Rápida",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"activa\": false\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/respuestas-rapidas/1/toggle-status",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "respuestas-rapidas", "1", "toggle-status"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
