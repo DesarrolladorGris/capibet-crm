@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { Lightbulb } from 'lucide-react';
 import { espacioTrabajoServices, EspacioTrabajoData } from '@/services/espacioTrabajoServices';
 
 interface NuevoEspacioModalProps {
@@ -94,7 +95,7 @@ export default function NuevoEspacioModal({ isOpen, onClose, onEspacioCreated }:
           <button
             onClick={handleClose}
             disabled={isLoading}
-            className="text-gray-400 hover:text-white text-2xl disabled:opacity-50"
+            className="text-gray-400 hover:text-white text-2xl disabled:opacity-50 cursor-pointer"
           >
             ×
           </button>
@@ -131,14 +132,14 @@ export default function NuevoEspacioModal({ isOpen, onClose, onEspacioCreated }:
               type="button"
               onClick={handleClose}
               disabled={isLoading}
-              className="px-4 py-2 text-gray-400 bg-transparent border border-[#3a3d45] rounded-lg hover:bg-[#3a3d45] transition-colors disabled:opacity-50"
+              className="px-4 py-2 text-gray-400 bg-transparent border border-[#3a3d45] rounded-lg hover:bg-[#3a3d45] transition-colors disabled:opacity-50 cursor-pointer"
             >
               Cancelar
             </button>
             <button
               type="submit"
               disabled={isLoading || !formData.nombre.trim()}
-              className="px-4 py-2 bg-[#F29A1F] text-white rounded-lg hover:bg-[#F29A1F] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+              className="px-4 py-2 bg-[#F29A1F] text-white rounded-lg hover:bg-[#F29A1F] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2 cursor-pointer"
             >
               {isLoading && (
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
@@ -151,7 +152,7 @@ export default function NuevoEspacioModal({ isOpen, onClose, onEspacioCreated }:
         {/* Info */}
         <div className="mt-4 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
           <p className="text-blue-400 text-xs">
-            💡 El espacio de trabajo se creará asociado a tu usuario actual.
+            <Lightbulb className="w-4 h-4 inline mr-1" /> El espacio de trabajo se creará asociado a tu usuario actual.
           </p>
         </div>
       </div>

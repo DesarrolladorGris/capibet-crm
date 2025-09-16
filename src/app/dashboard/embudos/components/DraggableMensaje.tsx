@@ -95,7 +95,7 @@ export default function DraggableMensaje({ mensaje, onMensajeClick }: DraggableM
 
       {/* Botón para ver detalles (separado del drag) */}
       <button
-        className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-white p-1 rounded"
+        className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-white p-1 rounded cursor-pointer"
         onClick={(e) => {
           e.stopPropagation();
           console.log('👁️ Click en botón ver detalles:', mensaje.id);

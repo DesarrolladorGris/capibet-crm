@@ -340,7 +340,7 @@ export default function EmbudosPage() {
           {/* Left Section - Selector de Espacio */}
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-3">
-              <button className="text-[var(--text-muted)] hover:text-[var(--text-primary)] p-1 rounded">
+              <button className="text-[var(--text-muted)] hover:text-[var(--text-primary)] p-1 rounded cursor-pointer">
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
@@ -372,10 +372,10 @@ export default function EmbudosPage() {
             
             {/* Tabs de navegación */}
             <div className="flex space-x-4 ml-8">
-              <button className="text-white font-medium px-3 py-1 bg-[var(--accent-primary)] rounded text-sm">
+              <button className="text-white font-medium px-3 py-1 bg-[var(--accent-primary)] rounded text-sm cursor-pointer">
                 Todos
               </button>
-              <button className="text-[var(--text-muted)] hover:text-[var(--text-primary)] font-medium px-3 py-1 hover:bg-[var(--bg-secondary)] rounded text-sm">
+              <button className="text-[var(--text-muted)] hover:text-[var(--text-primary)] font-medium px-3 py-1 hover:bg-[var(--bg-secondary)] rounded text-sm cursor-pointer">
                 Mis Chats
               </button>
             </div>
@@ -386,7 +386,7 @@ export default function EmbudosPage() {
             <button 
               onClick={handleNuevoMensaje}
               disabled={!selectedEspacio}
-              className="bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-4 py-2 rounded text-sm font-medium transition-colors"
+              className="bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-4 py-2 rounded text-sm font-medium transition-colors cursor-pointer"
             >
               + Nuevo Mensaje
             </button>
@@ -444,7 +444,7 @@ export default function EmbudosPage() {
                   </p>
                   <button 
                     onClick={handleAgregarEmbudo}
-                    className="bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] text-white px-6 py-3 rounded-lg font-medium transition-colors"
+                    className="bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] text-white px-6 py-3 rounded-lg font-medium transition-colors cursor-pointer"
                   >
                     + Crear Primer Embudo
                   </button>

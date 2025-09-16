@@ -97,7 +97,7 @@ export default function ConfirmarEliminarEspacioModal({
           <button
             onClick={handleCancel}
             disabled={isLoading}
-            className="w-full px-4 py-3 text-gray-300 bg-[#4a4d55] rounded-lg hover:bg-[#5a5d65] transition-colors disabled:opacity-50 font-medium"
+            className="w-full px-4 py-3 text-gray-300 bg-[#4a4d55] rounded-lg hover:bg-[#5a5d65] transition-colors disabled:opacity-50 font-medium cursor-pointer"
           >
             Cancelar
           </button>
@@ -105,7 +105,7 @@ export default function ConfirmarEliminarEspacioModal({
           <button
             onClick={handleConfirmDelete}
             disabled={isLoading}
-            className="w-full px-4 py-3 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors disabled:opacity-50 font-medium flex items-center justify-center space-x-2"
+            className="w-full px-4 py-3 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors disabled:opacity-50 font-medium flex items-center justify-center space-x-2 cursor-pointer"
           >
             {isLoading && (
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>

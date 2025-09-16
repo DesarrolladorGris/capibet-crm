@@ -163,7 +163,7 @@ export default function Sidebar({ isOpen }: SidebarProps) {
           <button
             key={item.id}
             onClick={() => handleItemClick(item.id)}
-            className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-left transition-colors duration-200 mb-1 ${
+            className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-left transition-colors duration-200 mb-1 cursor-pointer ${
               activeItem === item.id
                 ? 'bg-[#F29A1F] text-white'
                 : 'text-gray-400 hover:text-white hover:bg-[#2a2d35]'

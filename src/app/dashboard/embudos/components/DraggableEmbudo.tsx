@@ -47,7 +47,7 @@ export default function DraggableEmbudo({ embudo, index, mensajes, onEdit, onDel
               e.stopPropagation();
               onEdit(embudo);
             }}
-            className="text-[var(--text-muted)] hover:text-[var(--text-primary)] text-xs p-1" 
+            className="text-[var(--text-muted)] hover:text-[var(--text-primary)] text-xs p-1 cursor-pointer" 
             title="Editar embudo"
           >
             <Edit2 className="w-4 h-4" />
@@ -57,7 +57,7 @@ export default function DraggableEmbudo({ embudo, index, mensajes, onEdit, onDel
               e.stopPropagation();
               onDelete(embudo);
             }}
-            className="text-[var(--text-muted)] hover:text-[var(--error)] text-xs p-1" 
+            className="text-[var(--text-muted)] hover:text-[var(--error)] text-xs p-1 cursor-pointer" 
             title="Eliminar embudo"
           >
             <Trash2 className="w-4 h-4" />

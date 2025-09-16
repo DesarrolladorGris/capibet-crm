@@ -285,7 +285,7 @@ export default function ChatsPage() {
         <div className="flex items-center justify-between">
           {/* Left Section */}
           <div className="flex items-center space-x-4">
-            <button className="text-[var(--text-muted)] hover:text-[var(--text-primary)] p-2 rounded">
+            <button className="text-[var(--text-muted)] hover:text-[var(--text-primary)] p-2 rounded cursor-pointer">
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
@@ -329,7 +329,7 @@ export default function ChatsPage() {
 
           {/* Right Section */}
           <div className="flex items-center space-x-4">
-            <button className="text-[var(--text-muted)] hover:text-[var(--text-primary)] p-2 rounded">
+            <button className="text-[var(--text-muted)] hover:text-[var(--text-primary)] p-2 rounded cursor-pointer">
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
               </svg>
@@ -465,7 +465,7 @@ export default function ChatsPage() {
                     </div>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <button className="text-[var(--text-muted)] hover:text-[var(--text-primary)] p-2 rounded">
+                    <button className="text-[var(--text-muted)] hover:text-[var(--text-primary)] p-2 rounded cursor-pointer">
                       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
                       </svg>
@@ -509,7 +509,7 @@ export default function ChatsPage() {
               {/* Input de mensaje */}
               <div className="bg-[var(--bg-secondary)] border-t border-[var(--border-primary)] p-4">
                 <div className="flex items-center space-x-3">
-                  <button className="text-[var(--text-muted)] hover:text-[var(--text-primary)] p-2 rounded">
+                  <button className="text-[var(--text-muted)] hover:text-[var(--text-primary)] p-2 rounded cursor-pointer">
                     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
                     </svg>
@@ -525,7 +525,7 @@ export default function ChatsPage() {
                   <button
                     onClick={handleSendMessage}
                     disabled={!newMessage.trim()}
-                    className="bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] disabled:bg-gray-600 disabled:cursor-not-allowed text-white p-2 rounded transition-colors"
+                    className="bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] disabled:bg-gray-600 disabled:cursor-not-allowed text-white p-2 rounded transition-colors cursor-pointer"
                   >
                     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />

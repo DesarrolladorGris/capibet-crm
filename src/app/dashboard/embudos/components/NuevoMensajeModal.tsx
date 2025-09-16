@@ -197,7 +197,7 @@ export default function NuevoMensajeModal({
           <h2 className="text-white text-lg font-semibold">Nuevo Mensaje</h2>
           <button 
             onClick={handleClose}
-            className="text-gray-400 hover:text-white transition-colors"
+            className="text-gray-400 hover:text-white transition-colors cursor-pointer"
           >
             <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -324,14 +324,14 @@ export default function NuevoMensajeModal({
                 <button
                   type="button"
                   onClick={handleClose}
-                  className="px-4 py-2 text-gray-400 hover:text-white transition-colors"
+                  className="px-4 py-2 text-gray-400 hover:text-white transition-colors cursor-pointer"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="bg-[#F29A1F] hover:bg-[#F29A1F] disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-6 py-2 rounded font-medium transition-colors"
+                  className="bg-[#F29A1F] hover:bg-[#F29A1F] disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-6 py-2 rounded font-medium transition-colors cursor-pointer"
                 >
                   {isLoading ? 'Enviando...' : 'Enviar Mensaje'}
                 </button>

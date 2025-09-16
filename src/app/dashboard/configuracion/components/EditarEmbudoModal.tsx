@@ -95,7 +95,7 @@ export default function EditarEmbudoModal({
           <h3 className="text-white text-xl font-semibold">Editar Embudo</h3>
           <button 
             onClick={onClose} 
-            className="text-gray-400 hover:text-white text-2xl"
+            className="text-gray-400 hover:text-white text-2xl cursor-pointer"
             disabled={isLoading}
           >
             ×
@@ -176,14 +176,14 @@ export default function EditarEmbudoModal({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-gray-300 bg-gray-600 rounded-lg hover:bg-gray-500 transition-colors"
+              className="px-4 py-2 text-gray-300 bg-gray-600 rounded-lg hover:bg-gray-500 transition-colors cursor-pointer"
               disabled={isLoading}
             >
               Cancelar
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-[#F29A1F] text-white rounded-lg hover:bg-[#F29A1F] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+              className="px-4 py-2 bg-[#F29A1F] text-white rounded-lg hover:bg-[#F29A1F] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2 cursor-pointer"
               disabled={isLoading || !hasChanges}
             >
               {isLoading && (

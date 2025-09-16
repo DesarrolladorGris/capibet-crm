@@ -291,14 +291,14 @@ export default function ContactosPage() {
           {/* Right Section */}
           <div className="flex items-center space-x-4">
             {/* Action Buttons */}
-            <button className="flex items-center space-x-2 bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] text-white px-4 py-2 rounded text-sm font-medium transition-colors">
+            <button className="flex items-center space-x-2 bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] text-white px-4 py-2 rounded text-sm font-medium transition-colors cursor-pointer">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
               </svg>
               <span>Importar</span>
             </button>
 
-            <button className="flex items-center space-x-2 bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] text-white px-4 py-2 rounded text-sm font-medium transition-colors">
+            <button className="flex items-center space-x-2 bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] text-white px-4 py-2 rounded text-sm font-medium transition-colors cursor-pointer">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
               </svg>
@@ -308,7 +308,7 @@ export default function ContactosPage() {
             {/* Botón Agregar Contacto */}
             <button 
               onClick={() => setShowAddModal(true)}
-              className="flex items-center space-x-2 bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] text-white px-4 py-2 rounded text-sm font-medium transition-colors"
+              className="flex items-center space-x-2 bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] text-white px-4 py-2 rounded text-sm font-medium transition-colors cursor-pointer"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -317,7 +317,7 @@ export default function ContactosPage() {
             </button>
 
             {/* Filter */}
-            <button className="text-[var(--text-muted)] hover:text-[var(--text-primary)] p-2 rounded">
+            <button className="text-[var(--text-muted)] hover:text-[var(--text-primary)] p-2 rounded cursor-pointer">
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.414A1 1 0 013 6.707V4z" />
               </svg>
@@ -406,14 +406,14 @@ export default function ContactosPage() {
                 <div className="flex items-center space-x-3">
                   <button 
                     onClick={() => handleEditContact(contact)}
-                    className="text-[var(--text-muted)] hover:text-blue-400 text-sm transition-colors"
+                    className="text-[var(--text-muted)] hover:text-blue-400 text-sm transition-colors cursor-pointer"
                     title="Editar contacto"
                   >
                     <Edit2 className="w-4 h-4" />
                   </button>
                   <button 
                     onClick={() => handleDeleteContact(contact)}
-                    className="text-[var(--text-muted)] hover:text-red-400 text-sm transition-colors"
+                    className="text-[var(--text-muted)] hover:text-red-400 text-sm transition-colors cursor-pointer"
                     title="Eliminar contacto"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -432,10 +432,10 @@ export default function ContactosPage() {
 
         {/* Pagination */}
         <div className="flex justify-center mt-6 space-x-4">
-          <button className="px-4 py-2 text-[var(--text-muted)] bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded cursor-not-allowed">
+          <button className="px-4 py-2 text-[var(--text-muted)] bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded cursor-pointer">
             ANTERIOR
           </button>
-          <button className="px-4 py-2 text-[var(--text-muted)] bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded cursor-not-allowed">
+          <button className="px-4 py-2 text-[var(--text-muted)] bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded cursor-pointer">
             SIGUIENTE
           </button>
         </div>
@@ -456,7 +456,7 @@ export default function ContactosPage() {
                <div className="flex items-center space-x-3">
                                    <button 
                     onClick={() => setSelectedContacts([])}
-                    className="flex items-center space-x-2 bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                    className="flex items-center space-x-2 bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer"
                   >
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -465,7 +465,7 @@ export default function ContactosPage() {
                   </button>
                   <button 
                     onClick={handleBulkDelete}
-                    className="flex items-center space-x-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                    className="flex items-center space-x-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer"
                   >
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />

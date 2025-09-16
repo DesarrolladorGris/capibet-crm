@@ -2,6 +2,7 @@
 
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { Edit2, Trash2 } from 'lucide-react';
 import { EmbUpdoResponse } from '@/services/supabaseService';
 
 interface DraggableEmbudoProps {
@@ -61,20 +62,20 @@ export default function DraggableEmbudo({ embudo, onEdit, onDelete, formatDate }
               e.stopPropagation();
               onEdit(embudo);
             }}
-            className="text-[var(--text-muted)] hover:text-[var(--text-primary)] text-xs p-1" 
+            className="text-[var(--text-muted)] hover:text-[var(--text-primary)] text-xs p-1 cursor-pointer" 
             title="Editar embudo"
           >
-            ✏️
+            <Edit2 className="w-3 h-3" />
           </button>
           <button 
             onClick={(e) => {
               e.stopPropagation();
               onDelete(embudo);
             }}
-            className="text-[var(--text-muted)] hover:text-red-400 text-xs p-1" 
+            className="text-[var(--text-muted)] hover:text-red-400 text-xs p-1 cursor-pointer" 
             title="Eliminar embudo"
           >
-            🗑️
+            <Trash2 className="w-3 h-3" />
           </button>
         </div>
       </div>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { Settings, Lightbulb } from 'lucide-react';
 import { embudoServices } from '@/services/embudoServices';
 import { EmbudoData } from '@/app/api/embudos/domain/embudo';
 
@@ -101,7 +102,7 @@ export default function NuevoEmbudoModal({
           <h3 className="text-white text-xl font-semibold">Nuevo Embudo</h3>
           <button 
             onClick={onClose} 
-            className="text-gray-400 hover:text-white text-2xl"
+            className="text-gray-400 hover:text-white text-2xl cursor-pointer"
             disabled={isLoading}
           >
             ×
@@ -111,7 +112,7 @@ export default function NuevoEmbudoModal({
         {/* Info del espacio */}
         <div className="mb-4 p-3 bg-[#1a1d23] rounded-lg border border-[#3a3d45]">
           <div className="flex items-center space-x-2">
-            <span className="text-[#F29A1F]">⚙️</span>
+            <Settings className="w-4 h-4 text-[#F29A1F]" />
             <span className="text-gray-300 text-sm font-medium">
               Se creará en: <span className="text-white">{espacioNombre}</span>
             </span>
@@ -161,7 +162,7 @@ export default function NuevoEmbudoModal({
 
           <div className="bg-[#1a1d23] rounded-lg p-3 border border-[#3a3d45]">
             <div className="text-sm text-gray-400">
-              💡 <strong>Información automática:</strong>
+              <Lightbulb className="w-4 h-4 inline mr-1" /> <strong>Información automática:</strong>
             </div>
             <ul className="text-xs text-gray-500 mt-2 space-y-1">
               <li>• <strong>Creado por:</strong> Tu usuario (ID: {userId || 'Cargando...'})</li>
@@ -174,14 +175,14 @@ export default function NuevoEmbudoModal({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-gray-300 bg-gray-600 rounded-lg hover:bg-gray-500 transition-colors"
+              className="px-4 py-2 text-gray-300 bg-gray-600 rounded-lg hover:bg-gray-500 transition-colors cursor-pointer"
               disabled={isLoading}
             >
               Cancelar
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-[#F29A1F] text-white rounded-lg hover:bg-[#F29A1F] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+              className="px-4 py-2 bg-[#F29A1F] text-white rounded-lg hover:bg-[#F29A1F] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2 cursor-pointer"
               disabled={isLoading}
             >
               {isLoading && (

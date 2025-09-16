@@ -109,7 +109,7 @@ export default function EditarContactoModal({ isOpen, onClose, onContactUpdated,
           <button
             onClick={onClose}
             disabled={loading}
-            className="text-gray-400 hover:text-white transition-colors disabled:opacity-50"
+            className="text-gray-400 hover:text-white transition-colors disabled:opacity-50 cursor-pointer"
           >
             ✕
           </button>
@@ -251,14 +251,14 @@ export default function EditarContactoModal({ isOpen, onClose, onContactUpdated,
                 type="button"
                 onClick={onClose}
                 disabled={loading}
-                className="px-4 py-2 text-gray-400 hover:text-white transition-colors disabled:opacity-50"
+                className="px-4 py-2 text-gray-400 hover:text-white transition-colors disabled:opacity-50 cursor-pointer"
               >
                 Cancelar
               </button>
               <button
                 type="submit"
                 disabled={loading}
-                className="bg-[#F29A1F] hover:bg-[#F29A1F] disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg font-medium transition-colors"
+                className="bg-[#F29A1F] hover:bg-[#F29A1F] disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg font-medium transition-colors cursor-pointer"
               >
                 {loading ? 'Actualizando...' : 'Actualizar Contacto'}
               </button>

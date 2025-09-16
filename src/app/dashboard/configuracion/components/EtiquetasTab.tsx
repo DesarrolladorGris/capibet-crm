@@ -252,7 +252,7 @@ export default function EtiquetasTab({ onEtiquetasCountChange }: EtiquetasTabPro
         </div>
         <button
           onClick={() => abrirModal()}
-          className="bg-[#F29A1F] hover:bg-[#F29A1F] text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center space-x-2"
+          className="bg-[#F29A1F] hover:bg-[#F29A1F] text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center space-x-2 cursor-pointer"
         >
           <Tag className="w-5 h-5" />
           <span>Nueva Etiqueta</span>
@@ -316,16 +316,18 @@ export default function EtiquetasTab({ onEtiquetasCountChange }: EtiquetasTabPro
                 <div className="flex items-center space-x-2">
                   <button
                     onClick={() => abrirModal(etiqueta)}
-                    className="bg-[#0984e3] hover:bg-[#0873c4] text-white px-3 py-1 rounded text-xs font-medium transition-colors"
+                    className="text-[var(--text-muted)] hover:text-[var(--accent-primary)] transition-colors cursor-pointer p-2"
+                    title="Editar etiqueta"
                   >
-                    <Edit2 className="w-4 h-4 mr-1" /> Editar
+                    <Edit2 className="w-4 h-4" />
                   </button>
                   
                   <button
                     onClick={() => handleDelete(etiqueta)}
-                    className="bg-[#d63031] hover:bg-[#c0392b] text-white px-3 py-1 rounded text-xs font-medium transition-colors"
+                    className="text-[var(--text-muted)] hover:text-red-500 transition-colors cursor-pointer p-2"
+                    title="Eliminar etiqueta"
                   >
-                    <Trash2 className="w-4 h-4 mr-1" /> Eliminar
+                    <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
               </div>
@@ -344,7 +346,7 @@ export default function EtiquetasTab({ onEtiquetasCountChange }: EtiquetasTabPro
               </h3>
               <button
                 onClick={cerrarModal}
-                className="text-gray-400 hover:text-white text-xl"
+                className="text-gray-400 hover:text-white text-xl cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -377,7 +379,7 @@ export default function EtiquetasTab({ onEtiquetasCountChange }: EtiquetasTabPro
                       key={color}
                       type="button"
                       onClick={() => setFormData({ ...formData, color })}
-                      className={`w-8 h-8 rounded-full border-2 transition-all ${
+                      className={`w-8 h-8 rounded-full border-2 transition-all cursor-pointer ${
                         formData.color === color ? 'border-white scale-110' : 'border-gray-600'
                       }`}
                       style={{ backgroundColor: color }}
@@ -411,13 +413,13 @@ export default function EtiquetasTab({ onEtiquetasCountChange }: EtiquetasTabPro
                 <button
                   type="button"
                   onClick={cerrarModal}
-                  className="flex-1 bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                  className="flex-1 bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg font-medium transition-colors cursor-pointer"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 bg-[#F29A1F] hover:bg-[#F29A1F] text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                  className="flex-1 bg-[#F29A1F] hover:bg-[#F29A1F] text-white px-4 py-2 rounded-lg font-medium transition-colors cursor-pointer"
                 >
                   {editingEtiqueta ? 'Actualizar' : 'Crear'}
                 </button>
@@ -455,14 +457,14 @@ export default function EtiquetasTab({ onEtiquetasCountChange }: EtiquetasTabPro
                 <button
                   type="button"
                   onClick={cancelarEliminacion}
-                  className="flex-1 bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                  className="flex-1 bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg font-medium transition-colors cursor-pointer"
                 >
                   Cancelar
                 </button>
                 <button
                   type="button"
                   onClick={confirmarEliminacion}
-                  className="flex-1 bg-[#d63031] hover:bg-[#c0392b] text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                  className="flex-1 bg-[#d63031] hover:bg-[#c0392b] text-white px-4 py-2 rounded-lg font-medium transition-colors cursor-pointer"
                 >
                   Eliminar
                 </button>

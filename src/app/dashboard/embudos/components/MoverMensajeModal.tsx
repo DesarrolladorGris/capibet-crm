@@ -87,7 +87,7 @@ export default function MoverMensajeModal({
           <button 
             onClick={handleClose}
             disabled={isLoading}
-            className="text-gray-400 hover:text-white transition-colors disabled:opacity-50"
+            className="text-gray-400 hover:text-white transition-colors disabled:opacity-50 cursor-pointer"
           >
             <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -149,14 +149,14 @@ export default function MoverMensajeModal({
           <button
             onClick={handleClose}
             disabled={isLoading}
-            className="bg-[#3a3d45] hover:bg-[#4a4d55] disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-6 py-2 rounded font-medium transition-colors"
+            className="bg-[#3a3d45] hover:bg-[#4a4d55] disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-6 py-2 rounded font-medium transition-colors cursor-pointer"
           >
             Cancelar
           </button>
           <button
             onClick={handleMove}
             disabled={isLoading || !selectedEmbudoId || embudosDisponibles.length === 0}
-            className="bg-[#F29A1F] hover:bg-[#F29A1F] disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-6 py-2 rounded font-medium transition-colors flex items-center space-x-2"
+            className="bg-[#F29A1F] hover:bg-[#F29A1F] disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-6 py-2 rounded font-medium transition-colors flex items-center space-x-2 cursor-pointer"
           >
             {isLoading && (
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>

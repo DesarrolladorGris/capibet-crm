@@ -247,7 +247,7 @@ export default function RegisterPage() {
                   <button
                     type="button"
                     onClick={() => setShowCountryDropdown(!showCountryDropdown)}
-                    className="flex items-center space-x-2 px-3 py-4 bg-[#2a2d35] border border-[#3a3d45] border-r-0 rounded-l-lg text-white hover:bg-slate-700/70 focus:outline-none focus:ring-2 focus:ring-[#F29A1F] focus:border-[#F29A1F] min-w-[100px]"
+                    className="flex items-center space-x-2 px-3 py-4 bg-[#2a2d35] border border-[#3a3d45] border-r-0 rounded-l-lg text-white hover:bg-slate-700/70 focus:outline-none focus:ring-2 focus:ring-[#F29A1F] focus:border-[#F29A1F] min-w-[100px] cursor-pointer"
                   >
                     <Image 
                       src={selectedCountry.flag} 
@@ -270,7 +270,7 @@ export default function RegisterPage() {
                           key={index}
                           type="button"
                           onClick={() => handleCountrySelect(country)}
-                          className="w-full flex items-center space-x-3 px-3 py-2 text-left hover:bg-slate-700 text-white text-sm transition-colors duration-150"
+                          className="w-full flex items-center space-x-3 px-3 py-2 text-left hover:bg-slate-700 text-white text-sm transition-colors duration-150 cursor-pointer"
                         >
                           <Image 
                             src={country.flag} 
@@ -320,7 +320,7 @@ export default function RegisterPage() {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute inset-y-0 right-0 pr-3 flex items-center hover:bg-slate-600/30 rounded-r-lg transition-colors duration-200"
+                className="absolute inset-y-0 right-0 pr-3 flex items-center hover:bg-slate-600/30 rounded-r-lg transition-colors duration-200 cursor-pointer"
               >
                 <div className="p-1 rounded-full hover:bg-slate-600/50 transition-colors duration-200">
                   <svg className="h-4 w-4 text-gray-400 hover:text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -353,7 +353,7 @@ export default function RegisterPage() {
               <button
                 type="button"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute inset-y-0 right-0 pr-3 flex items-center hover:bg-slate-600/30 rounded-r-lg transition-colors duration-200"
+                className="absolute inset-y-0 right-0 pr-3 flex items-center hover:bg-slate-600/30 rounded-r-lg transition-colors duration-200 cursor-pointer"
               >
                 <div className="p-1 rounded-full hover:bg-slate-600/50 transition-colors duration-200">
                   <svg className="h-4 w-4 text-gray-400 hover:text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -399,7 +399,7 @@ export default function RegisterPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-[#F29A1F] hover:bg-[#F29A1F] disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-medium py-4 px-4 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#F29A1F] focus:ring-offset-2 focus:ring-offset-[#1a1d23] mt-6 text-base"
+              className="w-full bg-[#F29A1F] hover:bg-[#F29A1F] disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-medium py-4 px-4 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#F29A1F] focus:ring-offset-2 focus:ring-offset-[#1a1d23] mt-6 text-base cursor-pointer"
             >
               {isLoading ? 'REGISTRANDO...' : 'REGISTRAR'}
             </button>

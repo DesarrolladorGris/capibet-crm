@@ -349,7 +349,7 @@ export default function CalendarioPage() {
                 <button
                   key={mode}
                   onClick={() => setViewMode(mode)}
-                  className={`px-3 py-1.5 text-sm font-medium transition-colors ${
+                  className={`px-3 py-1.5 text-sm font-medium transition-colors cursor-pointer ${
                     viewMode === mode
                       ? 'bg-[var(--accent-primary)] text-white'
                       : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
@@ -363,7 +363,7 @@ export default function CalendarioPage() {
             {localStorage.getItem('userRole') !== 'Comercial' && (
               <button 
                 onClick={() => openNewTaskModal(selectedDate)}
-                className="flex items-center space-x-2 bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] text-white px-4 py-2 rounded text-sm font-medium transition-colors"
+                className="flex items-center space-x-2 bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] text-white px-4 py-2 rounded text-sm font-medium transition-colors cursor-pointer"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -381,7 +381,7 @@ export default function CalendarioPage() {
           <div className="flex items-center space-x-4">
             <button
               onClick={() => navigateDate('prev')}
-              className="text-[var(--text-muted)] hover:text-[var(--text-primary)] p-2 rounded"
+              className="text-[var(--text-muted)] hover:text-[var(--text-primary)] p-2 rounded cursor-pointer"
             >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -418,7 +418,7 @@ export default function CalendarioPage() {
             
             <button
               onClick={() => navigateDate('next')}
-              className="text-[var(--text-muted)] hover:text-[var(--text-primary)] p-2 rounded"
+              className="text-[var(--text-muted)] hover:text-[var(--text-primary)] p-2 rounded cursor-pointer"
             >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -428,7 +428,7 @@ export default function CalendarioPage() {
 
           <button
             onClick={() => setCurrentDate(new Date())}
-            className="text-[var(--text-muted)] hover:text-[var(--text-primary)] text-sm px-3 py-1 rounded border border-[var(--border-primary)] hover:border-[var(--text-muted)]"
+            className="text-[var(--text-muted)] hover:text-[var(--text-primary)] text-sm px-3 py-1 rounded border border-[var(--border-primary)] hover:border-[var(--text-muted)] cursor-pointer"
           >
             Hoy
           </button>
@@ -629,14 +629,14 @@ export default function CalendarioPage() {
                   <div className="flex items-center space-x-2">
                     <button
                       onClick={() => openEditTaskModal(task)}
-                      className="text-[var(--text-muted)] hover:text-[var(--text-primary)] text-sm"
+                      className="text-[var(--text-muted)] hover:text-[var(--text-primary)] text-sm cursor-pointer"
                     >
                       <Edit2 className="w-4 h-4" />
                     </button>
                     {localStorage.getItem('userRole') !== 'Comercial' && (
                       <button
                         onClick={() => openDeleteModal(task)}
-                        className="text-[var(--text-muted)] hover:text-red-400 text-sm"
+                        className="text-[var(--text-muted)] hover:text-red-400 text-sm cursor-pointer"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -715,14 +715,14 @@ export default function CalendarioPage() {
                       />
                       <button
                         onClick={() => openEditTaskModal(task)}
-                        className="text-[var(--text-muted)] hover:text-[var(--text-primary)] text-sm"
+                        className="text-[var(--text-muted)] hover:text-[var(--text-primary)] text-sm cursor-pointer"
                       >
                         <Edit2 className="w-4 h-4" />
                       </button>
                       {localStorage.getItem('userRole') !== 'Comercial' && (
                         <button
                           onClick={() => openDeleteModal(task)}
-                          className="text-[var(--text-muted)] hover:text-red-400 text-sm"
+                          className="text-[var(--text-muted)] hover:text-red-400 text-sm cursor-pointer"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -765,7 +765,7 @@ export default function CalendarioPage() {
               </div>
               <button 
                 onClick={() => setShowTaskModal(false)}
-                className="text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                className="text-[var(--text-muted)] hover:text-[var(--text-primary)] cursor-pointer"
               >
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -872,13 +872,13 @@ export default function CalendarioPage() {
             <div className="flex items-center justify-end space-x-3 p-4 border-t border-[var(--border-primary)]">
               <button
                 onClick={() => setShowTaskModal(false)}
-                className="px-4 py-2 text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
+                className="px-4 py-2 text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors cursor-pointer"
               >
                 Cancelar
               </button>
               <button
                 onClick={handleSaveTask}
-                className="px-4 py-2 bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] text-white rounded transition-colors"
+                className="px-4 py-2 bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] text-white rounded transition-colors cursor-pointer"
               >
                 {editingTask ? 'Actualizar' : 'Crear'} Tarea
               </button>
@@ -895,7 +895,7 @@ export default function CalendarioPage() {
               <h3 className="text-lg font-semibold text-[var(--text-primary)]">Eliminar Tarea</h3>
               <button 
                 onClick={() => setShowDeleteModal(false)} 
-                className="text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
+                className="text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors cursor-pointer"
               >
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -938,7 +938,7 @@ export default function CalendarioPage() {
             <div className="flex gap-3 justify-end">
               <button
                 onClick={() => setShowDeleteModal(false)}
-                className="px-4 py-2 border border-[var(--border-primary)] text-[var(--text-primary)] rounded-md hover:bg-[var(--bg-secondary)] transition-colors"
+                className="px-4 py-2 border border-[var(--border-primary)] text-[var(--text-primary)] rounded-md hover:bg-[var(--bg-secondary)] transition-colors cursor-pointer"
                 disabled={loading}
               >
                 Cancelar
@@ -946,7 +946,7 @@ export default function CalendarioPage() {
               <button
                 onClick={confirmDeleteTask}
                 disabled={loading}
-                className="px-4 py-2 bg-red-500 hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-md transition-colors flex items-center gap-2"
+                className="px-4 py-2 bg-red-500 hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-md transition-colors flex items-center gap-2 cursor-pointer"
               >
                 {loading ? (
                   <>

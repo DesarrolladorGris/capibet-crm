@@ -267,18 +267,18 @@ export default function EspaciosTrabajoTab() {
         <div className="flex space-x-3">
           <button 
             onClick={loadEspaciosTrabajo}
-            className="flex items-center space-x-2 bg-gray-600 hover:bg-gray-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+            className="flex items-center space-x-2 bg-gray-600 hover:bg-gray-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer"
           >
             <RefreshCw className="w-5 h-5" />
             <span>Actualizar</span>
           </button>
-          <button className="flex items-center space-x-2 bg-gray-600 hover:bg-gray-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+          <button className="flex items-center space-x-2 bg-gray-600 hover:bg-gray-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer">
             <Hammer className="w-5 h-5" />
             <span>Plantillas</span>
           </button>
           <button 
             onClick={() => setShowNuevoEspacioModal(true)}
-            className="flex items-center space-x-2 bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+            className="flex items-center space-x-2 bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer"
           >
             <Plus className="w-5 h-5" />
             <span>Nuevo Espacio</span>
@@ -301,14 +301,14 @@ export default function EspaciosTrabajoTab() {
                 <div className="flex items-center space-x-2">
                   <button 
                     onClick={() => handleEditEspacio(espacio)}
-                    className="flex items-center space-x-1 text-[var(--text-muted)] hover:text-[var(--text-primary)] text-sm transition-colors px-3 py-1 rounded border border-[var(--border-primary)] hover:border-[var(--border-secondary)]"
+                    className="flex items-center space-x-1 text-[var(--text-muted)] hover:text-[var(--text-primary)] text-sm transition-colors px-3 py-1 rounded border border-[var(--border-primary)] hover:border-[var(--border-secondary)] cursor-pointer"
                   >
                     <Edit2 className="w-4 h-4" />
                     <span>Editar</span>
                   </button>
                   <button 
                     onClick={() => handleDeleteEspacio(espacio)}
-                    className="flex items-center space-x-1 text-[var(--text-muted)] hover:text-red-400 text-sm transition-colors px-3 py-1 rounded border border-[var(--border-primary)] hover:border-red-500"
+                    className="flex items-center space-x-1 text-[var(--text-muted)] hover:text-red-400 text-sm transition-colors px-3 py-1 rounded border border-[var(--border-primary)] hover:border-red-500 cursor-pointer"
                   >
                     <Trash2 className="w-4 h-4" />
                     <span>Eliminar</span>
@@ -367,7 +367,7 @@ export default function EspaciosTrabajoTab() {
           <p className="text-[var(--text-muted)] text-sm mb-6">No se encontraron espacios de trabajo en el sistema.</p>
           <button 
             onClick={loadEspaciosTrabajo}
-            className="bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] text-white px-6 py-3 rounded-lg font-medium transition-colors"
+            className="bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] text-white px-6 py-3 rounded-lg font-medium transition-colors cursor-pointer"
           >
             Recargar espacios de trabajo
           </button>

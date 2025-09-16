@@ -149,7 +149,7 @@ export default function ConfiguracionPage() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center space-x-2 py-4 px-2 border-b-2 transition-colors ${
+                className={`flex items-center space-x-2 py-4 px-2 border-b-2 transition-colors cursor-pointer ${
                   activeTab === tab.id
                     ? 'border-[var(--accent-primary)] text-[var(--accent-primary)]'
                     : 'border-transparent text-[var(--text-muted)] hover:text-[var(--text-primary)]'

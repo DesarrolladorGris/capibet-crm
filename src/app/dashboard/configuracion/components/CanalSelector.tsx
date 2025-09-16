@@ -1,12 +1,14 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import { Canal } from '@/services/supabaseService';
 
 interface CanalOption {
   id: string;
   nombre: string;
   icon: string;
+  logoPath: string;
   color: string;
   tipo: Canal['tipo'];
   description: string;
@@ -17,6 +19,7 @@ const canalOptions: CanalOption[] = [
     id: 'whatsapp', 
     nombre: 'WhatsApp', 
     icon: '📱', 
+    logoPath: '/wpp_logo.svg',
     color: '#25D366', 
     tipo: 'whatsapp',
     description: 'WhatsApp estándar'
@@ -26,14 +29,16 @@ const canalOptions: CanalOption[] = [
     id: 'whatsapp_api', 
     nombre: 'Whatsapp API', 
     icon: '📱', 
+    logoPath: '/wpp_logo.svg',
     color: '#25D366', 
-    tipo: 'whatsapp_api',
+    tipo: 'whatsappApi',
     description: 'Conecta WhatsApp usando API oficial'
   },
   { 
     id: 'instagram', 
     nombre: 'Instagram', 
     icon: '📷', 
+    logoPath: '/instagram_logo.svg',
     color: '#E4405F', 
     tipo: 'instagram',
     description: 'Conecta Instagram Business'
@@ -42,6 +47,7 @@ const canalOptions: CanalOption[] = [
     id: 'messenger', 
     nombre: 'Messenger', 
     icon: '💬', 
+    logoPath: '/messenger_logo.svg',
     color: '#0084FF', 
     tipo: 'messenger',
     description: 'Conecta Facebook Messenger'
@@ -50,6 +56,7 @@ const canalOptions: CanalOption[] = [
     id: 'telegram', 
     nombre: 'Telegram', 
     icon: '✈️', 
+    logoPath: '/telegram_logo.svg',
     color: '#0088CC', 
     tipo: 'telegram',
     description: 'Conecta Telegram personal'
@@ -58,22 +65,25 @@ const canalOptions: CanalOption[] = [
     id: 'telegram_bot', 
     nombre: 'Telegram Bot', 
     icon: '🤖', 
+    logoPath: '/telegram_logo.svg',
     color: '#0088CC', 
-    tipo: 'telegram_bot',
+    tipo: 'telegramBot',
     description: 'Conecta Telegram Bot API'
   },
   { 
     id: 'web_chat', 
     nombre: 'Web Chat', 
     icon: '💬', 
+    logoPath: '/chat_logo.svg',
     color: '#F29A1F', 
-    tipo: 'web_chat',
+    tipo: 'webChat',
     description: 'Chat integrado en tu sitio web'
   },
   { 
     id: 'email', 
     nombre: 'Email', 
     icon: '✉️', 
+    logoPath: '/email_logo.svg',
     color: '#EA4335', 
     tipo: 'email',
     description: 'Conecta tu cuenta de email'
@@ -115,15 +125,20 @@ export default function CanalSelector({
                 ${isHovered ? 'transform scale-105' : ''}
               `}
             >
-              {/* Icono del canal */}
+              {/* Logo del canal */}
               <div 
                 className={`
-                  text-3xl mb-3 transition-all duration-200
+                  w-12 h-12 mb-3 transition-all duration-200 flex items-center justify-center mx-auto
                   ${isSelected ? 'transform scale-110' : ''}
                 `}
-                style={{ color: option.color }}
               >
-                {option.icon}
+                <Image
+                  src={option.logoPath}
+                  alt={`${option.nombre} logo`}
+                  width={48}
+                  height={48}
+                  className="w-full h-full object-contain"
+                />
               </div>
               
               {/* Nombre del canal */}

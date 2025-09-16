@@ -199,7 +199,7 @@ export default function UsuariosTab() {
           </div>
           <button 
             onClick={loadUsuarios}
-            className="mt-3 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded text-sm transition-colors"
+            className="mt-3 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded text-sm transition-colors cursor-pointer"
           >
             Reintentar
           </button>
@@ -221,14 +221,14 @@ export default function UsuariosTab() {
         <div className="flex space-x-3">
           <button 
             onClick={loadUsuarios}
-            className="flex items-center space-x-2 bg-gray-600 hover:bg-gray-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+            className="flex items-center space-x-2 bg-gray-600 hover:bg-gray-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer"
           >
             <RefreshCw className="w-5 h-5" />
             <span>Actualizar</span>
           </button>
           <button 
             onClick={() => setShowNuevoUsuarioModal(true)}
-            className="flex items-center space-x-2 bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+            className="flex items-center space-x-2 bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer"
           >
             <Plus className="w-5 h-5" />
             <span>Nuevo Usuario</span>
@@ -300,7 +300,7 @@ export default function UsuariosTab() {
                       <div className="flex items-center space-x-3">
                         <button 
                           onClick={() => handleEditUser(usuario)}
-                          className="text-[var(--text-muted)] hover:text-blue-400 text-sm transition-colors"
+                          className="text-[var(--text-muted)] hover:text-blue-400 text-sm transition-colors cursor-pointer"
                           title="Editar usuario"
                         >
                           <Edit2 className="w-4 h-4" />
@@ -308,7 +308,7 @@ export default function UsuariosTab() {
                         {usuario.activo ? (
                           <button 
                             onClick={() => handleDeactivateUser(usuario)}
-                            className="text-[var(--text-muted)] hover:text-red-400 text-sm transition-colors"
+                            className="text-[var(--text-muted)] hover:text-red-400 text-sm transition-colors cursor-pointer"
                             title="Dar de baja usuario"
                           >
                             <ArrowDown className="w-4 h-4" />
@@ -316,7 +316,7 @@ export default function UsuariosTab() {
                         ) : (
                           <button 
                             onClick={() => handleActivateUser(usuario)}
-                            className="text-[var(--text-muted)] hover:text-green-400 text-sm transition-colors"
+                            className="text-[var(--text-muted)] hover:text-green-400 text-sm transition-colors cursor-pointer"
                             title="Dar de alta usuario"
                           >
                             ⬆️
@@ -337,7 +337,7 @@ export default function UsuariosTab() {
           <p className="text-[var(--text-muted)] text-sm mb-6">No se encontraron usuarios en el sistema.</p>
           <button 
             onClick={loadUsuarios}
-            className="bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] text-white px-6 py-3 rounded-lg font-medium transition-colors"
+            className="bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] text-white px-6 py-3 rounded-lg font-medium transition-colors cursor-pointer"
           >
             Recargar usuarios
           </button>
