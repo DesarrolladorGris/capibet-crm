@@ -2,14 +2,16 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { Building2, Link, Tag, Users, MessageCircle } from 'lucide-react';
 
 import EspaciosTrabajoTab from './components/EspaciosTrabajoTab';
 import UsuariosTab from './components/UsuariosTab';
 import EtiquetasTab from './components/EtiquetasTab';
 import RespuestasRapidasTab from './components/RespuestasRapidasTab';
 import SesionesTab from './components/SesionesTab';
-import { supabaseService } from '@/services/supabaseService';
+import { userServices } from '@/services/userServices';
 import { espacioTrabajoServices } from '@/services/espacioTrabajoServices';
+import { supabaseService } from '@/services/supabaseService';
 import { isUserAuthenticated } from '@/utils/auth';
 import RoleProtection from '@/components/RoleProtection';
 
@@ -17,7 +19,7 @@ import RoleProtection from '@/components/RoleProtection';
 interface TabConfig {
   id: string;
   label: string;
-  icon: string;
+  icon: React.ReactNode;
   count?: number;
   component: React.ComponentType;
 }
@@ -41,11 +43,11 @@ export default function ConfiguracionPage() {
 
   // Configuración de pestañas
   const tabs: TabConfig[] = [
-    { id: 'espacios-trabajo', label: 'Espacios de trabajo', icon: '🏢', count: espaciosCount, component: EspaciosTrabajoTab },
-    { id: 'sesiones', label: 'Sesiones', icon: '🔗', count: 0, component: SesionesTab },
-    { id: 'etiquetas', label: 'Etiquetas', icon: '🏷️', count: etiquetasCount, component: EtiquetasTab },
-    { id: 'usuarios', label: 'Usuarios', icon: '👥', count: userCount, component: UsuariosTab },
-    { id: 'respuestas-rapidas', label: 'Respuestas rápidas', icon: '💬', count: respuestasRapidasCount, component: RespuestasRapidasTab },
+    { id: 'espacios-trabajo', label: 'Espacios de trabajo', icon: <Building2 className="w-4 h-4" />, count: espaciosCount, component: EspaciosTrabajoTab },
+    { id: 'sesiones', label: 'Sesiones', icon: <Link className="w-4 h-4" />, count: 0, component: SesionesTab },
+    { id: 'etiquetas', label: 'Etiquetas', icon: <Tag className="w-4 h-4" />, count: etiquetasCount, component: EtiquetasTab },
+    { id: 'usuarios', label: 'Usuarios', icon: <Users className="w-4 h-4" />, count: userCount, component: UsuariosTab },
+    { id: 'respuestas-rapidas', label: 'Respuestas rápidas', icon: <MessageCircle className="w-4 h-4" />, count: respuestasRapidasCount, component: RespuestasRapidasTab },
   ];
 
   useEffect(() => {
@@ -70,8 +72,8 @@ export default function ConfiguracionPage() {
 
   const loadUserCount = async () => {
     try {
-      // Usar el nuevo método seguro de conteo
-      const result = await supabaseService.getUsersCount();
+      // Usar el método de conteo del servicio de usuarios
+      const result = await userServices.getUsersCount();
       if (result.success && typeof result.data === 'number') {
         setUserCount(result.data);
       }

@@ -1,6 +1,7 @@
 'use client';
 
 import { useDroppable } from '@dnd-kit/core';
+import { Edit2, Trash2, MessageCircle, BarChart3 } from 'lucide-react';
 import { EmbUpdoResponse, MensajeResponse } from '@/services/supabaseService';
 import DraggableMensaje from './DraggableMensaje';
 
@@ -49,7 +50,7 @@ export default function DraggableEmbudo({ embudo, index, mensajes, onEdit, onDel
             className="text-[var(--text-muted)] hover:text-[var(--text-primary)] text-xs p-1" 
             title="Editar embudo"
           >
-            ✏️
+            <Edit2 className="w-4 h-4" />
           </button>
           <button 
             onClick={(e) => {
@@ -59,7 +60,7 @@ export default function DraggableEmbudo({ embudo, index, mensajes, onEdit, onDel
             className="text-[var(--text-muted)] hover:text-[var(--error)] text-xs p-1" 
             title="Eliminar embudo"
           >
-            🗑️
+            <Trash2 className="w-4 h-4" />
           </button>
         </div>
       </div>
@@ -85,12 +86,12 @@ export default function DraggableEmbudo({ embudo, index, mensajes, onEdit, onDel
         {/* Header del área de contenido */}
         <div className="p-3 border-b border-[var(--border-primary)] flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <span className="text-[var(--text-muted)] text-xs">💬</span>
+            <span className="text-[var(--text-muted)] text-xs"><MessageCircle className="w-4 h-4" /></span>
             <span className="text-[var(--text-secondary)] text-xs font-medium">
               {mensajes.length} mensaje{mensajes.length !== 1 ? 's' : ''}
             </span>
           </div>
-          <div className="text-[var(--text-muted)] text-xs">📊</div>
+          <div className="text-[var(--text-muted)] text-xs"><BarChart3 className="w-4 h-4" /></div>
         </div>
         
         {/* Área principal para mensajes */}
@@ -113,7 +114,7 @@ export default function DraggableEmbudo({ embudo, index, mensajes, onEdit, onDel
           ) : (
             <div className="flex items-center justify-center h-full">
               <div className="text-center">
-                <div className="text-[var(--text-muted)] text-3xl mb-3">💬</div>
+                <div className="text-[var(--text-muted)] text-3xl mb-3"><MessageCircle className="w-4 h-4" /></div>
                 <div className="text-[var(--text-muted)] text-sm mb-2">Sin mensajes</div>
                 <div className="text-[var(--text-muted)] text-xs">Arrastra mensajes aquí o crea nuevos</div>
               </div>

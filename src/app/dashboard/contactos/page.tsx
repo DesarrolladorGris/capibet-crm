@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { Edit2, Trash2 } from 'lucide-react';
 // import DashboardLayout from '../layout';
 import AgregarContactoModal from './components/AgregarContactoModal';
 import EditarContactoModal from './components/EditarContactoModal';
@@ -408,14 +409,14 @@ export default function ContactosPage() {
                     className="text-[var(--text-muted)] hover:text-blue-400 text-sm transition-colors"
                     title="Editar contacto"
                   >
-                    ✏️
+                    <Edit2 className="w-4 h-4" />
                   </button>
                   <button 
                     onClick={() => handleDeleteContact(contact)}
                     className="text-[var(--text-muted)] hover:text-red-400 text-sm transition-colors"
                     title="Eliminar contacto"
                   >
-                    🗑️
+                    <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
               </div>

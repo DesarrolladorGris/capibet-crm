@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { Smartphone, Camera, MessageCircle, Send, Bot, Mail, Facebook, Twitter, Briefcase, Megaphone, Building2, Check } from 'lucide-react';
 import { isUserAuthenticated } from '@/utils/auth';
 import { mensajesServices } from '@/services/mensajesServices';
 import { MensajeResponse } from '@/app/api/mensajes/domain/mensaje';
@@ -27,20 +28,20 @@ interface MensajeConUI extends MensajeResponse {
 }
 
 // Mapeo de tipos de canal a iconos (igual que en DraggableMensaje)
-const getChannelInfoByType = (tipo: string): { name: string; icon: string } => {
-  const typeMap: { [key: string]: { name: string; icon: string } } = {
-    'whatsapp': { name: 'WhatsApp', icon: '📱' },
-    'whatsapp-api': { name: 'WhatsApp API', icon: '📱' },
-    'instagram': { name: 'Instagram', icon: '📷' },
-    'messenger': { name: 'Messenger', icon: '💬' },
-    'telegram': { name: 'Telegram', icon: '✈️' },
-    'telegram-bot': { name: 'Telegram Bot', icon: '🤖' },
-    'web-chat': { name: 'Web Chat', icon: '💬' },
-    'email': { name: 'Email', icon: '📧' },
-    'sms': { name: 'SMS', icon: '📱' },
-    'facebook': { name: 'Facebook', icon: '📘' },
-    'twitter': { name: 'Twitter', icon: '🐦' },
-    'linkedin': { name: 'LinkedIn', icon: '💼' }
+const getChannelInfoByType = (tipo: string): { name: string; icon: React.ReactNode } => {
+  const typeMap: { [key: string]: { name: string; icon: React.ReactNode } } = {
+    'whatsapp': { name: 'WhatsApp', icon: <Smartphone className="w-4 h-4" /> },
+    'whatsapp-api': { name: 'WhatsApp API', icon: <Smartphone className="w-4 h-4" /> },
+    'instagram': { name: 'Instagram', icon: <Camera className="w-4 h-4" /> },
+    'messenger': { name: 'Messenger', icon: <MessageCircle className="w-4 h-4" /> },
+    'telegram': { name: 'Telegram', icon: <Send className="w-4 h-4" /> },
+    'telegram-bot': { name: 'Telegram Bot', icon: <Bot className="w-4 h-4" /> },
+    'web-chat': { name: 'Web Chat', icon: <MessageCircle className="w-4 h-4" /> },
+    'email': { name: 'Email', icon: <Mail className="w-4 h-4" /> },
+    'sms': { name: 'SMS', icon: <Smartphone className="w-4 h-4" /> },
+    'facebook': { name: 'Facebook', icon: <Facebook className="w-4 h-4" /> },
+    'twitter': { name: 'Twitter', icon: <Twitter className="w-4 h-4" /> },
+    'linkedin': { name: 'LinkedIn', icon: <Briefcase className="w-4 h-4" /> }
   };
   
   const normalizedType = tipo.toLowerCase().trim();
@@ -50,7 +51,7 @@ const getChannelInfoByType = (tipo: string): { name: string; icon: string } => {
   }
   
   const capitalizedType = tipo.charAt(0).toUpperCase() + tipo.slice(1).toLowerCase();
-  return { name: capitalizedType, icon: '📢' };
+  return { name: capitalizedType, icon: <Megaphone className="w-4 h-4" /> };
 };
 
 export default function ChatsPage() {
@@ -75,7 +76,7 @@ export default function ChatsPage() {
     setError('');
     
     try {
-      console.log('🔄 Cargando datos para chats...');
+      console.log('⚡ Cargando datos para chats...');
       
       // Cargar datos en paralelo
       const [espaciosResult, mensajesResult, canalesResult, contactosResult] = await Promise.all([
@@ -86,13 +87,7 @@ export default function ChatsPage() {
       ]);
       
       if (espaciosResult.success && espaciosResult.data) {
-        const espacios = espaciosResult.data;
-        setEspaciosTrabajo(espacios);
-        
-        // Seleccionar el primer espacio por defecto
-        if (espacios.length > 0 && !selectedEspacio) {
-          setSelectedEspacio(espacios[0]);
-        }
+        setEspaciosTrabajo(espaciosResult.data);
       }
       
       if (mensajesResult.success && mensajesResult.data) {
@@ -113,7 +108,7 @@ export default function ChatsPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [selectedEspacio]);
+  }, []); // Removemos selectedEspacio de las dependencias para evitar el bucle infinito
 
   // Función para obtener el tipo de canal por ID
   const getCanalTipo = useCallback((canalId: number): string | undefined => {
@@ -151,7 +146,7 @@ export default function ChatsPage() {
             ultimoMensaje: mensaje,
             canal: {
               ...canal,
-              icono: channelInfo.icon
+              icono: channelInfo.name
             },
             noLeidos: 0, // TODO: Implementar lógica de no leídos
             estado: 'activo'
@@ -181,6 +176,13 @@ export default function ChatsPage() {
     }
     loadData();
   }, [router, loadData]);
+
+  // Efecto separado para seleccionar el primer espacio cuando se cargan los datos
+  useEffect(() => {
+    if (espaciosTrabajo.length > 0 && !selectedEspacio) {
+      setSelectedEspacio(espaciosTrabajo[0]);
+    }
+  }, [espaciosTrabajo, selectedEspacio]);
 
   useEffect(() => {
     createChatsFromMessages();
@@ -344,7 +346,7 @@ export default function ChatsPage() {
           {isLoading && (
             <div className="flex-1 flex items-center justify-center">
               <div className="text-center">
-                <div className="text-[var(--text-muted)] text-4xl mb-4">⏳</div>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--accent-primary)] mx-auto mb-4"></div>
                 <h3 className="text-[var(--text-primary)] text-lg font-medium mb-2">Cargando chats...</h3>
                 <p className="text-[var(--text-muted)] text-sm">Obteniendo conversaciones del espacio de trabajo</p>
               </div>
@@ -355,7 +357,7 @@ export default function ChatsPage() {
           {!isLoading && !selectedEspacio && (
             <div className="flex-1 flex items-center justify-center">
               <div className="text-center">
-                <div className="text-[var(--text-muted)] text-4xl mb-4">🏢</div>
+                <Building2 className="text-[var(--text-muted)] w-16 h-16 mb-4 mx-auto" />
                 <h3 className="text-[var(--text-primary)] text-lg font-medium mb-2">Selecciona un espacio</h3>
                 <p className="text-[var(--text-muted)] text-sm">Elige un espacio de trabajo para ver sus conversaciones</p>
               </div>
@@ -404,7 +406,7 @@ export default function ChatsPage() {
                     <div className="flex items-center justify-between mb-1">
                       <div className="flex items-center space-x-2">
                         <h3 className="text-[var(--text-primary)] font-medium truncate">{chat.contacto.nombre}</h3>
-                        <span className="text-xs">{chat.canal.icono}</span>
+                        <span className="text-xs">{getChannelInfoByType(chat.canal.tipo).icon}</span>
                       </div>
                       <div className="flex items-center space-x-2">
                         <span className="text-[var(--text-muted)] text-xs">{formatTime(chat.ultimoMensaje.creado_en)}</span>
@@ -427,7 +429,7 @@ export default function ChatsPage() {
 
             {filteredChats.length === 0 && (
               <div className="p-8 text-center">
-                <div className="text-[var(--text-muted)] text-4xl mb-4">💬</div>
+                <MessageCircle className="text-[var(--text-muted)] w-16 h-16 mb-4 mx-auto" />
                 <h3 className="text-[var(--text-primary)] text-lg font-medium mb-2">No hay chats</h3>
                 <p className="text-[var(--text-muted)] text-sm">
                   {searchQuery ? 'No se encontraron chats con ese término' : 'Aún no tienes conversaciones'}
@@ -455,7 +457,7 @@ export default function ChatsPage() {
                     <div>
                       <h3 className="text-[var(--text-primary)] font-medium">{selectedChat.contacto.nombre}</h3>
                       <div className="flex items-center space-x-2">
-                        <span className="text-xs">{selectedChat.canal.icono}</span>
+                        <span className="text-xs">{getChannelInfoByType(selectedChat.canal.tipo).icon}</span>
                         <span className="text-[var(--text-muted)] text-sm">{getChannelInfoByType(selectedChat.canal.tipo).name}</span>
                         <span className="text-[var(--text-muted)]">•</span>
                         <span className="text-[var(--text-muted)] text-sm">{selectedChat.contacto.telefono}</span>
@@ -493,9 +495,9 @@ export default function ChatsPage() {
                         {formatTime(message.creado_en)}
                         {message.remitente_id === 1 && (
                           <span className="ml-1">
-                            {message.estado === 'enviado' && '✓'}
-                            {message.estado === 'entregado' && '✓✓'}
-                            {message.leido && <span className="text-blue-300">✓✓</span>}
+                            {message.estado === 'enviado' && <Check className="w-3 h-3" />}
+                            {message.estado === 'entregado' && <><Check className="w-3 h-3" /><Check className="w-3 h-3" /></>}
+                            {message.leido && <span className="text-blue-300 flex"><Check className="w-3 h-3" /><Check className="w-3 h-3" /></span>}
                           </span>
                         )}
                       </div>
@@ -536,7 +538,7 @@ export default function ChatsPage() {
             /* Estado sin chat seleccionado */
             <div className="flex-1 flex items-center justify-center bg-[var(--bg-primary)]">
               <div className="text-center">
-                <div className="text-[var(--text-muted)] text-6xl mb-4">💬</div>
+                <MessageCircle className="text-[var(--text-muted)] w-24 h-24 mb-4 mx-auto" />
                 <h3 className="text-[var(--text-primary)] text-xl font-medium mb-2">Selecciona una conversación</h3>
                 <p className="text-[var(--text-muted)] text-sm">
                   Elige un chat de la lista para comenzar a conversar

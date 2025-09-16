@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { Tag, Zap, User, Edit2, Trash2, Calendar, AlertTriangle } from 'lucide-react';
 import { isUserAuthenticated } from '@/utils/auth';
 import { supabaseService } from '@/services/supabaseService';
 import { userServices } from '@/services/userServices';
@@ -619,9 +620,9 @@ export default function CalendarioPage() {
                         {task.descripion || 'Sin descripción'}
                       </p>
                       <div className="flex items-center space-x-4 mt-1 text-xs text-[var(--text-muted)]">
-                        <span>🏷️ {task.categoria}</span>
-                        <span>⚡ {task.prioridad}</span>
-                        {task.asignado_nombre && <span>👤 {task.asignado_nombre}</span>}
+                        <span><Tag className="w-3 h-3 inline mr-1" /> {task.categoria}</span>
+                        <span><Zap className="w-3 h-3 inline mr-1" /> {task.prioridad}</span>
+                        {task.asignado_nombre && <span><User className="w-3 h-3 inline mr-1" /> {task.asignado_nombre}</span>}
                       </div>
                     </div>
                   </div>
@@ -630,14 +631,14 @@ export default function CalendarioPage() {
                       onClick={() => openEditTaskModal(task)}
                       className="text-[var(--text-muted)] hover:text-[var(--text-primary)] text-sm"
                     >
-                      ✏️
+                      <Edit2 className="w-4 h-4" />
                     </button>
                     {localStorage.getItem('userRole') !== 'Comercial' && (
                       <button
                         onClick={() => openDeleteModal(task)}
                         className="text-[var(--text-muted)] hover:text-red-400 text-sm"
                       >
-                        🗑️
+                        <Trash2 className="w-4 h-4" />
                       </button>
                     )}
                   </div>
@@ -646,7 +647,7 @@ export default function CalendarioPage() {
               
               {getTasksForDate(currentDate).length === 0 && (
                 <div className="text-center py-8 text-[var(--text-muted)]">
-                  <div className="text-4xl mb-2">📅</div>
+                  <div className="text-4xl mb-2"><Calendar className="w-4 h-4" /></div>
                   <p>
                     {localStorage.getItem('userRole') === 'Comercial' 
                       ? 'No tienes tareas asignadas para este día'
@@ -716,14 +717,14 @@ export default function CalendarioPage() {
                         onClick={() => openEditTaskModal(task)}
                         className="text-[var(--text-muted)] hover:text-[var(--text-primary)] text-sm"
                       >
-                        ✏️
+                        <Edit2 className="w-4 h-4" />
                       </button>
                       {localStorage.getItem('userRole') !== 'Comercial' && (
                         <button
                           onClick={() => openDeleteModal(task)}
                           className="text-[var(--text-muted)] hover:text-red-400 text-sm"
                         >
-                          🗑️
+                          <Trash2 className="w-4 h-4" />
                         </button>
                       )}
                     </div>
@@ -921,9 +922,9 @@ export default function CalendarioPage() {
                       {taskToDelete.descripion || 'Sin descripción'}
                     </p>
                     <div className="flex items-center space-x-4 mt-2 text-xs text-[var(--text-muted)]">
-                      <span>📅 {new Date(taskToDelete.fecha).toLocaleDateString('es-ES')}</span>
+                      <span><Calendar className="w-4 h-4" /> {new Date(taskToDelete.fecha).toLocaleDateString('es-ES')}</span>
                       <span>🏷️ {taskToDelete.categoria}</span>
-                      <span>⚡ {taskToDelete.prioridad}</span>
+                      <span><Zap className="w-4 h-4" /> {taskToDelete.prioridad}</span>
                     </div>
                   </div>
                 </div>

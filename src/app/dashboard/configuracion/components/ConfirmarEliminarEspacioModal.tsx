@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { Trash2 } from 'lucide-react';
 import { espacioTrabajoServices, EspacioTrabajoResponse } from '@/services/espacioTrabajoServices';
 
 interface ConfirmarEliminarEspacioModalProps {
@@ -68,7 +69,7 @@ export default function ConfirmarEliminarEspacioModal({
         {/* Header con icono */}
         <div className="text-center mb-6">
           <div className="mx-auto w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mb-4">
-            <span className="text-red-500 text-2xl">🗑️</span>
+            <span className="text-red-500 text-2xl"><Trash2 className="w-8 h-8" /></span>
           </div>
           
           <h3 className="text-xl font-semibold text-white mb-2">

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { RefreshCw, Plus, Edit2, ArrowDown } from 'lucide-react';
 import { userServices } from '@/services/userServices';
 import { UsuarioResponse } from '@/app/api/usuarios/domain/usuario';
 import NuevoUsuarioModal from './NuevoUsuarioModal';
@@ -222,14 +223,14 @@ export default function UsuariosTab() {
             onClick={loadUsuarios}
             className="flex items-center space-x-2 bg-gray-600 hover:bg-gray-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
           >
-            <span>🔄</span>
+            <RefreshCw className="w-5 h-5" />
             <span>Actualizar</span>
           </button>
           <button 
             onClick={() => setShowNuevoUsuarioModal(true)}
             className="flex items-center space-x-2 bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
           >
-            <span>➕</span>
+            <Plus className="w-5 h-5" />
             <span>Nuevo Usuario</span>
           </button>
         </div>
@@ -302,7 +303,7 @@ export default function UsuariosTab() {
                           className="text-[var(--text-muted)] hover:text-blue-400 text-sm transition-colors"
                           title="Editar usuario"
                         >
-                          ✏️
+                          <Edit2 className="w-4 h-4" />
                         </button>
                         {usuario.activo ? (
                           <button 
@@ -310,7 +311,7 @@ export default function UsuariosTab() {
                             className="text-[var(--text-muted)] hover:text-red-400 text-sm transition-colors"
                             title="Dar de baja usuario"
                           >
-                            ⬇️
+                            <ArrowDown className="w-4 h-4" />
                           </button>
                         ) : (
                           <button 

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { BarChart3 } from 'lucide-react';
 import { mensajesServices } from '@/services/mensajesServices';
 import { MensajeResponse } from '@/app/api/mensajes/domain/mensaje';
 import { EspacioConEmbudos } from '@/services/supabaseService';
@@ -91,8 +92,14 @@ export default function EmbudosPage() {
         setEspaciosConEmbudos(espaciosConEmbudos);
         
         // Seleccionar el primer espacio por defecto si no hay ninguno seleccionado
-        if (!selectedEspacio && espacios.length > 0) {
-          setSelectedEspacio(espacios[0]);
+        if (espacios.length > 0) {
+          setSelectedEspacio(prevSelected => {
+            // Solo actualizar si no hay espacio seleccionado o si el espacio actual ya no existe
+            if (!prevSelected || !espacios.find(e => e.id === prevSelected.id)) {
+              return espacios[0];
+            }
+            return prevSelected;
+          });
         }
         
         console.log('Espacios con embudos cargados:', espaciosConEmbudos);
@@ -106,7 +113,7 @@ export default function EmbudosPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [selectedEspacio]);
+  }, []); // Remover selectedEspacio de las dependencias
 
   // Función para obtener el tipo de canal por ID
   const getCanalTipo = useCallback((canalId: number): string | undefined => {
@@ -126,7 +133,7 @@ export default function EmbudosPage() {
 
   useEffect(() => {
     loadEspaciosYEmbudos();
-  }, [loadEspaciosYEmbudos]);
+  }, []); // Solo ejecutar una vez al montar el componente
 
   const handleEspacioSelect = (espacio: EspacioTrabajoResponse) => {
     setSelectedEspacio(espacio);
@@ -307,7 +314,10 @@ export default function EmbudosPage() {
   if (isLoading) {
     return (
       <div className="p-6 flex items-center justify-center h-64">
-        <div className="text-[var(--text-primary)]">Cargando espacios y embudos...</div>
+        <div className="text-[var(--text-primary)]">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--accent-primary)] mx-auto mb-4"></div>
+          <p>Cargando embudos...</p>
+        </div>
       </div>
     );
   }
@@ -427,7 +437,7 @@ export default function EmbudosPage() {
                 </DndContext>
               ) : (
                 <div className="text-center py-16">
-                  <div className="text-[var(--text-muted)] text-6xl mb-4">📊</div>
+                  <BarChart3 className="text-[var(--text-muted)] w-24 h-24 mx-auto mb-4" />
                   <h3 className="text-[var(--text-primary)] text-lg font-medium mb-2">No hay embudos en este espacio</h3>
                   <p className="text-[var(--text-muted)] text-sm mb-6">
                     Crea tu primer embudo para comenzar a gestionar tu flujo de trabajo.

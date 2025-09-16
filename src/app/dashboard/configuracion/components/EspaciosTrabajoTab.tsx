@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { AlertTriangle, RefreshCw, Hammer, Plus, Settings, Edit2, Trash2, Building2 } from 'lucide-react';
 import { espacioTrabajoServices, EspacioTrabajoResponse } from '@/services/espacioTrabajoServices';
 import { supabaseService, EspacioConEmbudos } from '@/services/supabaseService';
 import { embudoServices, EmbudoResponse } from '@/services/embudoServices';
@@ -239,7 +240,7 @@ export default function EspaciosTrabajoTab() {
       <div className="p-6">
         <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4 text-red-400">
           <div className="flex items-center space-x-2">
-            <span>⚠️</span>
+            <AlertTriangle className="w-5 h-5" />
             <span>{error}</span>
           </div>
           <button 
@@ -268,18 +269,18 @@ export default function EspaciosTrabajoTab() {
             onClick={loadEspaciosTrabajo}
             className="flex items-center space-x-2 bg-gray-600 hover:bg-gray-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
           >
-            <span>🔄</span>
+            <RefreshCw className="w-5 h-5" />
             <span>Actualizar</span>
           </button>
           <button className="flex items-center space-x-2 bg-gray-600 hover:bg-gray-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
-            <span>🏗️</span>
+            <Hammer className="w-5 h-5" />
             <span>Plantillas</span>
           </button>
           <button 
             onClick={() => setShowNuevoEspacioModal(true)}
             className="flex items-center space-x-2 bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
           >
-            <span>➕</span>
+            <Plus className="w-5 h-5" />
             <span>Nuevo Espacio</span>
           </button>
         </div>
@@ -294,7 +295,7 @@ export default function EspaciosTrabajoTab() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
                   <span className="text-[var(--text-primary)] text-lg font-medium">
-                    ⚙️ {espacio.nombre.toUpperCase()}
+                    <Settings className="w-5 h-5 mr-2" /> {espacio.nombre.toUpperCase()}
                   </span>
                 </div>
                 <div className="flex items-center space-x-2">
@@ -302,14 +303,14 @@ export default function EspaciosTrabajoTab() {
                     onClick={() => handleEditEspacio(espacio)}
                     className="flex items-center space-x-1 text-[var(--text-muted)] hover:text-[var(--text-primary)] text-sm transition-colors px-3 py-1 rounded border border-[var(--border-primary)] hover:border-[var(--border-secondary)]"
                   >
-                    <span>✏️</span>
+                    <Edit2 className="w-4 h-4" />
                     <span>Editar</span>
                   </button>
                   <button 
                     onClick={() => handleDeleteEspacio(espacio)}
                     className="flex items-center space-x-1 text-[var(--text-muted)] hover:text-red-400 text-sm transition-colors px-3 py-1 rounded border border-[var(--border-primary)] hover:border-red-500"
                   >
-                    <span>🗑️</span>
+                    <Trash2 className="w-4 h-4" />
                     <span>Eliminar</span>
                   </button>
                 </div>
@@ -361,7 +362,7 @@ export default function EspaciosTrabajoTab() {
         </div>
       ) : (
         <div className="text-center py-12">
-          <div className="text-[var(--text-muted)] text-6xl mb-4">🏢</div>
+          <Building2 className="text-[var(--text-muted)] w-24 h-24 mx-auto mb-4" />
           <h4 className="text-[var(--text-primary)] text-lg font-medium mb-2">No hay espacios de trabajo</h4>
           <p className="text-[var(--text-muted)] text-sm mb-6">No se encontraron espacios de trabajo en el sistema.</p>
           <button 

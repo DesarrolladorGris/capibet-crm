@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { Tag, Search, Edit2, Trash2, X, AlertTriangle } from 'lucide-react';
 import { etiquetasServices } from '@/services/etiquetasServices';
 
 // Importar la interfaz del servicio
@@ -253,7 +254,7 @@ export default function EtiquetasTab({ onEtiquetasCountChange }: EtiquetasTabPro
           onClick={() => abrirModal()}
           className="bg-[#F29A1F] hover:bg-[#F29A1F] text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center space-x-2"
         >
-          <span>🏷️</span>
+          <Tag className="w-5 h-5" />
           <span>Nueva Etiqueta</span>
         </button>
       </div>
@@ -268,7 +269,7 @@ export default function EtiquetasTab({ onEtiquetasCountChange }: EtiquetasTabPro
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full bg-[#2a2d35] border border-[#3a3d45] rounded-lg px-4 py-3 pl-10 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#F29A1F] focus:border-transparent"
           />
-          <span className="absolute left-3 top-3 text-gray-400">🔍</span>
+          <Search className="absolute left-3 top-3 text-gray-400 w-4 h-4" />
         </div>
       </div>
 
@@ -276,7 +277,7 @@ export default function EtiquetasTab({ onEtiquetasCountChange }: EtiquetasTabPro
       <div className="grid gap-4">
         {etiquetasFiltradas.length === 0 ? (
           <div className="text-center py-12">
-            <span className="text-4xl mb-4 block">🏷️</span>
+            <Tag className="w-16 h-16 text-gray-400 mx-auto mb-4" />
             <p className="text-gray-400 text-lg mb-2">
               {searchTerm ? 'No se encontraron etiquetas' : 'No hay etiquetas creadas'}
             </p>
@@ -317,14 +318,14 @@ export default function EtiquetasTab({ onEtiquetasCountChange }: EtiquetasTabPro
                     onClick={() => abrirModal(etiqueta)}
                     className="bg-[#0984e3] hover:bg-[#0873c4] text-white px-3 py-1 rounded text-xs font-medium transition-colors"
                   >
-                    ✏️ Editar
+                    <Edit2 className="w-4 h-4 mr-1" /> Editar
                   </button>
                   
                   <button
                     onClick={() => handleDelete(etiqueta)}
                     className="bg-[#d63031] hover:bg-[#c0392b] text-white px-3 py-1 rounded text-xs font-medium transition-colors"
                   >
-                    🗑️ Eliminar
+                    <Trash2 className="w-4 h-4 mr-1" /> Eliminar
                   </button>
                 </div>
               </div>
@@ -345,7 +346,7 @@ export default function EtiquetasTab({ onEtiquetasCountChange }: EtiquetasTabPro
                 onClick={cerrarModal}
                 className="text-gray-400 hover:text-white text-xl"
               >
-                ✕
+                <X className="w-5 h-5" />
               </button>
             </div>
 
@@ -433,7 +434,7 @@ export default function EtiquetasTab({ onEtiquetasCountChange }: EtiquetasTabPro
             <div className="text-center">
               {/* Icono de advertencia */}
               <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
-                <span className="text-2xl">⚠️</span>
+                <AlertTriangle className="w-8 h-8 text-red-500" />
               </div>
               
               {/* Título */}

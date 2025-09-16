@@ -232,7 +232,7 @@ export default function EditarUsuarioModal({ isOpen, onClose, onUserUpdated, usu
         <div className="flex items-center justify-between p-6 border-b border-[#3a3d45]">
           <div className="flex items-center space-x-3">
             <div className="w-8 h-8 bg-[#F29A1F] rounded-full flex items-center justify-center">
-              <span className="text-white font-bold text-sm">✏️</span>
+              <span className="text-white font-bold text-sm"><Edit2 className="w-4 h-4" /></span>
             </div>
             <div>
               <h2 className="text-white text-lg font-semibold">Editar Usuario</h2>

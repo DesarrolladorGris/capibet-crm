@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { Trash2, BarChart3 } from 'lucide-react';
 import { embudoServices, EmbudoResponse } from '@/services/embudoServices';
 
 interface ConfirmarEliminarEmbudoModalProps {
@@ -68,7 +69,7 @@ export default function ConfirmarEliminarEmbudoModal({
         {/* Header con icono */}
         <div className="text-center mb-6">
           <div className="mx-auto w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mb-4">
-            <span className="text-red-500 text-2xl">🗑️</span>
+            <Trash2 className="text-red-500 w-8 h-8" />
           </div>
           
           <h3 className="text-xl font-semibold text-white mb-2">
@@ -78,7 +79,7 @@ export default function ConfirmarEliminarEmbudoModal({
           {embudo && (
             <div className="bg-[#2a2d35] rounded-lg p-3 mb-4">
               <p className="text-white text-sm font-medium">
-                📊 &quot;{embudo.nombre}&quot;
+                <BarChart3 className="w-4 h-4 inline mr-1" /> &quot;{embudo.nombre}&quot;
               </p>
               <p className="text-gray-400 text-xs mt-1">
                 ID: #{embudo.id} • Espacio: #{embudo.espacio_id}

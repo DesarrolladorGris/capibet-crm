@@ -1621,7 +1621,7 @@ export class SupabaseService {
    */
   async getAllVentasFichasDigitales(): Promise<ApiResponse<VentaFichasDigitales[]>> {
     try {
-      console.log('🚀 Obteniendo todas las ventas de fichas digitales...');
+      console.log('▶ Obteniendo todas las ventas de fichas digitales...');
       
       const response = await fetch(`${apiEndpoints.ventasFichasDigitales}?select=*&order=fecha_venta.desc`, {
         method: 'GET',
@@ -1643,14 +1643,14 @@ export class SupabaseService {
       }
 
       const data: VentaFichasDigitales[] = await response.json();
-      console.log('✅ Ventas de fichas digitales obtenidas:', data.length);
+      console.log('✓ Ventas de fichas digitales obtenidas:', data.length);
 
       return {
         success: true,
         data: data
       };
     } catch (error) {
-      console.error('❌ Error al obtener ventas de fichas digitales:', error);
+      console.error('✗ Error al obtener ventas de fichas digitales:', error);
       return { 
         success: false, 
         error: 'Error de conexión al obtener ventas de fichas digitales',
@@ -1664,7 +1664,7 @@ export class SupabaseService {
    */
   async getVentaFichasDigitalesById(id: number): Promise<ApiResponse<VentaFichasDigitales>> {
     try {
-      console.log('🚀 Obteniendo venta de fichas digitales por ID:', id);
+      console.log('▶ Obteniendo venta de fichas digitales por ID:', id);
       
       const response = await fetch(`${apiEndpoints.ventasFichasDigitales}?id=eq.${id}&select=*`, {
         method: 'GET',
@@ -1694,14 +1694,14 @@ export class SupabaseService {
         };
       }
 
-      console.log('✅ Venta de fichas digitales obtenida:', data[0]);
+      console.log('✓ Venta de fichas digitales obtenida:', data[0]);
 
       return {
         success: true,
         data: data[0]
       };
     } catch (error) {
-      console.error('❌ Error al obtener venta de fichas digitales:', error);
+      console.error('✗ Error al obtener venta de fichas digitales:', error);
       return { 
         success: false, 
         error: 'Error de conexión al obtener venta de fichas digitales',
@@ -1715,7 +1715,7 @@ export class SupabaseService {
    */
   async createVentaFichasDigitales(ventaData: VentaFichasDigitalesData): Promise<ApiResponse<VentaFichasDigitales>> {
     try {
-      console.log('🚀 Creando nueva venta de fichas digitales:', ventaData);
+      console.log('▶ Creando nueva venta de fichas digitales:', ventaData);
       
       const response = await fetch(apiEndpoints.ventasFichasDigitales, {
         method: 'POST',
@@ -1742,7 +1742,7 @@ export class SupabaseService {
       console.log('📄 Respuesta del servidor:', responseText);
       
       if (!responseText || responseText.trim() === '') {
-        console.log('✅ Venta creada exitosamente (sin contenido en respuesta)');
+        console.log('✓ Venta creada exitosamente (sin contenido en respuesta)');
         return {
           success: true,
           data: null
@@ -1750,14 +1750,14 @@ export class SupabaseService {
       }
 
       const data: VentaFichasDigitales = JSON.parse(responseText);
-      console.log('✅ Venta de fichas digitales creada:', data);
+      console.log('✓ Venta de fichas digitales creada:', data);
 
       return {
         success: true,
         data: data
       };
     } catch (error) {
-      console.error('❌ Error al crear venta de fichas digitales:', error);
+      console.error('✗ Error al crear venta de fichas digitales:', error);
       return { 
         success: false, 
         error: 'Error de conexión al crear venta de fichas digitales',
@@ -1771,7 +1771,7 @@ export class SupabaseService {
    */
   async updateVentaFichasDigitales(id: number, data: VentaFichasDigitalesData): Promise<ApiResponse<VentaFichasDigitales>> {
     try {
-      console.log('📝 Actualizando venta de fichas digitales:', id, data);
+      console.log('📄 Actualizando venta de fichas digitales:', id, data);
       
       const response = await fetch(`${apiEndpoints.ventasFichasDigitales}?id=eq.${id}`, {
         method: 'PATCH',
@@ -1785,7 +1785,7 @@ export class SupabaseService {
 
       if (!response.ok) {
         const errorData = await response.text();
-        console.error('❌ Error del servidor al actualizar venta:', errorData);
+        console.error('✗ Error del servidor al actualizar venta:', errorData);
         return {
           success: false,
           error: `Error del servidor: ${response.status} ${response.statusText}`,
@@ -1798,7 +1798,7 @@ export class SupabaseService {
       console.log('📄 Respuesta del servidor (actualización):', responseText);
       
       if (!responseText || responseText.trim() === '') {
-        console.log('✅ Venta actualizada exitosamente (sin contenido en respuesta)');
+        console.log('✓ Venta actualizada exitosamente (sin contenido en respuesta)');
         return {
           success: true,
           data: null
@@ -1806,14 +1806,14 @@ export class SupabaseService {
       }
 
       const updatedData: VentaFichasDigitales[] = JSON.parse(responseText);
-      console.log('✅ Venta de fichas digitales actualizada:', updatedData[0]);
+      console.log('✓ Venta de fichas digitales actualizada:', updatedData[0]);
 
       return {
         success: true,
         data: updatedData[0]
       };
     } catch (error) {
-      console.error('❌ Error al actualizar venta de fichas digitales:', error);
+      console.error('✗ Error al actualizar venta de fichas digitales:', error);
       return { 
         success: false, 
         error: 'Error de conexión al actualizar venta de fichas digitales',
@@ -1827,7 +1827,7 @@ export class SupabaseService {
    */
   async deleteVentaFichasDigitales(id: number): Promise<ApiResponse<null>> {
     try {
-      console.log('🗑️ Eliminando venta de fichas digitales:', id);
+      console.log('🗑 Eliminando venta de fichas digitales:', id);
       
       const response = await fetch(`${apiEndpoints.ventasFichasDigitales}?id=eq.${id}`, {
         method: 'DELETE',
@@ -1840,7 +1840,7 @@ export class SupabaseService {
 
       if (!response.ok) {
         const errorData = await response.text();
-        console.error('❌ Error del servidor al eliminar venta:', errorData);
+        console.error('✗ Error del servidor al eliminar venta:', errorData);
         return {
           success: false,
           error: `Error del servidor: ${response.status} ${response.statusText}`,
@@ -1848,14 +1848,14 @@ export class SupabaseService {
         };
       }
 
-      console.log('✅ Venta de fichas digitales eliminada:', id);
+      console.log('✓ Venta de fichas digitales eliminada:', id);
 
       return {
         success: true,
         data: null
       };
     } catch (error) {
-      console.error('❌ Error al eliminar venta de fichas digitales:', error);
+      console.error('✗ Error al eliminar venta de fichas digitales:', error);
       return { 
         success: false, 
         error: 'Error de conexión al eliminar venta de fichas digitales',

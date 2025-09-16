@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { Banknote, CreditCard, Building, Bitcoin, DollarSign, ShoppingCart, Package, Edit2, Trash2 } from 'lucide-react';
 import { isUserAuthenticated } from '@/utils/auth';
 import { supabaseService, VentaFichasDigitales, VentaFichasDigitalesData } from '@/services/supabaseService';
 import { productosServices } from '@/services/productosServices';
@@ -481,16 +482,16 @@ export default function VentasPage() {
   const getMetodoPagoIcon = (metodo: string) => {
     switch (metodo) {
       case 'EFECTIVO':
-        return '💵';
+        return <Banknote className="w-4 h-4" />;
       case 'DEBITO':
       case 'CREDITO':
-        return '💳';
+        return <CreditCard className="w-4 h-4" />;
       case 'TRANSFERENCIA':
-        return '🏦';
+        return <Building className="w-4 h-4" />;
       case 'CRIPTO':
-        return '₿';
+        return <Bitcoin className="w-4 h-4" />;
       default:
-        return '💰';
+        return <DollarSign className="w-4 h-4" />;
     }
   };
 
@@ -539,7 +540,7 @@ export default function VentasPage() {
                 : 'border-transparent text-[var(--text-muted)] hover:text-[var(--text-primary)]'
             }`}
           >
-            <span>🛒</span>
+            <ShoppingCart className="w-5 h-5" />
             <span className="font-medium">Ventas</span>
           </button>
 
@@ -551,7 +552,7 @@ export default function VentasPage() {
                 : 'border-transparent text-[var(--text-muted)] hover:text-[var(--text-primary)]'
             }`}
           >
-            <span>📦</span>
+            <Package className="w-5 h-5" />
             <span className="font-medium">Productos</span>
             <span className="bg-[var(--bg-secondary)] text-[var(--text-primary)] px-2 py-0.5 rounded text-xs">
               {products.length}
@@ -762,7 +763,7 @@ export default function VentasPage() {
                           className="text-[var(--text-muted)] hover:text-blue-400 text-sm transition-colors disabled:opacity-50"
                           title="Editar producto"
                         >
-                          ✏️
+                          <Edit2 className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => openDeleteModal(product)}
@@ -770,7 +771,7 @@ export default function VentasPage() {
                           className="text-[var(--text-muted)] hover:text-red-400 text-sm transition-colors disabled:opacity-50"
                           title="Eliminar producto"
                         >
-                          🗑️
+                          <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
                     </div>

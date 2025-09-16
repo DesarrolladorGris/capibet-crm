@@ -139,7 +139,7 @@ class MensajesServices {
       
       const data = await response.json();
       
-      console.log('📦 Mensajes obtenidos del API:', data);
+      console.log('📋 Mensajes obtenidos del API:', data);
       
       return { success: true, data: Array.isArray(data) ? data : [] };
     } catch (error) {

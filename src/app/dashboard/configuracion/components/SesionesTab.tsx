@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { Smartphone, Mail, Camera, MessageCircle, Send, Bot, Link, Trash2, X } from 'lucide-react';
 import { sesionesServices } from '@/services/sesionesServices';
 import { SesionResponse } from '@/app/api/sesiones/domain/sesion';
 import { canalesServices, Canal, CanalData } from '@/services/canalesServices';
@@ -14,21 +15,21 @@ import ConfirmDeleteCanalModal from './ConfirmDeleteCanalModal';
 interface CanalOption {
   id: Canal['tipo'];
   nombre: string;
-  icon: string;
+  icon: React.ReactNode;
   color: string;
   tipo: Canal['tipo'];
 }
 
 const canalOptions: CanalOption[] = [
-  { id: 'whatsapp', nombre: 'WhatsApp', icon: '📱', color: '#25D366', tipo: 'whatsapp' },
+  { id: 'whatsapp', nombre: 'WhatsApp', icon: <Smartphone className="w-4 h-4" />, color: '#25D366', tipo: 'whatsapp' },
 
-  { id: 'whatsappApi', nombre: 'WhatsApp API', icon: '📱', color: '#25D366', tipo: 'whatsappApi' },
-  { id: 'email', nombre: 'Email', icon: '✉️', color: '#EA4335', tipo: 'email' },
-  { id: 'instagram', nombre: 'Instagram', icon: '📷', color: '#E4405F', tipo: 'instagram' },
-  { id: 'messenger', nombre: 'Messenger', icon: '💬', color: '#0084FF', tipo: 'messenger' },
-  { id: 'telegram', nombre: 'Telegram', icon: '✈️', color: '#0088CC', tipo: 'telegram' },
-  { id: 'telegramBot', nombre: 'Telegram Bot', icon: '🤖', color: '#0088CC', tipo: 'telegramBot' },
-  { id: 'webChat', nombre: 'Web Chat', icon: '💬', color: '#F29A1F', tipo: 'webChat' },
+  { id: 'whatsappApi', nombre: 'WhatsApp API', icon: <Smartphone className="w-4 h-4" />, color: '#25D366', tipo: 'whatsappApi' },
+  { id: 'email', nombre: 'Email', icon: <Mail className="w-4 h-4" />, color: '#EA4335', tipo: 'email' },
+  { id: 'instagram', nombre: 'Instagram', icon: <Camera className="w-4 h-4" />, color: '#E4405F', tipo: 'instagram' },
+  { id: 'messenger', nombre: 'Messenger', icon: <MessageCircle className="w-4 h-4" />, color: '#0084FF', tipo: 'messenger' },
+  { id: 'telegram', nombre: 'Telegram', icon: <Send className="w-4 h-4" />, color: '#0088CC', tipo: 'telegram' },
+  { id: 'telegramBot', nombre: 'Telegram Bot', icon: <Bot className="w-4 h-4" />, color: '#0088CC', tipo: 'telegramBot' },
+  { id: 'webChat', nombre: 'Web Chat', icon: <MessageCircle className="w-4 h-4" />, color: '#F29A1F', tipo: 'webChat' },
 ];
 
 export default function SesionesTab() {
@@ -272,7 +273,7 @@ export default function SesionesTab() {
 
   const getCanalIcon = (tipo: Canal['tipo']) => {
     const option = canalOptions.find(opt => opt.tipo === tipo);
-    return option?.icon || '📱';
+    return option?.icon || <Smartphone className="w-4 h-4" />;
   };
 
   const getCanalColor = (tipo: Canal['tipo']) => {
@@ -384,7 +385,7 @@ export default function SesionesTab() {
       {/* Header de Sesiones */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-3">
-          <span className="text-2xl">🔗</span>
+          <Link className="w-8 h-8" />
           <div>
             <h2 className="text-white text-2xl font-semibold">Sesiones {sesiones.length}</h2>
             <p className="text-gray-400 text-sm">Crear, editar y eliminar tus sesiones vinculadas.</p>
@@ -464,7 +465,7 @@ export default function SesionesTab() {
                     title="Eliminar canal"
                     disabled={loading}
                   >
-                    🗑️
+                    <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
                 
@@ -521,7 +522,7 @@ export default function SesionesTab() {
         
         {sesiones.length === 0 ? (
           <div className="text-center py-8">
-            <div className="text-gray-400 text-6xl mb-4">🔗</div>
+            <Link className="text-gray-400 w-24 h-24 mx-auto mb-4" />
             <h4 className="text-white text-lg font-medium mb-2">Sesiones en desarrollo</h4>
             <p className="text-gray-400 text-sm mb-4">
               La funcionalidad de sesiones estará disponible próximamente.
@@ -552,7 +553,7 @@ export default function SesionesTab() {
                 onClick={() => setShowAddCanal(false)}
                 className="text-gray-400 hover:text-white"
               >
-                ✕
+                <X className="w-5 h-5" />
               </button>
             </div>
             
@@ -661,7 +662,7 @@ export default function SesionesTab() {
                 onClick={() => setShowAddSesion(false)}
                 className="text-gray-400 hover:text-white"
               >
-                ✕
+                <X className="w-5 h-5" />
               </button>
             </div>
             

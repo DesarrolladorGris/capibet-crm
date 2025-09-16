@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
+import { Home, Funnel, MessageCircle, MessageSquare, Mail, Calendar, Users, ShoppingCart, Send, Settings, GraduationCap } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 
 interface SidebarProps {
@@ -11,24 +12,24 @@ interface SidebarProps {
 
 interface MenuItem {
   id: string;
-  icon: string;
+  icon: React.ReactNode;
   label: string;
   active: boolean;
   requiredRoles?: string[]; // Roles que pueden ver este item
 }
 
 const menuItems: MenuItem[] = [
-  { id: 'dashboard', icon: '🏠', label: 'Dashboard', active: true },
-  { id: 'funnels', icon: '🔽', label: 'Embudos', active: false },
-  { id: 'chats', icon: '💬', label: 'Chats', active: false },
-  { id: 'internal-chat', icon: '💭', label: 'Chat Interno', active: false },
-  { id: 'emails', icon: '✉️', label: 'Emails', active: false },
-  { id: 'calendar', icon: '📅', label: 'Calendario', active: false },
-  { id: 'contacts', icon: '👥', label: 'Contactos', active: false, requiredRoles: ['Administrador', 'Admin'] },
-  { id: 'sales', icon: '🛒', label: 'Ventas', active: false },
-  { id: 'bulk-sends', icon: '📤', label: 'Envíos masivos', active: false },
-  { id: 'config', icon: '⚙️', label: 'Configuración', active: false, requiredRoles: ['Administrador', 'Admin'] },
-  { id: 'academy', icon: '🎓', label: 'CAPIBET Academy', active: false, requiredRoles: ['Administrador', 'Admin'] },
+  { id: 'dashboard', icon: <Home className="w-5 h-5" />, label: 'Dashboard', active: true },
+  { id: 'funnels', icon: <Funnel className="w-5 h-5" />, label: 'Embudos', active: false },
+  { id: 'chats', icon: <MessageCircle className="w-5 h-5" />, label: 'Chats', active: false },
+  { id: 'internal-chat', icon: <MessageSquare className="w-5 h-5" />, label: 'Chat Interno', active: false },
+  { id: 'emails', icon: <Mail className="w-5 h-5" />, label: 'Emails', active: false },
+  { id: 'calendar', icon: <Calendar className="w-5 h-5" />, label: 'Calendario', active: false },
+  { id: 'contacts', icon: <Users className="w-5 h-5" />, label: 'Contactos', active: false, requiredRoles: ['Administrador', 'Admin'] },
+  { id: 'sales', icon: <ShoppingCart className="w-5 h-5" />, label: 'Ventas', active: false },
+  { id: 'bulk-sends', icon: <Send className="w-5 h-5" />, label: 'Envíos masivos', active: false },
+  { id: 'config', icon: <Settings className="w-5 h-5" />, label: 'Configuración', active: false, requiredRoles: ['Administrador', 'Admin'] },
+  { id: 'academy', icon: <GraduationCap className="w-5 h-5" />, label: 'CAPIBET Academy', active: false, requiredRoles: ['Administrador', 'Admin'] },
 ];
 
 export default function Sidebar({ isOpen }: SidebarProps) {

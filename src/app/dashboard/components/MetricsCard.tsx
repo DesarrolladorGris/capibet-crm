@@ -5,7 +5,7 @@ interface MetricsCardProps {
   value: string;
   change: string;
   changeType: 'positive' | 'negative';
-  icon: string;
+  icon: React.ReactNode;
 }
 
 export default function MetricsCard({ title, value, change, changeType, icon }: MetricsCardProps) {
@@ -17,7 +17,7 @@ export default function MetricsCard({ title, value, change, changeType, icon }: 
           <p className="text-[var(--text-primary)] text-2xl font-bold">{value}</p>
         </div>
         <div className="w-12 h-12 bg-[var(--bg-tertiary)] rounded-lg flex items-center justify-center">
-          <span className="text-2xl">{icon}</span>
+          {icon}
         </div>
       </div>
       {change && (
