@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { supabaseService } from '@/services/supabaseService';
+import { etiquetasServices } from '@/services/etiquetasServices';
 
 // Importar la interfaz del servicio
-import type { Etiqueta } from '@/services/supabaseService';
+import type { EtiquetaResponse } from '@/app/api/etiquetas/domain/etiqueta';
 
 interface EtiquetaFormData {
   nombre: string;
@@ -13,38 +13,38 @@ interface EtiquetaFormData {
 }
 
 // Datos de prueba
-const etiquetasPrueba: Etiqueta[] = [
+const etiquetasPrueba: EtiquetaResponse[] = [
   {
     id: 1,
     nombre: 'Cliente VIP',
     color: '#F29A1F',
     descripcion: 'Clientes de alto valor',
-    activa: true,
-    created_at: '2024-12-28T10:00:00Z'
+    creado_por: 1,
+    creado_en: '2024-12-28T10:00:00Z'
   },
   {
     id: 2,
     nombre: 'Urgente',
     color: '#d63031',
     descripcion: 'Tareas prioritarias',
-    activa: true,
-    created_at: '2024-12-28T10:00:00Z'
+    creado_por: 1,
+    creado_en: '2024-12-28T10:00:00Z'
   },
   {
     id: 3,
     nombre: 'Nuevo',
     color: '#0984e3',
     descripcion: 'Elementos recientes',
-    activa: true,
-    created_at: '2024-12-28T10:00:00Z'
+    creado_por: 1,
+    creado_en: '2024-12-28T10:00:00Z'
   },
   {
     id: 4,
     nombre: 'Oferta',
     color: '#fd79a8',
     descripcion: 'Promociones activas',
-    activa: false,
-    created_at: '2024-12-28T10:00:00Z'
+    creado_por: 1,
+    creado_en: '2024-12-28T10:00:00Z'
   }
 ];
 
@@ -53,12 +53,12 @@ interface EtiquetasTabProps {
 }
 
 export default function EtiquetasTab({ onEtiquetasCountChange }: EtiquetasTabProps = {}) {
-  const [etiquetas, setEtiquetas] = useState<Etiqueta[]>([]);
+  const [etiquetas, setEtiquetas] = useState<EtiquetaResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [editingEtiqueta, setEditingEtiqueta] = useState<Etiqueta | null>(null);
-  const [etiquetaToDelete, setEtiquetaToDelete] = useState<Etiqueta | null>(null);
+  const [editingEtiqueta, setEditingEtiqueta] = useState<EtiquetaResponse | null>(null);
+  const [etiquetaToDelete, setEtiquetaToDelete] = useState<EtiquetaResponse | null>(null);
   const [formData, setFormData] = useState<EtiquetaFormData>({
     nombre: '',
     color: '#F29A1F',
@@ -75,7 +75,7 @@ export default function EtiquetasTab({ onEtiquetasCountChange }: EtiquetasTabPro
   // Función para recargar etiquetas desde la base de datos
   const recargarEtiquetas = async () => {
     try {
-      const response = await supabaseService.getAllEtiquetas();
+      const response = await etiquetasServices.getAllEtiquetas();
       
       if (response.success && response.data) {
         console.log('Etiquetas recargadas exitosamente:', response.data);
@@ -120,7 +120,7 @@ export default function EtiquetasTab({ onEtiquetasCountChange }: EtiquetasTabPro
     try {
       if (editingEtiqueta && editingEtiqueta.id) {
         // Actualizar etiqueta existente
-        const response = await supabaseService.updateEtiqueta(editingEtiqueta.id, {
+        const response = await etiquetasServices.updateEtiqueta(editingEtiqueta.id, {
           nombre: formData.nombre,
           color: formData.color,
           descripcion: formData.descripcion
@@ -135,10 +135,11 @@ export default function EtiquetasTab({ onEtiquetasCountChange }: EtiquetasTabPro
         }
       } else {
         // Crear nueva etiqueta
-        const response = await supabaseService.createEtiqueta({
+        const response = await etiquetasServices.createEtiqueta({
           nombre: formData.nombre,
           color: formData.color,
-          descripcion: formData.descripcion
+          descripcion: formData.descripcion,
+          creado_por: 1 // TODO: Obtener el ID del usuario logueado
         });
 
         if (response.success && response.data) {
@@ -155,7 +156,7 @@ export default function EtiquetasTab({ onEtiquetasCountChange }: EtiquetasTabPro
     }
   };
 
-  const handleDelete = (etiqueta: Etiqueta) => {
+  const handleDelete = (etiqueta: EtiquetaResponse) => {
     setEtiquetaToDelete(etiqueta);
     setShowDeleteModal(true);
   };
@@ -164,7 +165,7 @@ export default function EtiquetasTab({ onEtiquetasCountChange }: EtiquetasTabPro
     if (!etiquetaToDelete?.id) return;
     
     try {
-      const response = await supabaseService.deleteEtiqueta(etiquetaToDelete.id);
+      const response = await etiquetasServices.deleteEtiqueta(etiquetaToDelete.id);
       
       if (response.success) {
         setShowDeleteModal(false);
@@ -186,7 +187,7 @@ export default function EtiquetasTab({ onEtiquetasCountChange }: EtiquetasTabPro
   };
 
 
-  const abrirModal = (etiqueta?: Etiqueta) => {
+  const abrirModal = (etiqueta?: EtiquetaResponse) => {
     if (etiqueta) {
       setEditingEtiqueta(etiqueta);
       setFormData({
@@ -287,9 +288,7 @@ export default function EtiquetasTab({ onEtiquetasCountChange }: EtiquetasTabPro
           etiquetasFiltradas.map((etiqueta) => (
             <div
               key={etiqueta.id}
-              className={`bg-[#2a2d35] border border-[#3a3d45] rounded-lg p-4 transition-all hover:border-[#F29A1F] ${
-                !etiqueta.activa ? 'opacity-60' : ''
-              }`}
+              className="bg-[#2a2d35] border border-[#3a3d45] rounded-lg p-4 transition-all hover:border-[#F29A1F]"
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-4">
@@ -298,7 +297,7 @@ export default function EtiquetasTab({ onEtiquetasCountChange }: EtiquetasTabPro
                     style={{ backgroundColor: etiqueta.color }}
                   ></div>
                   <div>
-                    <h4 className={`text-white font-medium ${!etiqueta.activa ? 'line-through' : ''}`}>
+                    <h4 className="text-white font-medium">
                       {etiqueta.nombre}
                     </h4>
                     {etiqueta.descripcion && (
@@ -306,8 +305,8 @@ export default function EtiquetasTab({ onEtiquetasCountChange }: EtiquetasTabPro
                     )}
                     <div className="flex items-center space-x-4 mt-2 text-xs text-gray-500">
                       <span>Color: {etiqueta.color}</span>
-                      {etiqueta.created_at && (
-                        <span>Creada: {new Date(etiqueta.created_at).toLocaleDateString('es-ES')}</span>
+                      {etiqueta.creado_en && (
+                        <span>Creada: {new Date(etiqueta.creado_en).toLocaleDateString('es-ES')}</span>
                       )}
                     </div>
                   </div>

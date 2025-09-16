@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
+import { productosServices } from '@/services/productosServices';
+import { contactoServices } from '@/services/contactoServices';
 import { supabaseService } from '@/services/supabaseService';
 import MetricsCard from './components/MetricsCard';
 
@@ -22,9 +24,9 @@ export default function DashboardPage() {
   const loadProductsCount = async () => {
     setLoadingProducts(true);
     try {
-      const response = await supabaseService.getProductos();
-      if (response.success && response.data) {
-        setProductsCount(response.data.length);
+      const response = await productosServices.getProductosCount();
+      if (response.success && response.data !== undefined) {
+        setProductsCount(response.data);
       }
     } catch (error) {
       console.error('Error loading products count:', error);
@@ -37,7 +39,7 @@ export default function DashboardPage() {
   const loadContactsCount = async () => {
     setLoadingContacts(true);
     try {
-      const response = await supabaseService.getContactosCount();
+      const response = await contactoServices.getContactosCount();
       if (response.success && response.data !== undefined) {
         setContactsCount(response.data);
       }

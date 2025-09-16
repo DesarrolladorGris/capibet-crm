@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { supabaseService, EspacioTrabajoResponse, EmbUpdoResponse, EspacioConEmbudos } from '@/services/supabaseService';
+import { espacioTrabajoServices, EspacioTrabajoResponse } from '@/services/espacioTrabajoServices';
+import { supabaseService, EspacioConEmbudos } from '@/services/supabaseService';
+import { embudoServices, EmbudoResponse } from '@/services/embudoServices';
 import NuevoEspacioModal from './NuevoEspacioModal';
 import EditarEspacioModal from './EditarEspacioModal';
 import ConfirmarEliminarEspacioModal from './ConfirmarEliminarEspacioModal';
@@ -37,8 +39,8 @@ export default function EspaciosTrabajoTab() {
   const [showEliminarEmbudoModal, setShowEliminarEmbudoModal] = useState(false);
   const [selectedEspacio, setSelectedEspacio] = useState<EspacioTrabajoResponse | null>(null);
   const [selectedEspacioForEmbudo, setSelectedEspacioForEmbudo] = useState<EspacioTrabajoResponse | null>(null);
-  const [selectedEmbudo, setSelectedEmbudo] = useState<EmbUpdoResponse | null>(null);
-  const [selectedEmbudoForDelete, setSelectedEmbudoForDelete] = useState<EmbUpdoResponse | null>(null);
+  const [selectedEmbudo, setSelectedEmbudo] = useState<EmbudoResponse | null>(null);
+  const [selectedEmbudoForDelete, setSelectedEmbudoForDelete] = useState<EmbudoResponse | null>(null);
   
   // Sensores para drag & drop
   const sensors = useSensors(
@@ -61,8 +63,8 @@ export default function EspaciosTrabajoTab() {
     try {
       // Cargar espacios y embudos en paralelo
       const [espaciosResult, embudosResult] = await Promise.all([
-        supabaseService.getAllEspaciosTrabajo(),
-        supabaseService.getAllEmbudos()
+        espacioTrabajoServices.getAllEspaciosTrabajo(),
+        embudoServices.getAllEmbudos()
       ]);
       
       if (espaciosResult.success && espaciosResult.data) {
@@ -139,7 +141,7 @@ export default function EspaciosTrabajoTab() {
     setSelectedEspacioForEmbudo(null);
   };
 
-  const handleEditEmbudo = (embudo: EmbUpdoResponse) => {
+  const handleEditEmbudo = (embudo: EmbudoResponse) => {
     setSelectedEmbudo(embudo);
     setShowEditarEmbudoModal(true);
   };
@@ -151,7 +153,7 @@ export default function EspaciosTrabajoTab() {
     setSelectedEmbudo(null);
   };
 
-  const handleDeleteEmbudo = (embudo: EmbUpdoResponse) => {
+  const handleDeleteEmbudo = (embudo: EmbudoResponse) => {
     setSelectedEmbudoForDelete(embudo);
     setShowEliminarEmbudoModal(true);
   };
@@ -203,7 +205,7 @@ export default function EspaciosTrabajoTab() {
     console.log('📡 Actualizando orden en API:', embudosConOrden);
 
     try {
-      const result = await supabaseService.updateEmbudosOrder(embudosConOrden);
+      const result = await embudoServices.updateEmbudosOrder(embudosConOrden);
       
       if (result.success) {
         console.log('✅ Orden de embudos actualizado exitosamente');

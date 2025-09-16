@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { supabaseService, EspacioTrabajoResponse } from '@/services/supabaseService';
+import { espacioTrabajoServices, EspacioTrabajoResponse } from '@/services/espacioTrabajoServices';
 
 interface ConfirmarEliminarEspacioModalProps {
   isOpen: boolean;
@@ -27,7 +27,7 @@ export default function ConfirmarEliminarEspacioModal({
       console.log('Eliminando espacio de trabajo:', espacio.id);
 
       // Llamar al servicio de eliminación
-      const result = await supabaseService.deleteEspacioTrabajo(espacio.id);
+      const result = await espacioTrabajoServices.deleteEspacioTrabajo(espacio.id);
 
       if (result.success) {
         console.log('Espacio de trabajo eliminado exitosamente');

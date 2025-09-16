@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { supabaseService, EspacioTrabajoData } from '@/services/supabaseService';
+import { espacioTrabajoServices, EspacioTrabajoData } from '@/services/espacioTrabajoServices';
 
 interface NuevoEspacioModalProps {
   isOpen: boolean;
@@ -51,7 +51,7 @@ export default function NuevoEspacioModal({ isOpen, onClose, onEspacioCreated }:
       console.log('Creando espacio de trabajo:', espacioData);
 
       // Llamar al servicio
-      const result = await supabaseService.createEspacioTrabajo(espacioData);
+      const result = await espacioTrabajoServices.createEspacioTrabajo(espacioData);
 
       if (result.success) {
         console.log('Espacio de trabajo creado exitosamente');

@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { MensajeResponse, supabaseService } from '@/services/supabaseService';
+import { mensajesServices } from '@/services/mensajesServices';
+import { MensajeResponse } from '@/app/api/mensajes/domain/mensaje';
 
 interface DetallesMensajeModalProps {
   isOpen: boolean;
@@ -49,7 +50,7 @@ export default function DetallesMensajeModal({
     setDeleteError(null);
 
     try {
-      const result = await supabaseService.deleteMensaje(mensaje.id);
+      const result = await mensajesServices.deleteMensaje(mensaje.id);
 
       if (result.success) {
         console.log('Mensaje eliminado exitosamente');
@@ -89,7 +90,7 @@ export default function DetallesMensajeModal({
 
     try {
       console.log('🔄 Actualizando contenido del mensaje:', mensaje.id);
-      const result = await supabaseService.updateMensaje(mensaje.id, {
+      const result = await mensajesServices.updateMensaje(mensaje.id, {
         contenido: contenidoEditado.trim()
       });
 

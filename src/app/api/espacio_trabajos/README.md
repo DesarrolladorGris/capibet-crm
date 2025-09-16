@@ -11,9 +11,9 @@ src/app/api/espacio_trabajos/
 ├── [id]/
 │   └── route.ts               # GET, PATCH, DELETE por ID
 ├── utils/
-│   ├── getHeaders.ts          # Headers para Supabase
+│   ├── getHeaders.ts          # Utilidades para headers
 │   ├── handleResponse.ts      # Manejo de respuestas
-│   └── index.ts               # Exportaciones
+│   └── index.ts              # Exportaciones
 ├── route.ts                   # GET todos, POST crear
 └── README.md                  # Esta documentación
 ```
@@ -28,8 +28,7 @@ Crea un nuevo espacio de trabajo en el sistema.
 ```json
 {
   "nombre": "Espacio de Ventas",
-  "descripcion": "Espacio dedicado al equipo de ventas",
-  "activo": true
+  "creado_por": 1
 }
 ```
 
@@ -40,9 +39,9 @@ Crea un nuevo espacio de trabajo en el sistema.
   "data": {
     "id": 1,
     "nombre": "Espacio de Ventas",
-    "descripcion": "Espacio dedicado al equipo de ventas",
-    "activo": true,
-    "created_at": "2024-01-15T10:30:00Z"
+    "creado_por": 1,
+    "creado_en": "2024-01-15T10:30:00Z",
+    "actualizado_en": "2024-01-15T10:30:00Z"
   }
 }
 ```
@@ -70,16 +69,16 @@ Retorna una lista de todos los espacios de trabajo registrados.
     {
       "id": 1,
       "nombre": "Espacio de Ventas",
-      "descripcion": "Espacio dedicado al equipo de ventas",
-      "activo": true,
-      "created_at": "2024-01-15T10:30:00Z"
+      "creado_por": 1,
+      "creado_en": "2024-01-15T10:30:00Z",
+      "actualizado_en": "2024-01-15T10:30:00Z"
     },
     {
       "id": 2,
       "nombre": "Espacio de Marketing",
-      "descripcion": "Espacio para el equipo de marketing",
-      "activo": true,
-      "created_at": "2024-01-15T11:00:00Z"
+      "creado_por": 2,
+      "creado_en": "2024-01-15T11:00:00Z",
+      "actualizado_en": "2024-01-15T11:00:00Z"
     }
   ]
 }
@@ -101,9 +100,9 @@ Retorna los datos de un espacio de trabajo específico.
   "data": {
     "id": 1,
     "nombre": "Espacio de Ventas",
-    "descripcion": "Espacio dedicado al equipo de ventas",
-    "activo": true,
-    "created_at": "2024-01-15T10:30:00Z"
+    "creado_por": 1,
+    "creado_en": "2024-01-15T10:30:00Z",
+    "actualizado_en": "2024-01-15T10:30:00Z"
   }
 }
 ```
@@ -128,9 +127,7 @@ Actualiza los datos de un espacio de trabajo existente.
 **Request Body:**
 ```json
 {
-  "nombre": "Espacio de Ventas Premium",
-  "descripcion": "Espacio mejorado para el equipo de ventas",
-  "activo": true
+  "nombre": "Espacio de Ventas Premium"
 }
 ```
 
@@ -141,9 +138,9 @@ Actualiza los datos de un espacio de trabajo existente.
   "data": {
     "id": 1,
     "nombre": "Espacio de Ventas Premium",
-    "descripcion": "Espacio mejorado para el equipo de ventas",
-    "activo": true,
-    "created_at": "2024-01-15T10:30:00Z"
+    "creado_por": 1,
+    "creado_en": "2024-01-15T10:30:00Z",
+    "actualizado_en": "2024-01-15T12:00:00Z"
   }
 }
 ```
@@ -184,25 +181,63 @@ Elimina un espacio de trabajo del sistema.
 1. **Autenticación**: Todos los endpoints requieren autenticación con Supabase usando service role key.
 
 2. **Validaciones**: 
-   - Los IDs deben ser números válidos
+   - Los IDs deben ser números válidos (validación con `isNaN(Number(id))`)
    - El campo `nombre` es requerido
-   - El campo `descripcion` es opcional
-   - El campo `activo` tiene valor por defecto `true`
+   - El campo `creado_por` es requerido
+   - Los campos requeridos se validan en cada endpoint
 
-3. **Manejo de Errores**: Todos los endpoints incluyen manejo consistente de errores con mensajes descriptivos.
+3. **Manejo de Errores**: Todos los endpoints incluyen manejo consistente de errores con mensajes descriptivos:
+   - Errores de validación (400)
+   - Errores de servidor (500)
 
-4. **Respuestas**: Todas las respuestas siguen el formato estándar con `success`, `data` y `error`.
+4. **Respuestas**: Todas las respuestas siguen el formato estándar con `success`, `data`, `error` y `details` opcional.
 
-5. **Campos Opcionales**: 
-   - `descripcion`: Puede ser `null` si no se proporciona
-   - `activo`: Por defecto es `true` si no se especifica
+5. **Campos Opcionales**:
+   - `id` es opcional en creación (se genera automáticamente)
+
+---
+
+## 📋 Tipos de Datos
+
+### EspacioTrabajoData (Para creación)
+```typescript
+interface EspacioTrabajoData {
+  id?: number;                    // Opcional, se genera automáticamente
+  nombre: string;                 // Requerido
+  creado_por: number;            // Requerido
+}
+```
+
+### EspacioTrabajoResponse (Respuesta de la API)
+```typescript
+interface EspacioTrabajoResponse {
+  id: number;                     // Siempre presente
+  nombre: string;
+  creado_por: number;
+  creado_en: string;              // Siempre presente
+  actualizado_en: string;         // Siempre presente
+}
+```
+
+### ApiResponse
+```typescript
+interface ApiResponse<T = unknown> {
+  success: boolean;
+  data?: T;
+  error?: string;
+  details?: string;
+}
+```
 
 ---
 
 ## 🚀 Uso en el Frontend
 
 ```typescript
-// Ejemplo de uso en el frontend
+// Tipos de datos (importar desde el dominio)
+import { EspacioTrabajoData, EspacioTrabajoResponse } from './domain/espacio_trabajo';
+
+// Crear espacio de trabajo
 const createEspacioTrabajo = async (espacioData: EspacioTrabajoData) => {
   const response = await fetch('/api/espacio_trabajos', {
     method: 'POST',
@@ -215,17 +250,21 @@ const createEspacioTrabajo = async (espacioData: EspacioTrabajoData) => {
   return await response.json();
 };
 
-const getEspaciosTrabajo = async () => {
-  const response = await fetch('/api/espacio_trabajos', {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  });
-  
-  return await response.json();
+// Obtener todos los espacios de trabajo
+const getEspaciosTrabajo = async (): Promise<EspacioTrabajoResponse[]> => {
+  const response = await fetch('/api/espacio_trabajos');
+  const result = await response.json();
+  return result.data || [];
 };
 
+// Obtener espacio de trabajo por ID
+const getEspacioTrabajoById = async (id: number): Promise<EspacioTrabajoResponse | null> => {
+  const response = await fetch(`/api/espacio_trabajos/${id}`);
+  const result = await response.json();
+  return result.data;
+};
+
+// Actualizar espacio de trabajo
 const updateEspacioTrabajo = async (id: number, espacioData: Partial<EspacioTrabajoData>) => {
   const response = await fetch(`/api/espacio_trabajos/${id}`, {
     method: 'PATCH',
@@ -238,12 +277,10 @@ const updateEspacioTrabajo = async (id: number, espacioData: Partial<EspacioTrab
   return await response.json();
 };
 
+// Eliminar espacio de trabajo
 const deleteEspacioTrabajo = async (id: number) => {
   const response = await fetch(`/api/espacio_trabajos/${id}`, {
     method: 'DELETE',
-    headers: {
-      'Content-Type': 'application/json',
-    },
   });
   
   return await response.json();
@@ -252,17 +289,16 @@ const deleteEspacioTrabajo = async (id: number) => {
 
 ---
 
-## 🔄 Migración desde supabaseService
+## ⚠️ Errores Comunes
 
-Los métodos migrados desde `supabaseService.ts` son:
+### 400 Bad Request
+- **ID inválido**: `"ID de espacio de trabajo inválido"` - El ID debe ser un número válido
+- **Datos faltantes**: `"Datos de espacio de trabajo inválidos"` - Faltan campos requeridos
 
-- `getAllEspaciosTrabajo()` → `GET /api/espacio_trabajos`
-- `createEspacioTrabajo()` → `POST /api/espacio_trabajos`
-- `updateEspacioTrabajo()` → `PATCH /api/espacio_trabajos/[id]`
-- `deleteEspacioTrabajo()` → `DELETE /api/espacio_trabajos/[id]`
-
-Todos los métodos mantienen la misma funcionalidad pero ahora están disponibles como endpoints REST independientes.
+### 500 Internal Server Error
+- **Error de conexión**: `"Error de conexión al [operación]"` - Problemas de conectividad con Supabase
+- **Error del servidor**: `"Error del servidor: [código] [mensaje]"` - Error específico de Supabase
 
 ---
 
-*Documentación generada automáticamente - Última actualización: $(date)*
+*Documentación actualizada - Última actualización: Diciembre 2024*

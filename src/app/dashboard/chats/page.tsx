@@ -3,16 +3,27 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { isUserAuthenticated } from '@/utils/auth';
-import { supabaseService, EspacioTrabajoResponse, MensajeResponse, Canal, ContactoResponse } from '@/services/supabaseService';
+import { mensajesServices } from '@/services/mensajesServices';
+import { MensajeResponse } from '@/app/api/mensajes/domain/mensaje';
+import { canalesServices, Canal } from '@/services/canalesServices';
+import { espacioTrabajoServices } from '@/services/espacioTrabajoServices';
+import { EspacioTrabajoResponse } from '@/app/api/espacio_trabajos/domain/espacio_trabajo';
+import { contactoServices, ContactResponse } from '@/services/contactoServices';
 
 // Tipos para los chats basados en datos reales
 interface Chat {
   id: number;
-  contacto: ContactoResponse;
+  contacto: ContactResponse;
   ultimoMensaje: MensajeResponse;
   canal: Canal & { icono?: string };
   noLeidos: number;
   estado: 'activo' | 'archivado' | 'pausado';
+}
+
+// Interfaz extendida para mensajes con propiedades de UI
+interface MensajeConUI extends MensajeResponse {
+  leido?: boolean;
+  estado?: 'enviado' | 'entregado' | 'leido';
 }
 
 // Mapeo de tipos de canal a iconos (igual que en DraggableMensaje)
@@ -48,10 +59,10 @@ export default function ChatsPage() {
   const [selectedEspacio, setSelectedEspacio] = useState<EspacioTrabajoResponse | null>(null);
   const [mensajes, setMensajes] = useState<MensajeResponse[]>([]);
   const [canales, setCanales] = useState<Canal[]>([]);
-  const [contactos, setContactos] = useState<ContactoResponse[]>([]);
+  const [contactos, setContactos] = useState<ContactResponse[]>([]);
   const [chats, setChats] = useState<Chat[]>([]);
   const [selectedChat, setSelectedChat] = useState<Chat | null>(null);
-  const [messages, setMessages] = useState<MensajeResponse[]>([]);
+  const [messages, setMessages] = useState<MensajeConUI[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
@@ -68,10 +79,10 @@ export default function ChatsPage() {
       
       // Cargar datos en paralelo
       const [espaciosResult, mensajesResult, canalesResult, contactosResult] = await Promise.all([
-        supabaseService.getAllEspaciosTrabajo(),
-        supabaseService.getAllMensajes(),
-        supabaseService.getAllCanales(),
-        supabaseService.getAllContactos()
+        espacioTrabajoServices.getAllEspaciosTrabajo(),
+        mensajesServices.getAllMensajes(),
+        canalesServices.getAllCanales(),
+        contactoServices.getAllContactos()
       ]);
       
       if (espaciosResult.success && espaciosResult.data) {
@@ -206,14 +217,14 @@ export default function ChatsPage() {
   const handleSendMessage = () => {
     if (!newMessage.trim() || !selectedChat) return;
 
-    const message: MensajeResponse = {
+    const message: MensajeConUI = {
       id: Date.now(),
-      canal_id: selectedChat.canal.id,
+      canal_id: selectedChat.canal.id || 0,
       remitente_id: 1, // TODO: Obtener ID del usuario actual
       contenido: newMessage.trim(),
-      contacto_id: selectedChat.contacto.id,
+      contacto_id: selectedChat.contacto.id || 0,
       sesion_id: 1, // TODO: Obtener sesión actual
-      destinatario_id: selectedChat.contacto.id,
+      destinatario_id: selectedChat.contacto.id || 0,
       embudo_id: 1, // TODO: Obtener embudo si aplica
       creado_en: new Date().toISOString(),
       leido: false,

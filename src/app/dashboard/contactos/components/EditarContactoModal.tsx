@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ContactData, ContactResponse } from '@/services/supabaseService';
+import { ContactData, ContactResponse, contactoServices } from '@/services/contactoServices';
 
 interface EditarContactoModalProps {
   isOpen: boolean;
@@ -13,6 +13,7 @@ interface EditarContactoModalProps {
 export default function EditarContactoModal({ isOpen, onClose, onContactUpdated, contact }: EditarContactoModalProps) {
   const [formData, setFormData] = useState<ContactData>({
     nombre: '',
+    apellido: '',
     correo: '',
     telefono: '',
     empresa: '',
@@ -28,6 +29,7 @@ export default function EditarContactoModal({ isOpen, onClose, onContactUpdated,
     if (contact && isOpen) {
       setFormData({
         nombre: contact.nombre || '',
+        apellido: contact.apellido || '',
         correo: contact.correo || '',
         telefono: contact.telefono || '',
         empresa: contact.empresa || '',
@@ -59,6 +61,7 @@ export default function EditarContactoModal({ isOpen, onClose, onContactUpdated,
       // Preparar datos para la API (sin campos internos)
       const updateData = {
         nombre: formData.nombre.trim(),
+        apellido: formData.apellido?.trim() || '',
         correo: formData.correo.trim(),
         telefono: formData.telefono.trim(),
         empresa: formData.empresa?.trim() || '',
@@ -66,19 +69,14 @@ export default function EditarContactoModal({ isOpen, onClose, onContactUpdated,
         etiqueta: formData.etiqueta
       };
 
-      // Llamar al endpoint de actualización
-      const response = await fetch(`https://dkrdphnnsgndrqmgdvxp.supabase.co/rest/v1/contactos?id=eq.${contact.id}`, {
-        method: 'PATCH',
-        headers: {
-          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRrcmRwaG5uc2duZHJxbWdkdnhwIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NjIzMTQ0NSwiZXhwIjoyMDcxODA3NDQ1fQ.w9dE4zcpbfH3LUwx-XS-2GtqEo6mr7p2BJIcf77xMdg',
-          'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRrcmRwaG5uc2duZHJxbWdkdnhwIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NjIzMTQ0NSwiZXhwIjoyMDcxODA3NDQ1fQ.w9dE4zcpbfH3LUwx-XS-2GtqEo6mr7p2BJIcf77xMdg',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(updateData)
+      // Llamar al servicio de contactos
+      const response = await contactoServices.updateContacto({
+        id: contact.id,
+        ...updateData
       });
 
-      if (!response.ok) {
-        throw new Error('Error al actualizar el contacto');
+      if (!response.success) {
+        throw new Error(response.error || 'Error al actualizar el contacto');
       }
 
       // Cerrar modal y refrescar la tabla
@@ -135,6 +133,23 @@ export default function EditarContactoModal({ isOpen, onClose, onContactUpdated,
                 placeholder="Nombre del contacto"
                 className="w-full pl-10 pr-4 py-3 bg-[#2a2d35] border border-[#3a3d45] rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#F29A1F] focus:border-[#F29A1F] text-sm"
                 required
+              />
+            </div>
+
+            {/* Apellido */}
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+              </div>
+              <input
+                type="text"
+                name="apellido"
+                value={formData.apellido}
+                onChange={handleInputChange}
+                placeholder="Apellido del contacto"
+                className="w-full pl-10 pr-4 py-3 bg-[#2a2d35] border border-[#3a3d45] rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#F29A1F] focus:border-[#F29A1F] text-sm"
               />
             </div>
 

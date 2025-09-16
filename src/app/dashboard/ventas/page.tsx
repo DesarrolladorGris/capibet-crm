@@ -3,7 +3,11 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { isUserAuthenticated } from '@/utils/auth';
-import { supabaseService, ProductoResponse, VentaFichasDigitales, UsuarioResponse, VentaFichasDigitalesData } from '@/services/supabaseService';
+import { supabaseService, VentaFichasDigitales, VentaFichasDigitalesData } from '@/services/supabaseService';
+import { productosServices } from '@/services/productosServices';
+import { ProductResponse } from '@/app/api/productos/domain/producto';
+import { userServices } from '@/services/userServices';
+import { UsuarioResponse } from '@/app/api/usuarios/domain/usuario';
 
 // Tipos para productos (adaptado para la UI)
 interface Product {
@@ -104,12 +108,12 @@ export default function VentasPage() {
     codigo_venta: ''
   });
 
-  // Cargar productos desde Supabase
+  // Cargar productos desde la API del proyecto
   const loadProducts = async () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await supabaseService.getProductos();
+      const response = await productosServices.getAllProductos();
       if (response.success && response.data) {
         const convertedProducts = response.data.map(convertProductoToProduct);
         setProducts(convertedProducts);
@@ -146,7 +150,7 @@ export default function VentasPage() {
   // Cargar usuarios desde Supabase
   const loadUsuarios = async () => {
     try {
-      const response = await supabaseService.getAllUsuarios();
+      const response = await userServices.getAllUsuarios();
       if (response.success && response.data) {
         setUsuarios(response.data);
       }
@@ -375,9 +379,9 @@ export default function VentasPage() {
 
       let response;
       if (editingProduct) {
-        response = await supabaseService.updateProducto(editingProduct.id, productData);
+        response = await productosServices.updateProductoById(editingProduct.id, productData);
       } else {
-        response = await supabaseService.createProducto(productData);
+        response = await productosServices.createProducto(productData);
       }
 
       if (response.success) {
@@ -418,7 +422,7 @@ export default function VentasPage() {
     setError(null);
     
     try {
-      const response = await supabaseService.deleteProducto(productToDelete.id);
+      const response = await productosServices.deleteProducto(productToDelete.id);
       if (response.success) {
         // Recargar productos después de eliminar
         await loadProducts();

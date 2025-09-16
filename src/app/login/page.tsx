@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 
 import { useRouter } from 'next/navigation';
-import { supabaseService, LoginCredentials } from '@/services/supabaseService';
+import { userServices } from '@/services/userServices';
+import { LoginCredentials } from '@/app/api/usuarios/domain/usuario';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -52,7 +53,7 @@ export default function LoginPage() {
         contrasena: password
       };
       
-      const result = await supabaseService.loginUsuario(credentials);
+      const result = await userServices.loginUsuario(credentials);
       
       if (result.success && result.data) {
         // Login exitoso - guardar datos de sesión
@@ -95,7 +96,7 @@ export default function LoginPage() {
       {/* Mobile Logo - Only visible on small screens */}
       <div className="lg:hidden flex justify-center py-8 px-4">
         <div className="text-center">
-          <div className="w-16 h-16 mx-auto bg-[#F29A1F] rounded-full flex items-center justify-center border-2 border-[#F29A1F] shadow-lg mb-4 overflow-hidden">
+          <div className="w-16 h-16 mx-auto rounded-full flex items-center justify-center shadow-lg mb-4 overflow-hidden">
             <img 
               src="https://pbs.twimg.com/profile_images/1118644090420322304/5SFmHCl-_400x400.jpg" 
               alt="CAPIBET Logo"
@@ -198,7 +199,7 @@ export default function LoginPage() {
         <div className="text-center z-10">
           <div className="mb-8">
             {/* Beast Logo Circle */}
-            <div className="w-32 h-32 mx-auto bg-white/20 rounded-full flex items-center justify-center border-4 border-white/30 shadow-2xl overflow-hidden">
+            <div className="w-32 h-32 mx-auto rounded-full flex items-center justify-centershadow-2xl overflow-hidden">
               <img 
                 src="https://pbs.twimg.com/profile_images/1118644090420322304/5SFmHCl-_400x400.jpg" 
                 alt="CAPIBET Logo"

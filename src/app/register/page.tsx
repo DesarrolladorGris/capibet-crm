@@ -4,7 +4,8 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { supabaseService, UsuarioData } from '@/services/supabaseService';
+import { userServices } from '@/services/userServices';
+import { UsuarioData } from '@/app/api/usuarios/domain/usuario';
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -123,7 +124,7 @@ export default function RegisterPage() {
     
     try {
       // Verificar si el email ya existe
-      const emailCheck = await supabaseService.checkEmailExists(formData.email);
+      const emailCheck = await userServices.checkEmailExists(formData.email);
       
       if (emailCheck.success && emailCheck.data) {
         setError('Este email ya está registrado');
@@ -145,7 +146,7 @@ export default function RegisterPage() {
       };
       
       // Crear usuario en Supabase usando registro externo
-      const result = await supabaseService.registerExternalUser(userData);
+      const result = await userServices.registerExternalUser(userData);
       
       if (result.success) {
         setSuccess('¡Registro exitoso! Redirigiendo al login...');
@@ -178,7 +179,7 @@ export default function RegisterPage() {
         <div className="text-center mb-8">
           {/* Beast Logo */}
           <div className="mb-6">
-            <div className="w-16 h-16 mx-auto bg-[#F29A1F] rounded-full flex items-center justify-center border-2 border-[#F29A1F] shadow-lg overflow-hidden">
+            <div className="w-16 h-16 mx-auto rounded-full flex items-center justify-center border-2 border-[#F29A1F] shadow-lg overflow-hidden">
               <img 
                 src="https://pbs.twimg.com/profile_images/1118644090420322304/5SFmHCl-_400x400.jpg" 
                 alt="CAPIBET Logo"

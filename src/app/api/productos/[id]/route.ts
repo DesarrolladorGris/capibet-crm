@@ -1,0 +1,145 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { supabaseConfig } from '@/config/supabase';
+import { ProductResponse } from '../domain/producto';
+import { getHeaders, handleResponse } from '../utils';
+
+// GET /api/productos/[id] - Obtener un producto específico por ID
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    
+    if (!id || isNaN(Number(id))) {
+      return NextResponse.json({
+        success: false,
+        error: 'ID del producto inválido'
+      }, { status: 400 });
+    }
+
+    const response = await fetch(`${supabaseConfig.restUrl}/productos?id=eq.${id}`, {
+      method: 'GET',
+      headers: getHeaders()
+    });
+
+    if (!response.ok) {
+      return NextResponse.json({
+        success: false,
+        error: 'Error al obtener el producto'
+      }, { status: response.status });
+    }
+
+    const data = await handleResponse(response);
+    
+    // Verificar si se encontró el producto
+    if (!Array.isArray(data) || data.length === 0) {
+      return NextResponse.json({
+        success: false,
+        error: 'Producto no encontrado'
+      }, { status: 404 });
+    }
+
+    return NextResponse.json({
+      success: true,
+      data: data[0] as ProductResponse
+    });
+
+  } catch (error) {
+    console.error('Error fetching product:', error);
+    
+    return NextResponse.json({
+      success: false,
+      error: 'Error de conexión al obtener producto',
+      details: error instanceof Error ? error.message : 'Error desconocido'
+    }, { status: 500 });
+  }
+}
+
+// PATCH /api/productos/[id] - Actualizar un producto específico por ID
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const productData = await request.json();
+    
+    if (!id || isNaN(Number(id))) {
+      return NextResponse.json({
+        success: false,
+        error: 'ID del producto inválido'
+      }, { status: 400 });
+    }
+
+    const response = await fetch(`${supabaseConfig.restUrl}/productos?id=eq.${id}`, {
+      method: 'PATCH',
+      headers: getHeaders(),
+      body: JSON.stringify(productData),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.text();
+      return NextResponse.json({
+        success: false,
+        error: `Error del servidor: ${response.status} ${response.statusText}`,
+        details: errorData
+      }, { status: response.status });
+    }
+
+    const data = await handleResponse(response);
+    
+    return NextResponse.json({
+      success: true,
+      data: data as unknown as ProductResponse
+    });
+  } catch (error) {
+    return NextResponse.json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Error al actualizar producto'
+    }, { status: 500 });
+  }
+}
+
+// DELETE /api/productos/[id] - Eliminar un producto específico por ID
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    
+    if (!id || isNaN(Number(id))) {
+      return NextResponse.json({
+        success: false,
+        error: 'ID del producto inválido'
+      }, { status: 400 });
+    }
+
+    const response = await fetch(`${supabaseConfig.restUrl}/productos?id=eq.${id}`, {
+      method: 'DELETE',
+      headers: getHeaders()
+    });
+
+    if (!response.ok) {
+      const errorData = await response.text();
+      return NextResponse.json({
+        success: false,
+        error: `Error del servidor: ${response.status} ${response.statusText}`,
+        details: errorData
+      }, { status: response.status });
+    }
+
+    await handleResponse(response);
+    
+    return NextResponse.json({
+      success: true,
+      data: undefined
+    });
+  } catch (error) {
+    return NextResponse.json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Error al eliminar producto'
+    }, { status: 500 });
+  }
+}

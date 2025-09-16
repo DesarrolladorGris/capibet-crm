@@ -1,7 +1,14 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { supabaseService, MensajeData, Canal, Sesion, ContactResponse, EmbUpdoResponse } from '@/services/supabaseService';
+import { useState, useEffect, useCallback } from 'react';
+import { mensajesServices } from '@/services/mensajesServices';
+import { MensajeData } from '@/app/api/mensajes/domain/mensaje';
+import { sesionesServices } from '@/services/sesionesServices';
+import { SesionResponse } from '@/app/api/sesiones/domain/sesion';
+import { canalesServices, Canal } from '@/services/canalesServices';
+import { embudoServices } from '@/services/embudoServices';
+import { EmbudoResponse } from '@/app/api/embudos/domain/embudo';
+import { contactoServices, ContactResponse } from '@/services/contactoServices';
 
 interface NuevoMensajeModalProps {
   isOpen: boolean;
@@ -25,9 +32,9 @@ export default function NuevoMensajeModal({
   
   // Estados para datos auxiliares
   const [canales, setCanales] = useState<Canal[]>([]);
-  const [sesiones, setSesiones] = useState<Sesion[]>([]);
+  const [sesiones, setSesiones] = useState<SesionResponse[]>([]);
   const [contactos, setContactos] = useState<ContactResponse[]>([]);
-  const [embudos, setEmbudos] = useState<EmbUpdoResponse[]>([]);
+  const [embudos, setEmbudos] = useState<EmbudoResponse[]>([]);
   const [userId, setUserId] = useState<number>(0);
   
   // Estados de UI
@@ -35,14 +42,7 @@ export default function NuevoMensajeModal({
   const [error, setError] = useState<string | null>(null);
   const [loadingData, setLoadingData] = useState(true);
 
-  // Cargar datos iniciales
-  useEffect(() => {
-    if (isOpen) {
-      loadInitialData();
-    }
-  }, [isOpen]);
-
-  const loadInitialData = async () => {
+  const loadInitialData = useCallback(async () => {
     setLoadingData(true);
     setError(null);
     
@@ -54,9 +54,9 @@ export default function NuevoMensajeModal({
 
       // Cargar datos en paralelo
       const [canalesResult, contactosResult, embudosResult] = await Promise.all([
-        supabaseService.getAllCanales(),
-        supabaseService.getAllContactos(),
-        espacioId ? supabaseService.getEmbudosByEspacio(espacioId) : supabaseService.getAllEmbudos()
+        canalesServices.getAllCanales(),
+        contactoServices.getAllContactos(),
+        espacioId ? embudoServices.getEmbudosByEspacio(espacioId) : embudoServices.getAllEmbudos()
       ]);
 
       if (canalesResult.success && canalesResult.data) {
@@ -81,12 +81,19 @@ export default function NuevoMensajeModal({
     } finally {
       setLoadingData(false);
     }
-  };
+  }, [espacioId]);
+
+  // Cargar datos iniciales
+  useEffect(() => {
+    if (isOpen) {
+      loadInitialData();
+    }
+  }, [isOpen, loadInitialData]);
 
   // Cargar sesiones cuando se selecciona un canal
   const loadSesiones = async (selectedCanalId: number) => {
     try {
-      const sesionesResult = await supabaseService.getSesionesByCanal(selectedCanalId);
+      const sesionesResult = await sesionesServices.getSesionesByCanal(selectedCanalId);
       if (sesionesResult.success && sesionesResult.data) {
         setSesiones(sesionesResult.data);
       }
@@ -151,7 +158,7 @@ export default function NuevoMensajeModal({
 
       console.log('Enviando mensaje:', mensajeData);
 
-      const result = await supabaseService.createMensaje(mensajeData);
+      const result = await mensajesServices.createMensaje(mensajeData);
 
       if (result.success) {
         console.log('Mensaje creado exitosamente');

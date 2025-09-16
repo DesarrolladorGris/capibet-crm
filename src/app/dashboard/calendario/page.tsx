@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { isUserAuthenticated } from '@/utils/auth';
 import { supabaseService } from '@/services/supabaseService';
+import { userServices } from '@/services/userServices';
+import { UsuarioResponse } from '@/app/api/usuarios/domain/usuario';
 
 // Tipos para las tareas (basado en la API de Supabase)
 interface Task {
@@ -79,7 +81,7 @@ export default function CalendarioPage() {
   // Cargar usuarios para el select
   const loadUsuarios = async () => {
     try {
-      const result = await supabaseService.getAllUsuarios();
+      const result = await userServices.getAllUsuarios();
       if (result.success && result.data) {
         setUsuarios(result.data);
       } else {

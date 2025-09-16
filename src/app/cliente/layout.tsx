@@ -44,7 +44,7 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
     return (
       <div className="min-h-screen bg-[#1a1d23] flex items-center justify-center">
         <div className="text-center">
-          <div className="w-8 h-8 bg-[#F29A1F] rounded-full flex items-center justify-center mb-4 mx-auto animate-pulse overflow-hidden">
+          <div className="w-8 h-8 rounded-full flex items-center justify-center mb-4 mx-auto animate-pulse overflow-hidden">
             <img 
               src="https://pbs.twimg.com/profile_images/1118644090420322304/5SFmHCl-_400x400.jpg" 
               alt="CAPIBET Logo"
@@ -74,7 +74,7 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
             <div className="flex items-center space-x-6">
               {/* Logo CAPIBET CRM */}
               <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-[#F29A1F] rounded-full flex items-center justify-center overflow-hidden">
+                <div className="w-8 h-8 rounded-full flex items-center justify-center overflow-hidden">
                   <img 
                     src="https://pbs.twimg.com/profile_images/1118644090420322304/5SFmHCl-_400x400.jpg" 
                     alt="CAPIBET Logo"
@@ -156,7 +156,7 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
           {/* Primera fila: Logo y botón logout */}
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-[#F29A1F] rounded-full flex items-center justify-center overflow-hidden">
+              <div className="w-8 h-8 rounded-full flex items-center justify-center overflow-hidden">
                 <img 
                   src="https://pbs.twimg.com/profile_images/1118644090420322304/5SFmHCl-_400x400.jpg" 
                   alt="CAPIBET Logo"

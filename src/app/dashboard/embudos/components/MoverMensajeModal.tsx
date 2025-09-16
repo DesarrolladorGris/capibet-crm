@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { supabaseService, MensajeResponse, EmbUpdoResponse } from '@/services/supabaseService';
+import { mensajesServices } from '@/services/mensajesServices';
+import { MensajeResponse } from '@/app/api/mensajes/domain/mensaje';
+import { EmbUpdoResponse } from '@/services/supabaseService';
 
 interface MoverMensajeModalProps {
   isOpen: boolean;
@@ -49,7 +51,7 @@ export default function MoverMensajeModal({
     try {
       console.log('Moviendo mensaje:', mensaje.id, 'al embudo:', selectedEmbudoId);
 
-      const result = await supabaseService.moveMensajeToEmbudo(mensaje.id, selectedEmbudoId);
+      const result = await mensajesServices.moveMensajeToEmbudo(mensaje.id, selectedEmbudoId);
 
       if (result.success) {
         console.log('Mensaje movido exitosamente');

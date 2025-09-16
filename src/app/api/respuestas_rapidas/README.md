@@ -13,7 +13,7 @@ src/app/api/respuestas_rapidas/
 │   └── toggle-status/
 │       └── route.ts             # PATCH para cambiar estado
 ├── utils/
-│   ├── getHeaders.ts            # Configuración de headers
+│   ├── getHeaders.ts            # Utilidades para headers
 │   ├── handleResponse.ts        # Manejo de respuestas
 │   └── index.ts                 # Exportaciones
 ├── route.ts                     # GET todos, POST crear
@@ -223,22 +223,33 @@ Activa o desactiva una respuesta rápida.
 
 2. **Validaciones**: 
    - Los campos `titulo` y `contenido` son requeridos para crear respuestas rápidas
-   - Los IDs deben ser números válidos
+   - Los IDs deben ser números válidos (validación con `isNaN(Number(id))`)
    - El campo `categoria` es opcional y por defecto se asigna "General"
    - El campo `activa` se establece automáticamente como `true` al crear
+   - El campo `activa` en toggle-status debe ser un booleano
 
-3. **Manejo de Errores**: Todos los endpoints incluyen manejo consistente de errores con mensajes descriptivos.
+3. **Manejo de Errores**: Todos los endpoints incluyen manejo consistente de errores con mensajes descriptivos:
+   - Errores de validación (400)
+   - Errores de servidor (500)
 
-4. **Respuestas**: Todas las respuestas siguen el formato estándar con `success`, `data` y `error`.
+4. **Respuestas**: Todas las respuestas siguen el formato estándar con `success`, `data`, `error` y `details` opcional.
 
 5. **Ordenamiento**: Las respuestas rápidas se ordenan por fecha de creación descendente por defecto.
+
+6. **Campos Opcionales**:
+   - `categoria` tiene valor por defecto 'General'
+   - `activa` tiene valor por defecto `true`
+   - `id` es opcional en creación (se genera automáticamente)
 
 ---
 
 ## 🚀 Uso en el Frontend
 
 ```typescript
-// Ejemplo de uso en el frontend
+// Tipos de datos (importar desde el dominio)
+import { RespuestaRapidaData, RespuestaRapidaFormData, RespuestaRapidaResponse, ToggleStatusRequest } from './domain/respuesta_rapida';
+
+// Crear respuesta rápida
 const createRespuestaRapida = async (respuestaData: RespuestaRapidaFormData) => {
   const response = await fetch('/api/respuestas-rapidas', {
     method: 'POST',
@@ -251,11 +262,21 @@ const createRespuestaRapida = async (respuestaData: RespuestaRapidaFormData) => 
   return await response.json();
 };
 
-const getRespuestasRapidas = async () => {
+// Obtener todas las respuestas rápidas
+const getRespuestasRapidas = async (): Promise<RespuestaRapidaResponse[]> => {
   const response = await fetch('/api/respuestas-rapidas');
-  return await response.json();
+  const result = await response.json();
+  return result.data || [];
 };
 
+// Obtener respuesta rápida por ID
+const getRespuestaRapidaById = async (id: number): Promise<RespuestaRapidaResponse | null> => {
+  const response = await fetch(`/api/respuestas-rapidas/${id}`);
+  const result = await response.json();
+  return result.data;
+};
+
+// Actualizar respuesta rápida
 const updateRespuestaRapida = async (id: number, data: Partial<RespuestaRapidaData>) => {
   const response = await fetch(`/api/respuestas-rapidas/${id}`, {
     method: 'PATCH',
@@ -268,6 +289,16 @@ const updateRespuestaRapida = async (id: number, data: Partial<RespuestaRapidaDa
   return await response.json();
 };
 
+// Eliminar respuesta rápida
+const deleteRespuestaRapida = async (id: number) => {
+  const response = await fetch(`/api/respuestas-rapidas/${id}`, {
+    method: 'DELETE',
+  });
+  
+  return await response.json();
+};
+
+// Cambiar estado de la respuesta rápida
 const toggleRespuestaRapidaStatus = async (id: number, activa: boolean) => {
   const response = await fetch(`/api/respuestas-rapidas/${id}/toggle-status`, {
     method: 'PATCH',
@@ -283,43 +314,63 @@ const toggleRespuestaRapidaStatus = async (id: number, activa: boolean) => {
 
 ---
 
-## 🏗️ Estructura de Datos
+## 📋 Tipos de Datos
 
-### RespuestaRapidaData (Para crear/actualizar)
+### RespuestaRapidaData (Para creación/actualización)
 ```typescript
 interface RespuestaRapidaData {
-  id?: number;
-  titulo: string;
-  contenido: string;
-  categoria?: string;
-  activa?: boolean;
-  created_at?: string;
-  updated_at?: string;
+  id?: number;                    // Opcional, se genera automáticamente
+  titulo: string;                 // Requerido
+  contenido: string;              // Requerido
+  categoria?: string;             // Opcional, default: 'General'
+  activa?: boolean;               // Opcional, default: true
+  created_at?: string;            // Opcional
+  updated_at?: string;            // Opcional
 }
 ```
 
-### RespuestaRapidaResponse (Respuesta del servidor)
+### RespuestaRapidaResponse (Respuesta de la API)
 ```typescript
 interface RespuestaRapidaResponse {
-  id: number;
+  id: number;                     // Siempre presente
   titulo: string;
   contenido: string;
-  categoria: string;
-  activa: boolean;
-  created_at: string;
-  updated_at?: string;
+  categoria: string;              // Siempre presente
+  activa: boolean;                // Siempre presente
+  created_at: string;             // Siempre presente
+  updated_at?: string;            // Opcional
 }
 ```
 
 ### RespuestaRapidaFormData (Para formularios)
 ```typescript
 interface RespuestaRapidaFormData {
-  titulo: string;
-  contenido: string;
-  categoria?: string;
+  titulo: string;                 // Requerido
+  contenido: string;              // Requerido
+  categoria?: string;             // Opcional
+}
+```
+
+### ToggleStatusRequest
+```typescript
+interface ToggleStatusRequest {
+  activa: boolean;                // Requerido, debe ser booleano
 }
 ```
 
 ---
 
-*Documentación generada automáticamente - Última actualización: $(date)*
+## ⚠️ Errores Comunes
+
+### 400 Bad Request
+- **ID inválido**: `"ID de respuesta rápida inválido"` - El ID debe ser un número válido
+- **Datos faltantes**: `"Título y contenido son campos requeridos"` - Faltan campos obligatorios
+- **Tipo incorrecto**: `"El campo 'activa' debe ser un valor booleano"` - El campo activo debe ser true/false
+
+### 500 Internal Server Error
+- **Error de conexión**: `"Error de conexión al [operación]"` - Problemas de conectividad con Supabase
+- **Error del servidor**: `"Error del servidor: [código] [mensaje]"` - Error específico de Supabase
+
+---
+
+*Documentación actualizada - Última actualización: Diciembre 2024*

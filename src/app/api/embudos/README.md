@@ -13,9 +13,9 @@ src/app/api/embudos/
 ├── update-order/
 │   └── route.ts               # PATCH para actualizar orden
 ├── utils/
-│   ├── getHeaders.ts          # Utilidad para headers de Supabase
-│   ├── handleResponse.ts      # Utilidad para manejar respuestas
-│   └── index.ts               # Exportaciones de utilidades
+│   ├── getHeaders.ts          # Utilidades para headers
+│   ├── handleResponse.ts      # Manejo de respuestas
+│   └── index.ts               # Exportaciones
 ├── route.ts                   # GET todos, POST crear
 └── README.md                  # Esta documentación
 ```
@@ -58,7 +58,8 @@ Crea un nuevo embudo en el sistema.
 ```json
 {
   "success": false,
-  "error": "Faltan campos requeridos: nombre, creado_por, espacio_id"
+  "error": "Error del servidor: 400 Bad Request",
+  "details": "Faltan campos requeridos: nombre, creado_por, espacio_id"
 }
 ```
 
@@ -255,23 +256,85 @@ Actualiza el orden de múltiples embudos de forma atómica.
 
 2. **Validaciones**: 
    - Los campos `nombre`, `creado_por` y `espacio_id` son requeridos para crear embudos
-   - Los IDs deben ser números válidos
+   - Los IDs deben ser números válidos (validación con `isNaN(Number(id))`)
    - El campo `orden` es opcional y por defecto es 0
+   - El campo `descripcion` es opcional
+   - Los campos `id` y `orden` son requeridos en el array de actualización de orden
 
-3. **Manejo de Errores**: Todos los endpoints incluyen manejo consistente de errores con mensajes descriptivos.
+3. **Manejo de Errores**: Todos los endpoints incluyen manejo consistente de errores con mensajes descriptivos:
+   - Errores de validación (400)
+   - Errores de servidor (500)
 
-4. **Respuestas**: Todas las respuestas siguen el formato estándar con `success`, `data` y `error`.
+4. **Respuestas**: Todas las respuestas siguen el formato estándar con `success`, `data`, `error` y `details` opcional.
 
 5. **Filtrado**: El endpoint GET principal soporta filtrado por `espacio_id` usando query parameters.
 
 6. **Actualización de Orden**: El endpoint de actualización de orden es atómico, todas las actualizaciones se realizan o ninguna.
+
+7. **Campos Opcionales**:
+   - `descripcion` es opcional en creación y actualización
+   - `orden` es opcional en creación (valor por defecto: 0)
+   - `id` es opcional en creación (se genera automáticamente)
+
+---
+
+## 📋 Tipos de Datos
+
+### EmbudoData (Para creación)
+```typescript
+interface EmbudoData {
+  id?: number;                    // Opcional, se genera automáticamente
+  nombre: string;                 // Requerido
+  descripcion?: string;           // Opcional
+  creado_por: number;             // Requerido
+  espacio_id: number;             // Requerido
+  orden?: number;                 // Opcional, default: 0
+}
+```
+
+### EmbudoResponse (Respuesta de la API)
+```typescript
+interface EmbudoResponse {
+  id: number;                     // Siempre presente
+  nombre: string;
+  descripcion: string | null;     // Puede ser null
+  creado_por: number;
+  creado_en: string;              // Timestamp de creación
+  actualizado_en: string;         // Timestamp de actualización
+  espacio_id: number;
+  orden: number;                  // Siempre presente
+}
+```
+
+### UpdateOrderRequest
+```typescript
+interface UpdateOrderRequest {
+  embudos: Array<{
+    id: number;                   // Requerido
+    orden: number;                // Requerido
+  }>;
+}
+```
+
+### ApiResponse (Respuesta estándar)
+```typescript
+interface ApiResponse<T = unknown> {
+  success: boolean;               // Siempre presente
+  data?: T;                       // Datos de respuesta
+  error?: string;                 // Mensaje de error
+  details?: string;               // Detalles adicionales del error
+}
+```
 
 ---
 
 ## 🚀 Uso en el Frontend
 
 ```typescript
-// Ejemplo de uso en el frontend
+// Tipos de datos (importar desde el dominio)
+import { EmbudoData, EmbudoResponse, UpdateOrderRequest } from './domain/embudo';
+
+// Crear embudo
 const createEmbudo = async (embudoData: EmbudoData) => {
   const response = await fetch('/api/embudos', {
     method: 'POST',
@@ -284,13 +347,44 @@ const createEmbudo = async (embudoData: EmbudoData) => {
   return await response.json();
 };
 
-const getEmbudos = async (espacioId?: number) => {
+// Obtener todos los embudos
+const getEmbudos = async (espacioId?: number): Promise<EmbudoResponse[]> => {
   const url = espacioId ? `/api/embudos?espacio_id=${espacioId}` : '/api/embudos';
   const response = await fetch(url);
+  const result = await response.json();
+  return result.data || [];
+};
+
+// Obtener embudo por ID
+const getEmbudoById = async (id: number): Promise<EmbudoResponse | null> => {
+  const response = await fetch(`/api/embudos/${id}`);
+  const result = await response.json();
+  return result.data;
+};
+
+// Actualizar embudo
+const updateEmbudo = async (id: number, embudoData: Partial<EmbudoData>) => {
+  const response = await fetch(`/api/embudos/${id}`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(embudoData),
+  });
   
   return await response.json();
 };
 
+// Eliminar embudo
+const deleteEmbudo = async (id: number) => {
+  const response = await fetch(`/api/embudos/${id}`, {
+    method: 'DELETE',
+  });
+  
+  return await response.json();
+};
+
+// Actualizar orden de embudos
 const updateEmbudosOrder = async (embudos: Array<{id: number, orden: number}>) => {
   const response = await fetch('/api/embudos/update-order', {
     method: 'PATCH',
@@ -306,4 +400,18 @@ const updateEmbudosOrder = async (embudos: Array<{id: number, orden: number}>) =
 
 ---
 
-*Documentación generada automáticamente - Última actualización: $(date)*
+## ⚠️ Errores Comunes
+
+### 400 Bad Request
+- **ID inválido**: `"ID de embudo inválido"` - El ID debe ser un número válido
+- **Campos faltantes**: `"Faltan campos requeridos: nombre, creado_por, espacio_id"` - Faltan campos obligatorios
+- **Array inválido**: `"Se requiere un array de embudos con id y orden"` - El array de actualización de orden es inválido
+- **Datos inválidos**: `"Error del servidor: 400 Bad Request"` - Datos enviados no válidos
+
+### 500 Internal Server Error
+- **Error de conexión**: `"Error de conexión al [operación]"` - Problemas de conectividad con Supabase
+- **Error del servidor**: `"Error del servidor: [código] [mensaje]"` - Error específico de Supabase
+
+---
+
+*Documentación actualizada - Última actualización: Diciembre 2024*

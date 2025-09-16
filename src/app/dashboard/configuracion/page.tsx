@@ -9,6 +9,7 @@ import EtiquetasTab from './components/EtiquetasTab';
 import RespuestasRapidasTab from './components/RespuestasRapidasTab';
 import SesionesTab from './components/SesionesTab';
 import { supabaseService } from '@/services/supabaseService';
+import { espacioTrabajoServices } from '@/services/espacioTrabajoServices';
 import { isUserAuthenticated } from '@/utils/auth';
 import RoleProtection from '@/components/RoleProtection';
 
@@ -82,7 +83,7 @@ export default function ConfiguracionPage() {
   const loadEspaciosCount = async () => {
     try {
       // Usar el nuevo método seguro de conteo
-      const result = await supabaseService.getEspaciosTrabajoCount();
+      const result = await espacioTrabajoServices.getEspaciosTrabajoCount();
       if (result.success && typeof result.data === 'number') {
         setEspaciosCount(result.data);
       }

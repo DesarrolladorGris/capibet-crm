@@ -136,7 +136,7 @@ export default function Sidebar({ isOpen }: SidebarProps) {
       {/* Logo */}
       <div className="p-4 border-b border-[var(--border-primary)]">
         <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 bg-[#F29A1F] rounded-full flex items-center justify-center overflow-hidden">
+          <div className="w-8 h-8 rounded-full flex items-center justify-center overflow-hidden">
             <img 
               src="https://pbs.twimg.com/profile_images/1118644090420322304/5SFmHCl-_400x400.jpg" 
               alt="CAPIBET Logo"

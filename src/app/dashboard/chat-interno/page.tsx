@@ -3,6 +3,7 @@
 import { X, Paperclip, Filter } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { supabaseService } from '@/services/supabaseService';
+import { userServices } from '@/services/userServices';
 
 interface ChatInternoConversation {
   id: number;
@@ -70,7 +71,7 @@ const ChatInternoPage = () => {
       const result = await supabaseService.getAllChatInternoConversations();
       if (result.success) {
         // Enriquecer con datos del cliente y operador
-        const usuariosResult = await supabaseService.getAllUsuarios();
+        const usuariosResult = await userServices.getAllUsuarios();
         const usuarios = usuariosResult.success ? usuariosResult.data : [];
         
         // Obtener conteo de mensajes no leídos

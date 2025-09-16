@@ -11,9 +11,9 @@ src/app/api/sesiones/
 ├── [id]/
 │   └── route.ts           # GET, PATCH, DELETE por ID
 ├── utils/
-│   ├── getHeaders.ts      # Headers para peticiones a Supabase
+│   ├── getHeaders.ts      # Utilidades para headers
 │   ├── handleResponse.ts  # Manejo de respuestas
-│   └── index.ts          # Exportaciones de utils
+│   └── index.ts          # Exportaciones
 ├── route.ts               # GET todos, POST crear
 └── README.md              # Esta documentación
 ```
@@ -236,24 +236,82 @@ Elimina una sesión del sistema.
 1. **Autenticación**: Todos los endpoints requieren autenticación con Supabase usando service role key.
 
 2. **Validaciones**: 
-   - Los IDs deben ser números válidos
+   - Los IDs deben ser números válidos (validación con `isNaN(Number(id))`)
    - Los campos requeridos se validan en cada endpoint
    - `canal_id`, `usuario_id` y `nombre` son obligatorios
+   - Los puertos SMTP e IMAP deben ser números válidos
+   - El estado debe ser 'Activo' o 'Inactivo'
 
-3. **Manejo de Errores**: Todos los endpoints incluyen manejo consistente de errores con mensajes descriptivos.
+3. **Manejo de Errores**: Todos los endpoints incluyen manejo consistente de errores con mensajes descriptivos:
+   - Errores de validación (400)
+   - Errores de servidor (500)
 
-4. **Respuestas**: Todas las respuestas siguen el formato estándar con `success`, `data` y `error`.
+4. **Respuestas**: Todas las respuestas siguen el formato estándar con `success`, `data`, `error` y `details` opcional.
 
-5. **Campos de Auditoría**: Los campos `creado_en`, `actualizado_en` y `creado_por` se manejan automáticamente por Supabase.
+5. **Seguridad**: Los campos sensibles como `api_key`, `access_token`, `email_password` deben manejarse con cuidado en producción.
 
-6. **Seguridad**: Los campos sensibles como `api_key`, `access_token`, `email_password` deben manejarse con cuidado en producción.
+6. **Campos Opcionales**:
+   - `api_key`, `access_token`, `phone_number`, `email_user`, `email_password`, `smtp_host`, `smtp_port`, `imap_host`, `imap_port` son opcionales
+   - `estado` tiene valor por defecto 'Activo'
+   - `id` es opcional en creación (se genera automáticamente)
+
+---
+
+## 📋 Tipos de Datos
+
+### SesionData (Para creación)
+```typescript
+interface SesionData {
+  id?: number;                    // Opcional, se genera automáticamente
+  canal_id: number;               // Requerido
+  usuario_id: number;             // Requerido
+  nombre: string;                 // Requerido
+  api_key?: string;               // Opcional
+  access_token?: string;          // Opcional
+  phone_number?: string;          // Opcional
+  email_user?: string;            // Opcional
+  email_password?: string;        // Opcional
+  smtp_host?: string;             // Opcional
+  smtp_port?: number;             // Opcional
+  imap_host?: string;             // Opcional
+  imap_port?: number;             // Opcional
+  estado?: string;                // Opcional, default: 'Activo'
+  creado_por?: number;            // Opcional
+}
+```
+
+### SesionResponse (Respuesta de la API)
+```typescript
+interface SesionResponse {
+  id: number;                     // Siempre presente
+  canal_id: number;
+  usuario_id: number;
+  nombre: string;
+  api_key: string;                // Siempre presente
+  access_token: string;           // Siempre presente
+  phone_number: string;           // Siempre presente
+  email_user: string;             // Siempre presente
+  email_password: string;         // Siempre presente
+  smtp_host: string;              // Siempre presente
+  smtp_port: number;              // Siempre presente
+  imap_host: string;              // Siempre presente
+  imap_port: number;              // Siempre presente
+  estado: string;                 // Siempre presente
+  creado_en: string;              // Siempre presente
+  actualizado_en: string;         // Siempre presente
+  creado_por: number;             // Siempre presente
+}
+```
 
 ---
 
 ## 🚀 Uso en el Frontend
 
 ```typescript
-// Ejemplo de uso en el frontend
+// Tipos de datos (importar desde el dominio)
+import { SesionData, SesionResponse } from './domain/sesion';
+
+// Crear sesión
 const createSesion = async (sesionData: SesionData) => {
   const response = await fetch('/api/sesiones', {
     method: 'POST',
@@ -266,17 +324,21 @@ const createSesion = async (sesionData: SesionData) => {
   return await response.json();
 };
 
-const getSesiones = async () => {
-  const response = await fetch('/api/sesiones', {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  });
-  
-  return await response.json();
+// Obtener todas las sesiones
+const getSesiones = async (): Promise<SesionResponse[]> => {
+  const response = await fetch('/api/sesiones');
+  const result = await response.json();
+  return result.data || [];
 };
 
+// Obtener sesión por ID
+const getSesionById = async (id: number): Promise<SesionResponse | null> => {
+  const response = await fetch(`/api/sesiones/${id}`);
+  const result = await response.json();
+  return result.data;
+};
+
+// Actualizar sesión
 const updateSesion = async (id: number, sesionData: Partial<SesionData>) => {
   const response = await fetch(`/api/sesiones/${id}`, {
     method: 'PATCH',
@@ -289,12 +351,10 @@ const updateSesion = async (id: number, sesionData: Partial<SesionData>) => {
   return await response.json();
 };
 
+// Eliminar sesión
 const deleteSesion = async (id: number) => {
   const response = await fetch(`/api/sesiones/${id}`, {
     method: 'DELETE',
-    headers: {
-      'Content-Type': 'application/json',
-    },
   });
   
   return await response.json();
@@ -303,28 +363,18 @@ const deleteSesion = async (id: number) => {
 
 ---
 
-## 📊 Estructura de la Tabla
+## ⚠️ Errores Comunes
 
-| Campo | Tipo | Descripción |
-|-------|------|-------------|
-| id | bigint | Identificador único de la sesión |
-| canal_id | bigint | ID del canal asociado |
-| usuario_id | bigint | ID del usuario propietario |
-| nombre | varchar | Nombre descriptivo de la sesión |
-| api_key | text | Clave API para servicios externos |
-| access_token | text | Token de acceso para autenticación |
-| phone_number | text | Número de teléfono asociado |
-| email_user | text | Usuario de email |
-| email_password | text | Contraseña del email |
-| smtp_host | text | Host del servidor SMTP |
-| smtp_port | integer | Puerto del servidor SMTP |
-| imap_host | text | Host del servidor IMAP |
-| imap_port | integer | Puerto del servidor IMAP |
-| estado | varchar | Estado de la sesión (Activo/Inactivo) |
-| creado_en | timestamp | Fecha de creación |
-| actualizado_en | timestamp | Fecha de última actualización |
-| creado_por | bigint | ID del usuario que creó la sesión |
+### 400 Bad Request
+- **ID inválido**: `"ID de sesión inválido"` - El ID debe ser un número válido
+- **Datos faltantes**: `"canal_id, usuario_id y nombre son requeridos"` - Faltan campos obligatorios
+- **Puerto inválido**: `"smtp_port debe ser un número válido"` - El puerto SMTP debe ser un número
+- **Estado inválido**: `"estado debe ser 'Activo' o 'Inactivo'"` - El estado no es válido
+
+### 500 Internal Server Error
+- **Error de conexión**: `"Error de conexión al [operación]"` - Problemas de conectividad con Supabase
+- **Error del servidor**: `"Error del servidor: [código] [mensaje]"` - Error específico de Supabase
 
 ---
 
-*Documentación generada automáticamente - Última actualización: $(date)*
+*Documentación actualizada - Última actualización: Diciembre 2024*

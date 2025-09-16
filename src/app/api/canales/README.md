@@ -11,6 +11,10 @@ src/app/api/canales/
 ├── [id]/
 │   └── route.ts           # GET, PATCH, DELETE por ID
 ├── route.ts               # GET todos, POST crear
+├── utils/
+│   ├── getHeaders.ts      # Utilidades para headers
+│   ├── handleResponse.ts  # Manejo de respuestas
+│   └── index.ts          # Exportaciones
 └── README.md              # Esta documentación
 ```
 
@@ -186,22 +190,70 @@ Elimina un canal del sistema.
 1. **Autenticación**: Todos los endpoints requieren autenticación con Supabase usando service role key.
 
 2. **Validaciones**: 
-   - Los IDs deben ser números válidos
+   - Los IDs deben ser números válidos (validación con `isNaN(Number(id))`)
    - Los campos requeridos se validan en cada endpoint
-   - `usuario_id` y `espacio_id` son obligatorios
+   - `usuario_id`, `espacio_id`, `tipo`, `descripcion` y `creado_por` son obligatorios al crear un canal
 
-3. **Manejo de Errores**: Todos los endpoints incluyen manejo consistente de errores con mensajes descriptivos.
+3. **Manejo de Errores**: Todos los endpoints incluyen manejo consistente de errores con mensajes descriptivos:
+   - Errores de validación (400)
+   - Errores de servidor (500)
 
-4. **Respuestas**: Todas las respuestas siguen el formato estándar con `success`, `data` y `error`.
+4. **Respuestas**: Todas las respuestas siguen el formato estándar con `success`, `data`, `error` y `details` opcional.
 
 5. **Campos de Auditoría**: Los campos `creado_en`, `actualizado_en` y `creado_por` se manejan automáticamente por Supabase.
+
+6. **Campos Opcionales**:
+   - `id` es opcional en creación (se genera automáticamente)
+
+---
+
+## 📋 Tipos de Datos
+
+### CanalData (Para creación)
+```typescript
+interface CanalData {
+  id?: number;                    // Opcional, se genera automáticamente
+  usuario_id: number;             // Requerido
+  espacio_id: number;             // Requerido
+  tipo: string;                   // Requerido
+  descripcion: string;            // Requerido
+  creado_por: number;             // Requerido
+}
+```
+
+### CanalResponse (Respuesta de la API)
+```typescript
+interface CanalResponse {
+  id: number;                     // Siempre presente
+  usuario_id: number;
+  espacio_id: number;
+  tipo: string;
+  descripcion: string;
+  creado_en: string;              // Siempre presente
+  actualizado_en: string;         // Siempre presente
+  creado_por: number;             // Siempre presente
+}
+```
+
+### ApiResponse
+```typescript
+interface ApiResponse<T = unknown> {
+  success: boolean;
+  data?: T;
+  error?: string;
+  details?: string;
+}
+```
 
 ---
 
 ## 🚀 Uso en el Frontend
 
 ```typescript
-// Ejemplo de uso en el frontend
+// Tipos de datos (importar desde el dominio)
+import { CanalData, CanalResponse } from './domain/canal';
+
+// Crear canal
 const createCanal = async (canalData: CanalData) => {
   const response = await fetch('/api/canales', {
     method: 'POST',
@@ -214,17 +266,21 @@ const createCanal = async (canalData: CanalData) => {
   return await response.json();
 };
 
-const getCanales = async () => {
-  const response = await fetch('/api/canales', {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  });
-  
-  return await response.json();
+// Obtener todos los canales
+const getCanales = async (): Promise<CanalResponse[]> => {
+  const response = await fetch('/api/canales');
+  const result = await response.json();
+  return result.data || [];
 };
 
+// Obtener canal por ID
+const getCanalById = async (id: number): Promise<CanalResponse | null> => {
+  const response = await fetch(`/api/canales/${id}`);
+  const result = await response.json();
+  return result.data;
+};
+
+// Actualizar canal
 const updateCanal = async (id: number, canalData: Partial<CanalData>) => {
   const response = await fetch(`/api/canales/${id}`, {
     method: 'PATCH',
@@ -237,12 +293,10 @@ const updateCanal = async (id: number, canalData: Partial<CanalData>) => {
   return await response.json();
 };
 
+// Eliminar canal
 const deleteCanal = async (id: number) => {
   const response = await fetch(`/api/canales/${id}`, {
     method: 'DELETE',
-    headers: {
-      'Content-Type': 'application/json',
-    },
   });
   
   return await response.json();
@@ -251,19 +305,17 @@ const deleteCanal = async (id: number) => {
 
 ---
 
-## 📊 Estructura de la Tabla
+## ⚠️ Errores Comunes
 
-| Campo | Tipo | Descripción |
-|-------|------|-------------|
-| id | bigint | Identificador único del canal |
-| usuario_id | bigint | ID del usuario propietario |
-| espacio_id | bigint | ID del espacio de trabajo |
-| tipo | text | Tipo de canal (WhatsApp, Telegram, etc.) |
-| descripcion | text | Descripción del canal |
-| creado_en | timestamp | Fecha de creación |
-| actualizado_en | timestamp | Fecha de última actualización |
-| creado_por | bigint | ID del usuario que creó el canal |
+### 400 Bad Request
+- **ID inválido**: `"ID de canal inválido"` - El ID debe ser un número válido
+- **Datos faltantes**: `"Datos de canal inválidos"` - Faltan campos requeridos
+- **Error del servidor**: `"Error del servidor: [código] [mensaje]"` - Error específico de Supabase
+
+### 500 Internal Server Error
+- **Error de conexión**: `"Error de conexión al [operación]"` - Problemas de conectividad con Supabase
+- **Error del servidor**: `"Error del servidor: [código] [mensaje]"` - Error específico de Supabase
 
 ---
 
-*Documentación generada automáticamente - Última actualización: $(date)*
+*Documentación actualizada - Última actualización: Diciembre 2024*

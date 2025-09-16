@@ -1,13 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { supabaseService, EmbUpdoResponse, EmbUpdoData } from '@/services/supabaseService';
+import { embudoServices, EmbudoResponse } from '@/services/embudoServices';
+import { EmbudoData } from '@/app/api/embudos/domain/embudo';
 
 interface EditarEmbudoModalProps {
   isOpen: boolean;
   onClose: () => void;
   onEmbudoUpdated: () => void;
-  embudo: EmbUpdoResponse | null;
+  embudo: EmbudoResponse | null;
 }
 
 export default function EditarEmbudoModal({ 
@@ -60,14 +61,14 @@ export default function EditarEmbudoModal({
 
     setIsLoading(true);
     try {
-      const updatedData: Partial<EmbUpdoData> = {
+      const updatedData: Partial<EmbudoData> = {
         nombre: nombre.trim(),
         descripcion: descripcion.trim() || undefined,
       };
 
       console.log('Datos del embudo a actualizar:', updatedData);
 
-      const result = await supabaseService.updateEmbudo(embudo.id, updatedData);
+      const result = await embudoServices.updateEmbudo(embudo.id, updatedData);
 
       if (result.success) {
         console.log('Embudo actualizado exitosamente');

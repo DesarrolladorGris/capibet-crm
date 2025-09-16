@@ -1,7 +1,12 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { supabaseService, EspacioConEmbudos, EspacioTrabajoResponse, EmbUpdoResponse, MensajeResponse, Canal } from '@/services/supabaseService';
+import { mensajesServices } from '@/services/mensajesServices';
+import { MensajeResponse } from '@/app/api/mensajes/domain/mensaje';
+import { EspacioConEmbudos } from '@/services/supabaseService';
+import { canalesServices, Canal } from '@/services/canalesServices';
+import { embudoServices, EmbudoResponse } from '@/services/embudoServices';
+import { espacioTrabajoServices, EspacioTrabajoResponse } from '@/services/espacioTrabajoServices';
 import NuevoEmbudoModal from '@/app/dashboard/configuracion/components/NuevoEmbudoModal';
 import EditarEmbudoModal from '@/app/dashboard/configuracion/components/EditarEmbudoModal';
 import ConfirmarEliminarEmbudoModal from '@/app/dashboard/configuracion/components/ConfirmarEliminarEmbudoModal';
@@ -36,8 +41,8 @@ export default function EmbudosPage() {
   const [showEliminarEmbudoModal, setShowEliminarEmbudoModal] = useState(false);
   const [showNuevoMensajeModal, setShowNuevoMensajeModal] = useState(false);
   const [showDetallesMensajeModal, setShowDetallesMensajeModal] = useState(false);
-  const [selectedEmbudo, setSelectedEmbudo] = useState<EmbUpdoResponse | null>(null);
-  const [selectedEmbudoForDelete, setSelectedEmbudoForDelete] = useState<EmbUpdoResponse | null>(null);
+  const [selectedEmbudo, setSelectedEmbudo] = useState<EmbudoResponse | null>(null);
+  const [selectedEmbudoForDelete, setSelectedEmbudoForDelete] = useState<EmbudoResponse | null>(null);
   const [selectedMensaje, setSelectedMensaje] = useState<MensajeResponse | null>(null);
 
   // Estados para drag & drop
@@ -59,10 +64,10 @@ export default function EmbudosPage() {
     try {
       // Cargar espacios, embudos, mensajes y canales en paralelo
       const [espaciosResult, embudosResult, mensajesResult, canalesResult] = await Promise.all([
-        supabaseService.getAllEspaciosTrabajo(),
-        supabaseService.getAllEmbudos(),
-        supabaseService.getAllMensajes(),
-        supabaseService.getAllCanales()
+        espacioTrabajoServices.getAllEspaciosTrabajo(),
+        embudoServices.getAllEmbudos(),
+        mensajesServices.getAllMensajes(),
+        canalesServices.getAllCanales()
       ]);
       
       if (espaciosResult.success && espaciosResult.data) {
@@ -139,12 +144,12 @@ export default function EmbudosPage() {
     }
   };
 
-  const handleEditEmbudo = (embudo: EmbUpdoResponse) => {
+  const handleEditEmbudo = (embudo: EmbudoResponse) => {
     setSelectedEmbudo(embudo);
     setShowEditarEmbudoModal(true);
   };
 
-  const handleDeleteEmbudo = (embudo: EmbUpdoResponse) => {
+  const handleDeleteEmbudo = (embudo: EmbudoResponse) => {
     setSelectedEmbudoForDelete(embudo);
     setShowEliminarEmbudoModal(true);
   };
@@ -197,7 +202,7 @@ export default function EmbudosPage() {
     
     try {
       // 1. Llamar al servicio para persistir el cambio en la base de datos
-      const result = await supabaseService.moveMensajeToEmbudo(mensajeId, nuevoEmbudoId);
+      const result = await mensajesServices.moveMensajeToEmbudo(mensajeId, nuevoEmbudoId);
       
       if (result.success) {
         console.log('✅ Mensaje movido exitosamente en la base de datos');

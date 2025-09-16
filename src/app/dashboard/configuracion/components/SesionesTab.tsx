@@ -1,7 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { supabaseService, Canal, SesionResponse, CanalData } from '@/services/supabaseService';
+import { sesionesServices } from '@/services/sesionesServices';
+import { SesionResponse } from '@/app/api/sesiones/domain/sesion';
+import { canalesServices, Canal, CanalData } from '@/services/canalesServices';
+import { espacioTrabajoServices } from '@/services/espacioTrabajoServices';
+import { userServices } from '@/services/userServices';
+import { UsuarioResponse } from '@/app/api/usuarios/domain/usuario';
 import CanalSelector from './CanalSelector';
 import SesionesList from './SesionesList';
 import ConfirmDeleteCanalModal from './ConfirmDeleteCanalModal';
@@ -72,7 +77,7 @@ export default function SesionesTab() {
   const loadCanales = async () => {
     setLoading(true);
     try {
-      const result = await supabaseService.getAllCanales();
+      const result = await canalesServices.getAllCanales();
       if (result.success && result.data) {
         setCanales(result.data);
       }
@@ -85,7 +90,7 @@ export default function SesionesTab() {
 
   const loadSesiones = async () => {
     try {
-      const result = await supabaseService.getAllSesiones();
+      const result = await sesionesServices.getAllSesiones();
       if (result.success) {
         setSesiones(result.data || []);
         
@@ -119,7 +124,7 @@ export default function SesionesTab() {
 
   const loadUsuarios = async () => {
     try {
-      const result = await supabaseService.getAllUsuarios();
+      const result = await userServices.getAllUsuarios();
       if (result.success && result.data) {
         setUsuarios(result.data);
       }
@@ -130,7 +135,7 @@ export default function SesionesTab() {
 
   const loadEspaciosTrabajo = async () => {
     try {
-      const result = await supabaseService.getAllEspaciosTrabajo();
+      const result = await espacioTrabajoServices.getAllEspaciosTrabajo();
       if (result.success && result.data) {
         setEspaciosTrabajo(result.data);
       }
@@ -169,7 +174,7 @@ export default function SesionesTab() {
         activo: true,
       };
 
-      const result = await supabaseService.createCanal(canalData);
+      const result = await canalesServices.createCanal(canalData);
 
       if (result.success) {
         setShowAddCanal(false);
@@ -198,7 +203,7 @@ export default function SesionesTab() {
   const handleToggleSesionStatus = async (sesionId: number, estado: 'activo' | 'desconectado' | 'expirado') => {
     setLoading(true);
     try {
-      const result = await supabaseService.updateSesion(sesionId, { estado });
+      const result = await sesionesServices.updateSesion(sesionId, { estado });
       if (result.success) {
         loadSesiones();
       } else {
@@ -218,7 +223,7 @@ export default function SesionesTab() {
     
     setLoading(true);
     try {
-      const result = await supabaseService.deleteSesion(sesionId);
+      const result = await sesionesServices.deleteSesion(sesionId);
       if (result.success) {
         loadSesiones();
       } else {
@@ -243,7 +248,7 @@ export default function SesionesTab() {
     
     setLoading(true);
     try {
-      const result = await supabaseService.deleteCanal(canalToDelete.id);
+      const result = await canalesServices.deleteCanal(canalToDelete.id);
       if (result.success) {
         setShowDeleteModal(false);
         setCanalToDelete(null);
@@ -278,7 +283,7 @@ export default function SesionesTab() {
   // Funciones para manejar sesiones
   const loadSesionesByCanal = async (canalId: number) => {
     try {
-      const result = await supabaseService.getSesionesByCanal(canalId);
+      const result = await sesionesServices.getSesionesByCanal(canalId);
       if (result.success) {
         setCanalSesiones(prev => ({
           ...prev,
@@ -341,7 +346,7 @@ export default function SesionesTab() {
         estado: sesionFormData.estado,
       };
 
-      const result = await supabaseService.createSesion(sesionData);
+      const result = await sesionesServices.createSesion(sesionData);
       
       if (result.success) {
         setShowAddSesion(false);
