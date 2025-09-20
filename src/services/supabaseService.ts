@@ -3119,7 +3119,8 @@ export class SupabaseService {
       }
 
       const data = await response.json();
-      console.log('Conversaciones de chat interno obtenidas:', data);
+      console.log('🔍 Backend - Conversaciones de chat interno obtenidas:', data);
+      console.log('🔍 Backend - Número de conversaciones:', Array.isArray(data) ? data.length : 'No es array');
 
       return { 
         success: true, 
@@ -3188,8 +3189,7 @@ export class SupabaseService {
       console.log('Actualizando conversación de chat interno:', { chatInternoId, operadorId });
 
       const updateData = {
-        operador_id: operadorId,
-        estado: 'EN CURSO'
+        estado: 'CURSO'
       };
 
       const response = await fetch(`https://dkrdphnnsgndrqmgdvxp.supabase.co/rest/v1/chat_interno?id=eq.${chatInternoId}`, {
@@ -3258,7 +3258,7 @@ export class SupabaseService {
         leido: true
       };
 
-      const response = await fetch(`https://dkrdphnnsgndrqmgdvxp.supabase.co/rest/v1/mensajes_internos?chat_interno_id=eq.${chatInternoId}&emisor=eq.cliente`, {
+      const response = await fetch(`https://dkrdphnnsgndrqmgdvxp.supabase.co/rest/v1/mensajes_internos?chat_interno_id=eq.${chatInternoId}`, {
         method: 'PATCH',
         headers: {
           'apikey': supabaseConfig.serviceRoleKey,
@@ -3374,7 +3374,7 @@ export class SupabaseService {
     try {
       console.log('Obteniendo conteo de mensajes no leídos');
 
-      const response = await fetch('https://dkrdphnnsgndrqmgdvxp.supabase.co/rest/v1/mensajes_internos?select=chat_interno_id&emisor=eq.cliente&leido=eq.false', {
+      const response = await fetch('https://dkrdphnnsgndrqmgdvxp.supabase.co/rest/v1/mensajes_internos?select=chat_interno_id&leido=eq.false', {
         method: 'GET',
         headers: {
           'apikey': supabaseConfig.serviceRoleKey,
@@ -3526,7 +3526,7 @@ export class SupabaseService {
         leido: true
       };
 
-      const response = await fetch(`https://dkrdphnnsgndrqmgdvxp.supabase.co/rest/v1/mensajes_internos?chat_interno_id=eq.${chatInternoId}&emisor=eq.operador&leido=eq.false`, {
+      const response = await fetch(`https://dkrdphnnsgndrqmgdvxp.supabase.co/rest/v1/mensajes_internos?chat_interno_id=eq.${chatInternoId}&leido=eq.false`, {
         method: 'PATCH',
         headers: {
           'apikey': supabaseConfig.serviceRoleKey,
@@ -3650,7 +3650,7 @@ export class SupabaseService {
   /**
    * Crea un mensaje interno en una conversación de chat interno
    */
-  async createMensajeInterno(chatInternoId: number, mensaje: string, emisor: 'cliente' | 'operador' = 'cliente'): Promise<ApiResponse<any>> {
+  async createMensajeInterno(chatInternoId: number, mensaje: string, emisorId: number, receptorId?: number): Promise<ApiResponse<any>> {
     try {
       console.log('Creando mensaje interno para conversación:', chatInternoId);
 
@@ -3658,7 +3658,8 @@ export class SupabaseService {
         chat_interno_id: chatInternoId,
         mensaje: mensaje,
         leido: false,
-        emisor: emisor
+        emisor_id: emisorId,
+        ...(receptorId && { receptor_id: receptorId })
       };
 
       const response = await fetch('https://dkrdphnnsgndrqmgdvxp.supabase.co/rest/v1/mensajes_internos', {
@@ -3711,6 +3712,126 @@ export class SupabaseService {
       return { 
         success: false, 
         error: 'Error de conexión al crear mensaje interno',
+        details: error instanceof Error ? error.message : 'Error desconocido'
+      };
+    }
+  }
+
+  /**
+   * Crea una nueva conversación de chat interno entre usuarios
+   */
+  async createChatInternoUsuario(emisorId: number, receptorId: number, tema: string): Promise<ApiResponse<any>> {
+    try {
+      console.log('Creando conversación de chat interno entre usuarios:', { emisorId, receptorId, tema });
+
+      const conversationData = {
+        emisor_id: emisorId,
+        receptor_id: receptorId,
+        estado: 'PENDIENTE',
+        tema: tema
+      };
+
+      const response = await fetch('https://dkrdphnnsgndrqmgdvxp.supabase.co/rest/v1/chat_interno', {
+        method: 'POST',
+        headers: {
+          'apikey': supabaseConfig.serviceRoleKey,
+          'Authorization': `Bearer ${supabaseConfig.serviceRoleKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(conversationData)
+      });
+
+      console.log('Response status:', response.status);
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error('Error response body:', errorData);
+        return {
+          success: false,
+          error: `Error del servidor: ${response.status} ${response.statusText}`,
+          details: errorData
+        };
+      }
+
+      // Manejar respuesta vacía o no-JSON
+      let data = null;
+      const contentType = response.headers.get('content-type');
+      const responseText = await response.text();
+      
+      if (responseText && contentType && contentType.includes('application/json')) {
+        try {
+          data = JSON.parse(responseText);
+        } catch (jsonError) {
+          console.warn('No se pudo parsear JSON, pero la operación fue exitosa:', responseText);
+          data = { success: true, message: 'Conversación de chat interno creada exitosamente' };
+        }
+      } else {
+        console.log('Respuesta exitosa sin JSON:', responseText);
+        data = { success: true, message: 'Conversación de chat interno creada exitosamente' };
+      }
+
+      console.log('Conversación de chat interno creada exitosamente:', data);
+
+      return { 
+        success: true, 
+        data: data 
+      };
+    } catch (error) {
+      console.error('Error al crear conversación de chat interno:', error);
+      return { 
+        success: false, 
+        error: 'Error de conexión al crear conversación de chat interno',
+        details: error instanceof Error ? error.message : 'Error desconocido'
+      };
+    }
+  }
+
+  /**
+   * Valida si un usuario tiene acceso a una conversación específica
+   */
+  async validateChatAccess(chatInternoId: number, userId: number): Promise<ApiResponse<boolean>> {
+    try {
+      console.log('🔐 Validando acceso a conversación:', chatInternoId, 'para usuario:', userId);
+
+      const url = `https://dkrdphnnsgndrqmgdvxp.supabase.co/rest/v1/chat_interno?id=eq.${chatInternoId}&or=(emisor_id.eq.${userId},receptor_id.eq.${userId})`;
+      console.log('🔐 URL de validación:', url);
+
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'apikey': supabaseConfig.serviceRoleKey,
+          'Authorization': `Bearer ${supabaseConfig.serviceRoleKey}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      console.log('🔐 Response status:', response.status);
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error('❌ Error response body:', errorData);
+        return {
+          success: false,
+          error: `Error del servidor: ${response.status} ${response.statusText}`,
+          details: errorData
+        };
+      }
+
+      const data = await response.json();
+      console.log('🔐 Datos de validación:', data);
+      
+      const hasAccess = Array.isArray(data) && data.length > 0;
+      console.log('🔐 ¿Tiene acceso?:', hasAccess);
+
+      return { 
+        success: true, 
+        data: hasAccess 
+      };
+    } catch (error) {
+      console.error('❌ Error al validar acceso:', error);
+      return { 
+        success: false, 
+        error: 'Error de conexión al validar acceso',
         details: error instanceof Error ? error.message : 'Error desconocido'
       };
     }

@@ -1,8 +1,9 @@
 'use client';
 
-import { X, Paperclip, Filter } from 'lucide-react';
+import { X, Paperclip, Filter, Plus } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { supabaseService } from '@/services/supabaseService';
+import NuevoChatModal from './components/NuevoChatModal';
 
 interface ChatInternoConversation {
   id: number;
@@ -22,7 +23,7 @@ interface MensajeInterno {
   chat_interno_id: number;
   mensaje: string;
   leido: boolean;
-  emisor: 'cliente' | 'operador';
+  emisor_id: number;
   created_at: string;
 }
 
@@ -36,7 +37,9 @@ const ChatInternoPage = () => {
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
   const [showCloseModal, setShowCloseModal] = useState(false);
   const [showFilterModal, setShowFilterModal] = useState(false);
+  const [showNuevoChatModal, setShowNuevoChatModal] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>('TODOS');
+  const [isPolling, setIsPolling] = useState(false);
 
   // Función para filtrar conversaciones por estado
   const getFilteredConversations = () => {
@@ -48,12 +51,13 @@ const ChatInternoPage = () => {
 
   // Cargar conversaciones al montar el componente
   useEffect(() => {
-    loadConversations();
-    
-    // Obtener ID del usuario logueado
+    // Obtener ID del usuario logueado primero
     const userId = localStorage.getItem('userId');
+    
     if (userId) {
-      setCurrentUserId(parseInt(userId));
+      const userIdNum = parseInt(userId);
+      setCurrentUserId(userIdNum);
+      loadConversationsWithUserId(userIdNum);
     }
   }, []);
 
@@ -64,10 +68,32 @@ const ChatInternoPage = () => {
     }
   }, [selectedConversation]);
 
-  const loadConversations = async () => {
+  // Polling para actualizar mensajes cada 7 segundos
+  useEffect(() => {
+    let intervalId: NodeJS.Timeout;
+
+    // Solo hacer polling si hay una conversación seleccionada
+    if (selectedConversation) {
+      intervalId = setInterval(() => {
+        setIsPolling(true);
+        loadMessages(selectedConversation.id, true); // true indica que es un polling update
+      }, 7000); // 7 segundos
+    }
+
+    // Limpiar el intervalo cuando el componente se desmonte o cambie la conversación
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+      setIsPolling(false);
+    };
+  }, [selectedConversation]);
+
+  const loadConversationsWithUserId = async (userId: number) => {
     setLoading(true);
     try {
       const result = await supabaseService.getAllChatInternoConversations();
+      
       if (result.success) {
         // Enriquecer con datos del cliente y operador
         const usuariosResult = await supabaseService.getAllUsuarios();
@@ -81,118 +107,263 @@ const ChatInternoPage = () => {
         const totalCountsResult = await supabaseService.getTotalMessagesCounts();
         const totalCounts = totalCountsResult.success ? totalCountsResult.data : {};
         
-        const enrichedConversations = result.data.map((conv: any) => {
-          // Obtener datos del cliente
-          const cliente = usuarios.find((user: any) => user.id === conv.cliente_id);
-          
-          // Obtener datos del operador (si está asignado)
-          const operador = conv.operador_id ? usuarios.find((user: any) => user.id === conv.operador_id) : null;
-          
-          return {
-            ...conv,
-            cliente_nombre: cliente?.nombre_usuario || `Cliente ${conv.cliente_id}`,
-            cliente_email: cliente?.correo_electronico || '',
-            operador_nombre: operador?.nombre_usuario || null,
-            unread_count: unreadCounts[conv.id] || 0,
-            total_messages: totalCounts[conv.id] || 0
-          };
-        });
+        const enrichedConversations = result.data
+          .filter((conv: any) => {
+            // Solo mostrar conversaciones donde el usuario actual es emisor o receptor
+            const currentUserIdNum = Number(userId);
+            const emisorIdNum = Number(conv.emisor_id);
+            const receptorIdNum = Number(conv.receptor_id);
+            
+            const isEmisor = emisorIdNum === currentUserIdNum;
+            const isReceptor = receptorIdNum === currentUserIdNum;
+            
+            return isEmisor || isReceptor;
+          })
+          .map((conv: any) => {
+            // Obtener datos de usuarios
+            const emisor = usuarios.find((user: any) => user.id === conv.emisor_id);
+            const receptor = usuarios.find((user: any) => user.id === conv.receptor_id);
+            
+            // Determinar quién es el "otro" usuario (no el actual)
+            const otherUser = conv.emisor_id === userId ? receptor : emisor;
+            const currentUser = conv.emisor_id === userId ? emisor : receptor;
+            
+            return {
+              ...conv,
+              cliente_nombre: otherUser?.nombre_usuario || `Usuario ${conv.emisor_id === userId ? conv.receptor_id : conv.emisor_id}`,
+              cliente_email: otherUser?.correo_electronico || '',
+              operador_nombre: currentUser?.nombre_usuario || null,
+              tema: conv.tema || 'Sin tema',
+              unread_count: unreadCounts[conv.id] || 0,
+              total_messages: totalCounts[conv.id] || 0,
+              tipo: 'interno'
+            };
+          });
         
         setConversations(enrichedConversations);
-        
-        // Debug: Verificar estados de las conversaciones
-        console.log('🔍 Estados de conversaciones cargadas:', enrichedConversations.map(conv => ({
-          id: conv.id,
-          cliente: conv.cliente_nombre,
-          estado: conv.estado
-        })));
         
         // Seleccionar la primera conversación si existe
         if (enrichedConversations.length > 0) {
           setSelectedConversation(enrichedConversations[0]);
         }
       } else {
-        console.error('Error al cargar conversaciones:', result.error);
+        setConversations([]);
       }
     } catch (error) {
-      console.error('Error al cargar conversaciones:', error);
+      setConversations([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const loadMessages = async (chatInternoId: number) => {
-    setLoadingMessages(true);
+  const loadConversations = async () => {
+    setLoading(true);
     try {
+      console.log('🔍 Iniciando carga de conversaciones para usuario:', currentUserId);
+      const result = await supabaseService.getAllChatInternoConversations();
+      
+      if (result.success) {
+        console.log('✅ Conversaciones obtenidas del backend:', result.data);
+        console.log('🔍 Número de conversaciones:', result.data.length);
+        
+        // Enriquecer con datos del cliente y operador
+        const usuariosResult = await supabaseService.getAllUsuarios();
+        const usuarios = usuariosResult.success ? usuariosResult.data : [];
+        console.log('✅ Usuarios obtenidos:', usuarios.length);
+        
+        // Obtener conteo de mensajes no leídos
+        const unreadCountsResult = await supabaseService.getUnreadMessagesCounts();
+        const unreadCounts = unreadCountsResult.success ? unreadCountsResult.data : {};
+        
+        // Obtener conteo total de mensajes
+        const totalCountsResult = await supabaseService.getTotalMessagesCounts();
+        const totalCounts = totalCountsResult.success ? totalCountsResult.data : {};
+        
+        console.log('🔍 ANTES DEL FILTRADO - Total conversaciones:', result.data.length);
+        console.log('🔍 ANTES DEL FILTRADO - Usuario actual:', currentUserId);
+        console.log('🔍 ANTES DEL FILTRADO - Tipo de currentUserId:', typeof currentUserId);
+        
+        // Alert temporal para ver las conversaciones
+        alert(`Conversaciones del backend: ${JSON.stringify(result.data, null, 2)}`);
+        
+        const enrichedConversations = result.data
+          .filter((conv: any) => {
+            // Solo mostrar conversaciones donde el usuario actual es emisor o receptor
+            const currentUserIdNum = Number(currentUserId);
+            const emisorIdNum = Number(conv.emisor_id);
+            const receptorIdNum = Number(conv.receptor_id);
+            
+            const isEmisor = emisorIdNum === currentUserIdNum;
+            const isReceptor = receptorIdNum === currentUserIdNum;
+            
+            // Alert temporal para cada conversación
+            alert(`Conversación ${conv.id}:\n- emisor_id: ${conv.emisor_id} (${typeof conv.emisor_id})\n- receptor_id: ${conv.receptor_id} (${typeof conv.receptor_id})\n- currentUserId: ${currentUserId} (${typeof currentUserId})\n- isEmisor: ${isEmisor}\n- isReceptor: ${isReceptor}\n- Mostrar: ${isEmisor || isReceptor}`);
+            
+            return isEmisor || isReceptor;
+          })
+          .map((conv: any) => {
+            // Obtener datos de usuarios
+            const emisor = usuarios.find((user: any) => user.id === conv.emisor_id);
+            const receptor = usuarios.find((user: any) => user.id === conv.receptor_id);
+            
+            // Determinar quién es el "otro" usuario (no el actual)
+            const otherUser = conv.emisor_id === currentUserId ? receptor : emisor;
+            const currentUser = conv.emisor_id === currentUserId ? emisor : receptor;
+            
+            return {
+              ...conv,
+              cliente_nombre: otherUser?.nombre_usuario || `Usuario ${conv.emisor_id === currentUserId ? conv.receptor_id : conv.emisor_id}`,
+              cliente_email: otherUser?.correo_electronico || '',
+              operador_nombre: currentUser?.nombre_usuario || null,
+              tema: conv.tema || 'Sin tema',
+              unread_count: unreadCounts[conv.id] || 0,
+              total_messages: totalCounts[conv.id] || 0,
+              tipo: 'interno'
+            };
+          });
+        
+        console.log('🔍 DESPUÉS DEL FILTRADO - Conversaciones que pasaron el filtro:', enrichedConversations.length);
+        console.log('✅ Conversaciones filtradas y enriquecidas:', enrichedConversations);
+        
+        if (enrichedConversations.length === 0) {
+          console.warn('⚠️ ADVERTENCIA: No hay conversaciones que coincidan con el usuario actual');
+          console.log('🔍 Datos de depuración:', {
+            currentUserId,
+            totalConversaciones: result.data.length,
+            conversacionesOriginales: result.data.map(conv => ({
+              id: conv.id,
+              emisor_id: conv.emisor_id,
+              receptor_id: conv.receptor_id
+            }))
+          });
+        }
+        setConversations(enrichedConversations);
+        
+        // Debug: Verificar estados de las conversaciones
+        console.log('🔍 Estados de conversaciones cargadas:', enrichedConversations.map(conv => ({
+          id: conv.id,
+          cliente: conv.cliente_nombre,
+          estado: conv.estado,
+          tipo: conv.tipo,
+          tema: conv.tema,
+          emisor_id: conv.emisor_id,
+          receptor_id: conv.receptor_id
+        })));
+        
+        console.log('🔍 Usuario actual:', currentUserId);
+        
+        // Seleccionar la primera conversación si existe
+        if (enrichedConversations.length > 0) {
+          setSelectedConversation(enrichedConversations[0]);
+        }
+      } else {
+        console.error('❌ Error al cargar conversaciones:', result.error);
+        setConversations([]);
+      }
+    } catch (error) {
+      console.error('❌ Error al cargar conversaciones:', error);
+      setConversations([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadMessages = async (chatInternoId: number, isPollingUpdate = false) => {
+    if (!isPollingUpdate) {
+      setLoadingMessages(true);
+    }
+    try {
+      // Si la conversación está en la lista, el usuario tiene acceso (ya filtrado)
+      const conversation = conversations.find(conv => conv.id === chatInternoId);
+      
+      if (!conversation) {
+        setMessages([]);
+        return;
+      }
+
       const result = await supabaseService.getMensajesInternosByConversation(chatInternoId);
       if (result.success) {
         setMessages(result.data);
       } else {
-        console.error('Error al cargar mensajes:', result.error);
         setMessages([]);
       }
     } catch (error) {
-      console.error('Error al cargar mensajes:', error);
       setMessages([]);
     } finally {
-      setLoadingMessages(false);
+      if (!isPollingUpdate) {
+        setLoadingMessages(false);
+      }
+      setIsPolling(false);
     }
   };
 
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !selectedConversation || !currentUserId) return;
 
+    // Validación estricta: verificar que el usuario es emisor o receptor
+    const conversation = conversations.find(conv => conv.id === selectedConversation.id);
+    if (!conversation) {
+      alert('No tienes permisos para enviar mensajes en esta conversación');
+      return;
+    }
+    
+    // Verificar que el usuario actual es emisor o receptor (con conversión de tipos)
+    const currentUserIdNum = Number(currentUserId);
+    const emisorIdNum = Number(conversation.emisor_id);
+    const receptorIdNum = Number(conversation.receptor_id);
+    
+    const isEmisor = emisorIdNum === currentUserIdNum;
+    const isReceptor = receptorIdNum === currentUserIdNum;
+    
+    if (!isEmisor && !isReceptor) {
+      alert('No tienes permisos para enviar mensajes en esta conversación');
+      return;
+    }
+
     try {
       // Paso 1: Crear el mensaje
+      // Determinar quién es el receptor (el otro usuario de la conversación)
+      const receptorId = selectedConversation.emisor_id === currentUserId 
+        ? selectedConversation.receptor_id 
+        : selectedConversation.emisor_id;
+      
       const messageResult = await supabaseService.createMensajeInterno(
         selectedConversation.id,
         newMessage.trim(),
-        'operador'
+        currentUserId, // emisor_id: usuario logueado
+        receptorId     // receptor_id: el otro usuario
       );
 
       if (messageResult.success) {
         // Paso 2: Actualizar la conversación con el operador_id
-        console.log('🚀 Asignando operador a la conversación:', {
-          chatInternoId: selectedConversation.id,
-          operadorId: currentUserId
-        });
-        
         const updateResult = await supabaseService.updateChatInternoConversation(
           selectedConversation.id,
           currentUserId
         );
 
         if (updateResult.success) {
-          console.log('✅ Operador asignado exitosamente a la conversación');
-          
           // Obtener el nombre del operador actual
           const currentUserName = localStorage.getItem('userName') || 'Operador';
           
           // Actualizar el estado local de la conversación
           setSelectedConversation(prev => prev ? {
             ...prev,
-            operador_id: currentUserId,
             operador_nombre: currentUserName,
-            estado: 'EN CURSO'
+            estado: 'CURSO'
           } : null);
 
           // Actualizar también en la lista de conversaciones
           setConversations(prev => prev.map(conv => 
             conv.id === selectedConversation.id 
-              ? { ...conv, operador_id: currentUserId, operador_nombre: currentUserName, estado: 'EN CURSO' }
+              ? { ...conv, operador_nombre: currentUserName, estado: 'CURSO' }
               : conv
           ));
-        } else {
-          console.error('❌ Error al asignar operador:', updateResult.error);
         }
 
         // Paso 3: Marcar mensajes del cliente como leídos
-        console.log('🚀 Marcando mensajes del cliente como leídos...');
         const readResult = await supabaseService.markMensajesInternosAsRead(selectedConversation.id);
         
         if (readResult.success) {
-          console.log('✅ Mensajes marcados como leídos exitosamente');
-          
           // Actualizar el conteo de no leídos en la conversación seleccionada
           setSelectedConversation(prev => prev ? {
             ...prev,
@@ -206,15 +377,11 @@ const ChatInternoPage = () => {
               ? { ...conv, unread_count: 0, total_messages: (conv.total_messages || 0) + 1 }
               : conv
           ));
-        } else {
-          console.error('❌ Error al marcar mensajes como leídos:', readResult.error);
         }
 
         setNewMessage('');
         // Recargar mensajes para reflejar el estado de leído
         loadMessages(selectedConversation.id);
-      } else {
-        console.error('Error al enviar mensaje:', messageResult.error);
       }
     } catch (error) {
       console.error('Error al enviar mensaje:', error);
@@ -233,17 +400,20 @@ const ChatInternoPage = () => {
     setShowCloseModal(true);
   };
 
+  // Función para manejar la creación de nuevo chat
+  const handleNuevoChatCreated = () => {
+    // Recargar las conversaciones después de crear un nuevo chat
+    loadConversations();
+  };
+
   // Función para confirmar el cierre de conversación
   const confirmCloseConversation = async () => {
     if (!selectedConversation) return;
 
     try {
-      console.log('🔒 Cerrando conversación:', selectedConversation.id);
       const result = await supabaseService.finalizeChatInternoConversation(selectedConversation.id);
 
       if (result.success) {
-        console.log('✅ Conversación cerrada exitosamente');
-        
         // Actualizar el estado local de la conversación
         setSelectedConversation(prev => prev ? {
           ...prev,
@@ -259,11 +429,9 @@ const ChatInternoPage = () => {
 
         setShowCloseModal(false);
       } else {
-        console.error('❌ Error al cerrar conversación:', result.error);
         alert('Error al cerrar la conversación. Por favor intenta nuevamente.');
       }
     } catch (error) {
-      console.error('❌ Error al cerrar conversación:', error);
       alert('Error inesperado al cerrar la conversación');
     }
   };
@@ -293,6 +461,13 @@ const ChatInternoPage = () => {
       });
     }
   };
+
+  // Función helper para determinar el tipo de emisor
+  const getEmisorType = (emisorId: number): 'cliente' | 'operador' => {
+    // Si el emisor es el usuario actual, es 'operador' (quien envía)
+    // Si el emisor es otro usuario, es 'cliente' (quien recibe)
+    return emisorId === currentUserId ? 'operador' : 'cliente';
+  };
   if (loading) {
     return (
       <div className="flex h-full bg-[var(--bg-primary)] text-[var(--text-primary)] items-center justify-center">
@@ -313,6 +488,13 @@ const ChatInternoPage = () => {
             Mensajes internos
             <div className="flex items-center space-x-2">
               <span className="text-sm text-[var(--text-muted)]">{getFilteredConversations().length}</span>
+              <button 
+                onClick={() => setShowNuevoChatModal(true)}
+                className="p-1 hover:bg-[var(--bg-secondary)] rounded-full transition-colors"
+                title="Nuevo chat interno"
+              >
+                <Plus size={20} />
+              </button>
               <button 
                 onClick={() => setShowFilterModal(true)}
                 className="p-1 hover:bg-[var(--bg-secondary)] rounded-full transition-colors"
@@ -357,6 +539,11 @@ const ChatInternoPage = () => {
                       👤 {conversation.operador_nombre}
                     </p>
                   )}
+                  {conversation.tema && (
+                    <p className="text-xs text-[var(--text-secondary)] truncate">
+                      📝 {conversation.tema}
+                    </p>
+                  )}
                   <div className="flex items-center justify-between mt-1">
                     <span className={`text-xs px-2 py-1 rounded-full font-medium ${
                       conversation.estado === 'EN CURSO' || conversation.estado === 'CURSO'
@@ -393,11 +580,21 @@ const ChatInternoPage = () => {
                   </svg>
                 </div>
                 <div>
-                  <h3 className="font-semibold">{selectedConversation.cliente_nombre}</h3>
+                  <h3 className="font-semibold flex items-center gap-2">
+                    {selectedConversation.cliente_nombre}
+                    {isPolling && (
+                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" title="Actualizando mensajes..."></div>
+                    )}
+                  </h3>
                   <p className="text-sm text-[var(--text-muted)]">{selectedConversation.cliente_email}</p>
                   {selectedConversation.operador_nombre && (
                     <p className="text-xs text-[var(--accent-primary)]">
                       👤 Asignado a: {selectedConversation.operador_nombre}
+                    </p>
+                  )}
+                  {selectedConversation.tema && (
+                    <p className="text-xs text-[var(--text-secondary)]">
+                      📝 {selectedConversation.tema}
                     </p>
                   )}
                 </div>
@@ -454,23 +651,23 @@ const ChatInternoPage = () => {
                   {messages.map((message) => (
                     <div 
                       key={message.id} 
-                      className={`flex ${message.emisor === 'operador' ? 'justify-end' : 'justify-start'}`}
+                      className={`flex ${getEmisorType(message.emisor_id) === 'operador' ? 'justify-end' : 'justify-start'}`}
                     >
                       <div className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                        message.emisor === 'operador' 
+                        getEmisorType(message.emisor_id) === 'operador' 
                           ? 'bg-[var(--accent-primary)] text-white' 
                           : 'bg-[var(--bg-secondary)] text-[var(--text-primary)]'
                       }`}>
                         <p className="text-sm">{message.mensaje}</p>
                         <div className={`flex items-center justify-between mt-1 ${
-                          message.emisor === 'operador' 
+                          getEmisorType(message.emisor_id) === 'operador' 
                             ? 'text-white text-opacity-70' 
                             : 'text-[var(--text-muted)]'
                         }`}>
                           <span className="text-xs">
                             {formatTime(message.created_at)}
                           </span>
-                          {message.emisor === 'cliente' && (
+                          {getEmisorType(message.emisor_id) === 'cliente' && (
                             <span className="text-xs flex items-center ml-2">
                               {message.leido ? (
                                 <span className="text-[var(--accent-primary)]">✓✓</span>
@@ -618,6 +815,16 @@ const ChatInternoPage = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Modal de nuevo chat interno */}
+      {showNuevoChatModal && currentUserId && (
+        <NuevoChatModal
+          isOpen={showNuevoChatModal}
+          onClose={() => setShowNuevoChatModal(false)}
+          onChatCreated={handleNuevoChatCreated}
+          currentUserId={currentUserId}
+        />
       )}
     </div>
   );
