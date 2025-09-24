@@ -15,11 +15,12 @@ interface Canal {
   espacio_id: number;
   creado_en?: string;
 }
-import { espacioTrabajoServices } from '@/services/espacioTrabajoServices';
+import { embudoServices } from '@/services/embudoServices';
 import { userServices } from '@/services/userServices';
 import CanalSelector from './CanalSelector';
 import SesionesList from './SesionesList';
 import ConfirmDeleteCanalModal from './ConfirmDeleteCanalModal';
+import VincularSesionModal from './VincularSesionModal';
 
 interface CanalOption {
   id: Canal['tipo'];
@@ -46,7 +47,9 @@ export default function SesionesTab() {
   const [sesiones, setSesiones] = useState<SesionResponse[]>([]);
   const [showAddCanal, setShowAddCanal] = useState(false);
   const [showAddSesion, setShowAddSesion] = useState(false);
+  const [showVincularSesion, setShowVincularSesion] = useState(false);
   const [selectedCanalForSesion, setSelectedCanalForSesion] = useState<Canal | null>(null);
+  const [tipoSesionSeleccionado, setTipoSesionSeleccionado] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     tipo: '' as Canal['tipo'] | '',
@@ -59,28 +62,26 @@ export default function SesionesTab() {
   const [sesionFormData, setSesionFormData] = useState({
     nombre: '',
     usuario_id: '',
-    api_key: '',
-    access_token: '',
-    phone_number: '',
-    email_user: '',
-    email_password: '',
-    smtp_host: '',
-    smtp_port: '',
-    imap_host: '',
-    imap_port: '',
+    embudo_id: '',
+    type: '' as 'whatsapp_qr' | 'whatsapp_api' | 'messenger' | 'instagram' | 'telegram' | 'telegram_bot' | 'gmail' | 'outlook' | '',
+    description: '',
+    email: '',
+    given_name: '',
+    picture: '',
+    whatsapp_session: '',
     estado: 'activo' as 'activo' | 'desconectado' | 'expirado',
   });
   const [usuarios, setUsuarios] = useState<{id: number, nombre_usuario: string, correo_electronico: string}[]>([]);
-  const [espaciosTrabajo, setEspaciosTrabajo] = useState<{id: number, nombre: string}[]>([]);
+  const [embudos, setEmbudos] = useState<{id: number, nombre: string}[]>([]);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [canalToDelete, setCanalToDelete] = useState<Canal | null>(null);
-  const [canalSesiones, setCanalSesiones] = useState<Record<number, SesionResponse[]>>({});
+  const [canalSesiones, setCanalSesiones] = useState<Record<string, SesionResponse[]>>({});
 
   useEffect(() => {
     loadCanales();
     loadSesiones();
     loadUsuarios();
-    loadEspaciosTrabajo();
+    loadEmbudos();
   }, []);
 
   const loadCanales = async () => {
@@ -101,14 +102,14 @@ export default function SesionesTab() {
       if (result.success) {
         setSesiones(result.data || []);
         
-        // Agrupar sesiones por canal
-        const sesionesGrouped: Record<number, SesionResponse[]> = {};
+        // Agrupar sesiones por tipo
+        const sesionesGrouped: Record<string, SesionResponse[]> = {};
         (result.data || []).forEach((sesion: SesionResponse) => {
-          if (sesion.canal_id) {
-            if (!sesionesGrouped[sesion.canal_id]) {
-              sesionesGrouped[sesion.canal_id] = [];
+          if (sesion.type) {
+            if (!sesionesGrouped[sesion.type]) {
+              sesionesGrouped[sesion.type] = [];
             }
-            sesionesGrouped[sesion.canal_id].push(sesion);
+            sesionesGrouped[sesion.type].push(sesion);
           }
         });
         
@@ -140,14 +141,14 @@ export default function SesionesTab() {
     }
   };
 
-  const loadEspaciosTrabajo = async () => {
+  const loadEmbudos = async () => {
     try {
-      const result = await espacioTrabajoServices.getAllEspaciosTrabajo();
+      const result = await embudoServices.getAllEmbudos();
       if (result.success && result.data) {
-        setEspaciosTrabajo(result.data);
+        setEmbudos(result.data);
       }
     } catch (error) {
-      console.error('Error loading espacios de trabajo:', error);
+      console.error('Error loading embudos:', error);
     }
   };
 
@@ -222,15 +223,13 @@ export default function SesionesTab() {
     setSesionFormData({
       nombre: '',
       usuario_id: '',
-      api_key: '',
-      access_token: '',
-      phone_number: '',
-      email_user: '',
-      email_password: '',
-      smtp_host: '',
-      smtp_port: '',
-      imap_host: '',
-      imap_port: '',
+      embudo_id: '',
+      type: '',
+      description: '',
+      email: '',
+      given_name: '',
+      picture: '',
+      whatsapp_session: '',
       estado: 'activo',
     });
     setShowAddSesion(true);
@@ -250,21 +249,28 @@ export default function SesionesTab() {
       return;
     }
 
+    if (!sesionFormData.embudo_id) {
+      alert('Debe seleccionar un embudo');
+      return;
+    }
+
+    if (!sesionFormData.type) {
+      alert('Debe seleccionar un tipo de sesión');
+      return;
+    }
+
     setLoading(true);
     try {
       const sesionData = {
-        canal_id: selectedCanalForSesion.id!,
         usuario_id: parseInt(sesionFormData.usuario_id),
         nombre: sesionFormData.nombre,
-        api_key: sesionFormData.api_key || undefined,
-        access_token: sesionFormData.access_token || undefined,
-        phone_number: sesionFormData.phone_number || undefined,
-        email_user: sesionFormData.email_user || undefined,
-        email_password: sesionFormData.email_password || undefined,
-        smtp_host: sesionFormData.smtp_host || undefined,
-        smtp_port: sesionFormData.smtp_port ? parseInt(sesionFormData.smtp_port) : undefined,
-        imap_host: sesionFormData.imap_host || undefined,
-        imap_port: sesionFormData.imap_port ? parseInt(sesionFormData.imap_port) : undefined,
+        type: sesionFormData.type,
+        embudo_id: parseInt(sesionFormData.embudo_id),
+        description: sesionFormData.description || undefined,
+        email: sesionFormData.email || undefined,
+        given_name: sesionFormData.given_name || undefined,
+        picture: sesionFormData.picture || undefined,
+        whatsapp_session: sesionFormData.whatsapp_session || undefined,
         estado: sesionFormData.estado,
       };
 
@@ -276,15 +282,13 @@ export default function SesionesTab() {
         setSesionFormData({
           nombre: '',
           usuario_id: '',
-          api_key: '',
-          access_token: '',
-          phone_number: '',
-          email_user: '',
-          email_password: '',
-          smtp_host: '',
-          smtp_port: '',
-          imap_host: '',
-          imap_port: '',
+          embudo_id: '',
+          type: '',
+          description: '',
+          email: '',
+          given_name: '',
+          picture: '',
+          whatsapp_session: '',
           estado: 'activo',
         });
         // Recargar todas las sesiones
@@ -298,6 +302,63 @@ export default function SesionesTab() {
       alert('Error de conexión al crear sesión');
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Mapeo de tipos de canal a tipos de sesión válidos
+  const mapearTipoCanalASesion = (tipoCanal: string): string => {
+    const mapeo: Record<string, string> = {
+      'whatsapp': 'whatsapp_qr',
+      'whatsappApi': 'whatsapp_api',
+      'email': 'gmail', // Por defecto Gmail, el usuario puede cambiar a Outlook si es necesario
+      'instagram': 'instagram',
+      'messenger': 'messenger',
+      'telegram': 'telegram',
+      'telegramBot': 'telegram_bot',
+      'webChat': 'messenger', // WebChat se mapea a messenger por similitud
+    };
+    
+    return mapeo[tipoCanal] || 'whatsapp_qr'; // Fallback por defecto
+  };
+
+  const handleVincularSesion = (tipo: string) => {
+    const tipoSesion = mapearTipoCanalASesion(tipo);
+    setTipoSesionSeleccionado(tipoSesion);
+    setShowVincularSesion(true);
+  };
+
+  const handleConfirmarVinculacion = (data: {
+    nombre: string;
+    descripcion: string;
+    embudo_id: number;
+    type: string;
+    sesionId?: number;
+  }) => {
+    console.log('Vinculación completada para sesión:', {
+      nombre: data.nombre,
+      descripcion: data.descripcion,
+      embudo_id: data.embudo_id,
+      type: data.type,
+      sesionId: data.sesionId
+    });
+    
+    // Para WhatsApp QR, solo cerrar cuando se ha completado la conexión (sesionId presente)
+    // Para otros tipos, cerrar inmediatamente
+    if (data.type === 'whatsapp_qr') {
+      if (data.sesionId) {
+        // Conexión exitosa de WhatsApp, cerrar modal
+        console.log('✅ Conexión WhatsApp exitosa, cerrando modal');
+        setShowVincularSesion(false);
+        setTipoSesionSeleccionado('');
+        // Aquí podrías refrescar la lista de sesiones si es necesario
+      } else {
+        // WhatsApp QR iniciado pero aún no conectado, mantener modal abierto
+        console.log('🔄 WhatsApp QR iniciado, manteniendo modal abierto para escaneo');
+      }
+    } else {
+      // Para otros tipos de sesión, cerrar inmediatamente
+      setShowVincularSesion(false);
+      setTipoSesionSeleccionado('');
     }
   };
 
@@ -318,10 +379,10 @@ export default function SesionesTab() {
       {/* Sección de Canales */}
       <div className="bg-[#2a2d35] rounded-lg p-6">
 
-        {/* Grid de opciones de canales - solo informativo */}
+        {/* Grid de opciones de canales */}
         <div>
           <CanalSelector 
-            onSelectCanal={() => {}} // Solo visual, no funcional
+            onSelectCanal={handleVincularSesion}
             showDescriptions={true}
           />
         </div>
@@ -377,13 +438,13 @@ export default function SesionesTab() {
                 </div>
                 
                 {/* Sesiones del canal */}
-                {canal.id && canalSesiones[canal.id] && canalSesiones[canal.id].length > 0 && (
+                {canal.id && canalSesiones[canal.tipo] && canalSesiones[canal.tipo].length > 0 && (
                   <div className="mt-4 pl-4 border-l-2 border-gray-600">
                     <h4 className="text-white text-sm font-medium mb-2">
-                      Sesiones asociadas ({canalSesiones[canal.id].length})
+                      Sesiones asociadas ({canalSesiones[canal.tipo].length})
                     </h4>
                     <div className="space-y-2">
-                      {canalSesiones[canal.id].map((sesion) => (
+                      {canalSesiones[canal.tipo].map((sesion) => (
                         <div
                           key={sesion.id}
                           className="bg-[#1a1d23] rounded-lg p-3 flex items-center justify-between"
@@ -434,7 +495,7 @@ export default function SesionesTab() {
           </div>
         ) : (
           <SesionesList 
-            sesiones={sesiones as any}
+            sesiones={sesiones}
             canales={canales}
             onToggleStatus={handleToggleSesionStatus}
             onDeleteSesion={handleDeleteSesion}
@@ -511,20 +572,20 @@ export default function SesionesTab() {
                 </select>
               </div>
 
-              {/* Espacio de trabajo */}
+              {/* Embudo */}
               <div>
                 <label className="block text-white text-sm font-medium mb-2">
-                  Espacio de trabajo <span className="text-red-400">*</span>
+                  Embudo <span className="text-red-400">*</span>
                 </label>
                 <select
                   value={formData.espacio_id}
                   onChange={(e) => setFormData({ ...formData, espacio_id: e.target.value })}
                   className="w-full bg-[#1a1d23] border border-[#3a3d45] rounded-lg px-3 py-2 text-white focus:outline-none focus:border-[#F29A1F]"
                 >
-                  <option value="">Seleccionar espacio</option>
-                  {espaciosTrabajo.map((espacio) => (
-                    <option key={espacio.id} value={espacio.id}>
-                      {espacio.nombre}
+                  <option value="">Seleccionar embudo</option>
+                  {embudos.map((embudo) => (
+                    <option key={embudo.id} value={embudo.id}>
+                      {embudo.nombre}
                     </option>
                   ))}
                 </select>
@@ -601,6 +662,58 @@ export default function SesionesTab() {
 
               <div>
                 <label className="block text-white text-sm font-medium mb-2">
+                  Embudo *
+                </label>
+                <select
+                  value={sesionFormData.embudo_id}
+                  onChange={(e) => setSesionFormData({ ...sesionFormData, embudo_id: e.target.value })}
+                  className="w-full bg-[#1a1d23] border border-[#3a3d45] rounded-lg px-3 py-2 text-white focus:outline-none focus:border-[#F29A1F]"
+                >
+                  <option value="">Seleccionar embudo</option>
+                  {embudos.map((embudo) => (
+                    <option key={embudo.id} value={embudo.id}>
+                      {embudo.nombre}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-white text-sm font-medium mb-2">
+                  Tipo de sesión *
+                </label>
+                <select
+                  value={sesionFormData.type}
+                  onChange={(e) => setSesionFormData({ ...sesionFormData, type: e.target.value as 'whatsapp_qr' | 'whatsapp_api' | 'messenger' | 'instagram' | 'telegram' | 'telegram_bot' | 'gmail' | 'outlook' })}
+                  className="w-full bg-[#1a1d23] border border-[#3a3d45] rounded-lg px-3 py-2 text-white focus:outline-none focus:border-[#F29A1F]"
+                >
+                  <option value="">Seleccionar tipo</option>
+                  <option value="whatsapp_qr">WhatsApp QR</option>
+                  <option value="whatsapp_api">WhatsApp API</option>
+                  <option value="messenger">Messenger</option>
+                  <option value="instagram">Instagram</option>
+                  <option value="telegram">Telegram</option>
+                  <option value="telegram_bot">Telegram Bot</option>
+                  <option value="gmail">Gmail</option>
+                  <option value="outlook">Outlook</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-white text-sm font-medium mb-2">
+                  Descripción
+                </label>
+                <textarea
+                  value={sesionFormData.description}
+                  onChange={(e) => setSesionFormData({ ...sesionFormData, description: e.target.value })}
+                  className="w-full bg-[#1a1d23] border border-[#3a3d45] rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-[#F29A1F]"
+                  placeholder="Descripción de la sesión..."
+                  rows={3}
+                />
+              </div>
+
+              <div>
+                <label className="block text-white text-sm font-medium mb-2">
                   Estado
                 </label>
                 <select
@@ -614,106 +727,102 @@ export default function SesionesTab() {
                 </select>
               </div>
 
-              {/* Configuración específica del canal */}
-              {selectedCanalForSesion.tipo === 'email' && (
-                <>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-white text-sm font-medium mb-2">
-                        Email
-                      </label>
-                      <input
-                        type="email"
-                        value={sesionFormData.email_user}
-                        onChange={(e) => setSesionFormData({ ...sesionFormData, email_user: e.target.value })}
-                        className="w-full bg-[#1a1d23] border border-[#3a3d45] rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-[#F29A1F]"
-                        placeholder="usuario@dominio.com"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-white text-sm font-medium mb-2">
-                        Contraseña
-                      </label>
-                      <input
-                        type="password"
-                        value={sesionFormData.email_password}
-                        onChange={(e) => setSesionFormData({ ...sesionFormData, email_password: e.target.value })}
-                        className="w-full bg-[#1a1d23] border border-[#3a3d45] rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-[#F29A1F]"
-                        placeholder="••••••••"
-                      />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-white text-sm font-medium mb-2">
-                        SMTP Host
-                      </label>
-                      <input
-                        type="text"
-                        value={sesionFormData.smtp_host}
-                        onChange={(e) => setSesionFormData({ ...sesionFormData, smtp_host: e.target.value })}
-                        className="w-full bg-[#1a1d23] border border-[#3a3d45] rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-[#F29A1F]"
-                        placeholder="smtp.gmail.com"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-white text-sm font-medium mb-2">
-                        SMTP Port
-                      </label>
-                      <input
-                        type="number"
-                        value={sesionFormData.smtp_port}
-                        onChange={(e) => setSesionFormData({ ...sesionFormData, smtp_port: e.target.value })}
-                        className="w-full bg-[#1a1d23] border border-[#3a3d45] rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-[#F29A1F]"
-                        placeholder="587"
-                      />
-                    </div>
-                  </div>
-                </>
-              )}
-
-              {(selectedCanalForSesion.tipo === 'whatsapp' || selectedCanalForSesion.tipo === 'whatsappApi') && (
+              {/* Configuración específica por tipo de sesión */}
+              {(sesionFormData.type === 'gmail' || sesionFormData.type === 'outlook') && (
                 <>
                   <div>
                     <label className="block text-white text-sm font-medium mb-2">
-                      API Key
+                      Email
                     </label>
                     <input
-                      type="text"
-                      value={sesionFormData.api_key}
-                      onChange={(e) => setSesionFormData({ ...sesionFormData, api_key: e.target.value })}
+                      type="email"
+                      value={sesionFormData.email}
+                      onChange={(e) => setSesionFormData({ ...sesionFormData, email: e.target.value })}
                       className="w-full bg-[#1a1d23] border border-[#3a3d45] rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-[#F29A1F]"
-                      placeholder="Ingresa tu API Key"
+                      placeholder="usuario@gmail.com"
                     />
                   </div>
                   <div>
                     <label className="block text-white text-sm font-medium mb-2">
-                      Número de teléfono
+                      Nombre
                     </label>
                     <input
                       type="text"
-                      value={sesionFormData.phone_number}
-                      onChange={(e) => setSesionFormData({ ...sesionFormData, phone_number: e.target.value })}
+                      value={sesionFormData.given_name}
+                      onChange={(e) => setSesionFormData({ ...sesionFormData, given_name: e.target.value })}
                       className="w-full bg-[#1a1d23] border border-[#3a3d45] rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-[#F29A1F]"
-                      placeholder="+1234567890"
+                      placeholder="Nombre del usuario"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-white text-sm font-medium mb-2">
+                      URL de la imagen de perfil
+                    </label>
+                    <input
+                      type="url"
+                      value={sesionFormData.picture}
+                      onChange={(e) => setSesionFormData({ ...sesionFormData, picture: e.target.value })}
+                      className="w-full bg-[#1a1d23] border border-[#3a3d45] rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-[#F29A1F]"
+                      placeholder="https://example.com/profile.jpg"
                     />
                   </div>
                 </>
               )}
 
-              {(selectedCanalForSesion.tipo === 'instagram' || selectedCanalForSesion.tipo === 'messenger') && (
+              {(sesionFormData.type === 'whatsapp_qr' || sesionFormData.type === 'whatsapp_api') && (
                 <div>
                   <label className="block text-white text-sm font-medium mb-2">
-                    Access Token
+                    WhatsApp Session UUID
                   </label>
                   <input
                     type="text"
-                    value={sesionFormData.access_token}
-                    onChange={(e) => setSesionFormData({ ...sesionFormData, access_token: e.target.value })}
+                    value={sesionFormData.whatsapp_session}
+                    onChange={(e) => setSesionFormData({ ...sesionFormData, whatsapp_session: e.target.value })}
                     className="w-full bg-[#1a1d23] border border-[#3a3d45] rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-[#F29A1F]"
-                    placeholder="Ingresa tu Access Token"
+                    placeholder="UUID de la sesión de WhatsApp"
                   />
                 </div>
+              )}
+
+              {(sesionFormData.type === 'instagram' || sesionFormData.type === 'messenger') && (
+                <>
+                  <div>
+                    <label className="block text-white text-sm font-medium mb-2">
+                      Email
+                    </label>
+                    <input
+                      type="email"
+                      value={sesionFormData.email}
+                      onChange={(e) => setSesionFormData({ ...sesionFormData, email: e.target.value })}
+                      className="w-full bg-[#1a1d23] border border-[#3a3d45] rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-[#F29A1F]"
+                      placeholder="usuario@facebook.com"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-white text-sm font-medium mb-2">
+                      Nombre
+                    </label>
+                    <input
+                      type="text"
+                      value={sesionFormData.given_name}
+                      onChange={(e) => setSesionFormData({ ...sesionFormData, given_name: e.target.value })}
+                      className="w-full bg-[#1a1d23] border border-[#3a3d45] rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-[#F29A1F]"
+                      placeholder="Nombre del usuario"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-white text-sm font-medium mb-2">
+                      URL de la imagen de perfil
+                    </label>
+                    <input
+                      type="url"
+                      value={sesionFormData.picture}
+                      onChange={(e) => setSesionFormData({ ...sesionFormData, picture: e.target.value })}
+                      className="w-full bg-[#1a1d23] border border-[#3a3d45] rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-[#F29A1F]"
+                      placeholder="https://example.com/profile.jpg"
+                    />
+                  </div>
+                </>
               )}
               
               <div className="flex space-x-3">
@@ -725,7 +834,7 @@ export default function SesionesTab() {
                 </button>
                 <button
                   onClick={handleCreateSesion}
-                  disabled={!sesionFormData.nombre || !sesionFormData.usuario_id || loading}
+                  disabled={!sesionFormData.nombre || !sesionFormData.usuario_id || !sesionFormData.embudo_id || !sesionFormData.type || loading}
                   className="flex-1 bg-[#F29A1F] hover:bg-[#F29A1F] disabled:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors"
                 >
                   {loading ? 'Creando...' : 'Crear Sesión'}
@@ -743,6 +852,17 @@ export default function SesionesTab() {
         onConfirm={confirmDeleteCanal}
         onCancel={cancelDeleteCanal}
         isLoading={loading}
+      />
+
+      {/* Modal para vincular sesión */}
+      <VincularSesionModal
+        isOpen={showVincularSesion}
+        onClose={() => {
+          setShowVincularSesion(false);
+          setTipoSesionSeleccionado('');
+        }}
+        onVincular={handleConfirmarVinculacion}
+        tipoSesion={tipoSesionSeleccionado}
       />
     </div>
   );

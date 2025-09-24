@@ -5,7 +5,7 @@ export interface MensajeData {
   contacto_id: number;
   creado_en?: string;
   chat_id: number;
-  type: 'whatsapp_qr' | 'whatsapp_api' | 'messenger' | 'instagram' | 'telegram' | 'telegram_bot' | 'gmail' | 'outlook';
+  type: 'whatsapp_qr' | 'whatsapp_api' | 'messenger' | 'instagram' | 'telegram' | 'telegram_bot' | 'gmail' | 'outlook' | 'web_chat';
   content: Record<string, unknown>;
 }
 
@@ -15,7 +15,7 @@ export interface MensajeResponse {
   contacto_id: number;
   creado_en: string;
   chat_id: number;
-  type: 'whatsapp_qr' | 'whatsapp_api' | 'messenger' | 'instagram' | 'telegram' | 'telegram_bot' | 'gmail' | 'outlook';
+  type: 'whatsapp_qr' | 'whatsapp_api' | 'messenger' | 'instagram' | 'telegram' | 'telegram_bot' | 'gmail' | 'outlook' | 'web_chat';
   content: Record<string, unknown>;
 }
 

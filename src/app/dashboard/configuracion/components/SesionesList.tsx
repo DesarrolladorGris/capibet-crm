@@ -1,6 +1,6 @@
 'use client';
 
-import { SesionResponse } from '@/services/supabaseService';
+import { SesionResponse } from '@/app/api/sesiones/domain/sesion';
 // Tipos locales para canales (sin dependencias externas)
 type CanalTipo = 'whatsapp' | 'whatsappApi' | 'email' | 'instagram' | 'messenger' | 'telegram' | 'telegramBot' | 'webChat';
 
@@ -47,8 +47,8 @@ export default function SesionesList({
   onDeleteSesion, 
   onToggleStatus 
 }: SesionesListProps) {
-  const getCanalById = (canalId: number): Canal | undefined => {
-    return canales.find(canal => canal.id === canalId);
+  const getCanalByType = (type: string): Canal | undefined => {
+    return canales.find(canal => canal.tipo === type);
   };
 
   const getCanalIcon = (tipo: Canal['tipo']) => {
@@ -117,12 +117,9 @@ export default function SesionesList({
         <div className="bg-[#1a1d23] rounded-lg p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-400 text-sm">Canales Únicos</p>
+              <p className="text-gray-400 text-sm">Tipos Únicos</p>
               <p className="text-white text-2xl font-bold">
-                {new Set(sesiones.map(s => {
-                  const canal = getCanalById(s.canal_id);
-                  return canal?.tipo;
-                }).filter(tipo => tipo !== undefined)).size}
+                {new Set(sesiones.map(s => s.type).filter(type => type !== undefined)).size}
               </p>
             </div>
             <div className="text-2xl">📱</div>
@@ -146,9 +143,9 @@ export default function SesionesList({
                 {/* Icono del canal */}
                 <div 
                   className="text-2xl p-3 rounded-full bg-[#2a2d35]"
-                  style={{ color: getCanalColor(getCanalById(sesion.canal_id)?.tipo || 'whatsapp') }}
+                  style={{ color: getCanalColor(sesion.type as any || 'whatsapp') }}
                 >
-                  {getCanalIcon(getCanalById(sesion.canal_id)?.tipo || 'whatsapp')}
+                  {getCanalIcon(sesion.type as any || 'whatsapp')}
                 </div>
                 
                 {/* Detalles de la sesión */}
@@ -167,8 +164,9 @@ export default function SesionesList({
                   </div>
                   
                    <div className="text-gray-400 text-sm space-y-1">
-                     <p>Canal: <span className="text-white">{getCanalById(sesion.canal_id)?.descripcion || `Canal ID: ${sesion.canal_id}`}</span></p>
+                     <p>Tipo: <span className="text-white">{sesion.type}</span></p>
                      <p>Usuario ID: <span className="text-white">{sesion.usuario_id}</span></p>
+                     <p>Embudo ID: <span className="text-white">{sesion.embudo_id}</span></p>
                      <p>Creada: <span className="text-white">{formatDate(sesion.creado_en)}</span></p>
                    </div>
                 </div>
@@ -218,13 +216,14 @@ export default function SesionesList({
             </div>
             
             {/* Información adicional */}
-            {(sesion.api_key || sesion.email_user || sesion.phone_number) && (
+            {(sesion.email || sesion.given_name || sesion.whatsapp_session || sesion.description) && (
               <div className="mt-3 pt-3 border-t border-[#3a3d45]">
                 <p className="text-gray-400 text-xs">
                   Configuración:
-                  {sesion.api_key && <span className="ml-1">API Key configurado</span>}
-                  {sesion.email_user && <span className="ml-1">Email: {sesion.email_user}</span>}
-                  {sesion.phone_number && <span className="ml-1">Tel: {sesion.phone_number}</span>}
+                  {sesion.email && <span className="ml-1">Email: {sesion.email}</span>}
+                  {sesion.given_name && <span className="ml-1">Nombre: {sesion.given_name}</span>}
+                  {sesion.whatsapp_session && <span className="ml-1">WhatsApp Session: {sesion.whatsapp_session}</span>}
+                  {sesion.description && <span className="ml-1">Descripción: {sesion.description}</span>}
                 </p>
               </div>
             )}

@@ -90,11 +90,11 @@ class SesionesServices {
   }
 
   /**
-   * Obtiene las sesiones de un espacio de trabajo específico
+   * Obtiene las sesiones de un embudo específico
    */
-  async getSesionesByEspacioTrabajo(espacioTrabajoId: number): Promise<ApiResponse<SesionResponse[]>> {
+  async getSesionesByEmbudo(embudoId: number): Promise<ApiResponse<SesionResponse[]>> {
     try {
-      const response = await fetch(`${apiEndpoints.sesiones}?espacio_de_trabajo_id=eq.${espacioTrabajoId}`, {
+      const response = await fetch(`${apiEndpoints.sesiones}?embudo_id=eq.${embudoId}`, {
         method: 'GET',
         headers: this.getHeaders()
       });
@@ -103,11 +103,11 @@ class SesionesServices {
       return data;
 
     } catch (error) {
-      console.error('Error fetching sesiones by espacio de trabajo:', error);
+      console.error('Error fetching sesiones by embudo:', error);
       
       return {
         success: false,
-        error: 'Error de conexión al obtener sesiones del espacio de trabajo',
+        error: 'Error de conexión al obtener sesiones del embudo',
         details: error instanceof Error ? error.message : 'Error desconocido',
         data: []
       };
@@ -268,11 +268,11 @@ class SesionesServices {
   }
 
   /**
-   * Obtiene sesiones de Facebook por user_id
+   * Obtiene sesiones de WhatsApp por session UUID
    */
-  async getSesionesFacebookByUserId(facebookUserId: string): Promise<ApiResponse<SesionResponse[]>> {
+  async getSesionesWhatsAppBySession(whatsappSession: string): Promise<ApiResponse<SesionResponse[]>> {
     try {
-      const response = await fetch(`${apiEndpoints.sesiones}?facebook_user_id=eq.${facebookUserId}`, {
+      const response = await fetch(`${apiEndpoints.sesiones}?whatsapp_session=eq.${whatsappSession}`, {
         method: 'GET',
         headers: this.getHeaders()
       });
@@ -281,11 +281,11 @@ class SesionesServices {
       return data;
 
     } catch (error) {
-      console.error('Error fetching Facebook sesiones by user_id:', error);
+      console.error('Error fetching WhatsApp sesiones by session:', error);
       
       return {
         success: false,
-        error: 'Error de conexión al obtener sesiones de Facebook',
+        error: 'Error de conexión al obtener sesiones de WhatsApp',
         details: error instanceof Error ? error.message : 'Error desconocido',
         data: []
       };
@@ -318,16 +318,15 @@ class SesionesServices {
   }
 
   /**
-   * Actualiza tokens de Gmail
+   * Actualiza la sesión de WhatsApp
    */
-  async updateGmailTokens(id: number, accessToken: string, refreshToken: string): Promise<ApiResponse<SesionResponse>> {
+  async updateWhatsAppSession(id: number, whatsappSession: string): Promise<ApiResponse<SesionResponse>> {
     try {
       const response = await fetch(apiEndpoints.sesionesById(id), {
         method: 'PATCH',
         headers: this.getHeaders(),
         body: JSON.stringify({ 
-          gmail_access_token: accessToken,
-          gmail_refresh_token: refreshToken
+          whatsapp_session: whatsappSession
         })
       });
 
@@ -335,39 +334,41 @@ class SesionesServices {
       return result;
 
     } catch (error) {
-      console.error('Error updating Gmail tokens:', error);
+      console.error('Error updating WhatsApp session:', error);
       
       return {
         success: false,
-        error: 'Error de conexión al actualizar tokens de Gmail',
+        error: 'Error de conexión al actualizar sesión de WhatsApp',
         details: error instanceof Error ? error.message : 'Error desconocido'
       };
     }
   }
 
   /**
-   * Actualiza tokens de Facebook
+   * Actualiza información de perfil (email, nombre, picture)
    */
-  async updateFacebookTokens(id: number, accessToken: string, userId: string): Promise<ApiResponse<SesionResponse>> {
+  async updateProfileInfo(id: number, email?: string, givenName?: string, picture?: string): Promise<ApiResponse<SesionResponse>> {
     try {
+      const updateData: any = {};
+      if (email !== undefined) updateData.email = email;
+      if (givenName !== undefined) updateData.given_name = givenName;
+      if (picture !== undefined) updateData.picture = picture;
+
       const response = await fetch(apiEndpoints.sesionesById(id), {
         method: 'PATCH',
         headers: this.getHeaders(),
-        body: JSON.stringify({ 
-          facebook_access_token: accessToken,
-          facebook_user_id: userId
-        })
+        body: JSON.stringify(updateData)
       });
 
       const result = await this.handleResponse<ApiResponse<SesionResponse>>(response);
       return result;
 
     } catch (error) {
-      console.error('Error updating Facebook tokens:', error);
+      console.error('Error updating profile info:', error);
       
       return {
         success: false,
-        error: 'Error de conexión al actualizar tokens de Facebook',
+        error: 'Error de conexión al actualizar información de perfil',
         details: error instanceof Error ? error.message : 'Error desconocido'
       };
     }

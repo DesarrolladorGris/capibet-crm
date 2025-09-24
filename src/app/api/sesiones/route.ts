@@ -10,19 +10,16 @@ export async function POST(request: NextRequest) {
     
     // Preparar los datos con valores por defecto
     const dataToSend = {
-      canal_id: sesionData.canal_id,
       usuario_id: sesionData.usuario_id,
       nombre: sesionData.nombre,
-      api_key: sesionData.api_key,
-      access_token: sesionData.access_token,
-      phone_number: sesionData.phone_number,
-      email_user: sesionData.email_user,
-      email_password: sesionData.email_password,
-      smtp_host: sesionData.smtp_host,
-      smtp_port: sesionData.smtp_port,
-      imap_host: sesionData.imap_host,
-      imap_port: sesionData.imap_port,
-      estado: sesionData.estado || 'Activo',
+      type: sesionData.type,
+      embudo_id: sesionData.embudo_id,
+      description: sesionData.description,
+      email: sesionData.email,
+      given_name: sesionData.given_name,
+      picture: sesionData.picture,
+      whatsapp_session: sesionData.whatsapp_session,
+      estado: sesionData.estado || 'activo',
       creado_por: sesionData.creado_por
     };
 
@@ -60,10 +57,30 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// GET /api/sesiones - Obtener todas las sesiones
-export async function GET() {
+// GET /api/sesiones - Obtener todas las sesiones con filtros opcionales
+export async function GET(request: NextRequest) {
   try {
-    const response = await fetch(`${supabaseConfig.restUrl}/sesiones`, {
+    const { searchParams } = new URL(request.url);
+    
+    // Construir la URL con filtros de Supabase
+    let url = `${supabaseConfig.restUrl}/sesiones`;
+    const filters = [];
+    
+    // Procesar filtros de query parameters
+    for (const [key, value] of searchParams.entries()) {
+      if (key && value) {
+        filters.push(`${key}=${value}`);
+      }
+    }
+    
+    // Agregar filtros a la URL si existen
+    if (filters.length > 0) {
+      url += `?${filters.join('&')}`;
+    }
+    
+    console.log('🔍 Buscando sesiones con URL:', url);
+    
+    const response = await fetch(url, {
       method: 'GET',
       headers: getHeaders()
     });
