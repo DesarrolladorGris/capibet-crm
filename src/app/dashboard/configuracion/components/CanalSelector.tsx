@@ -176,12 +176,6 @@ export default function CanalSelector({
           );
         })}
       </div>
-      
-      {/* Información adicional */}
-      <div className="text-center text-gray-400 text-sm">
-        <p>Selecciona el tipo de canal que deseas configurar</p>
-        <p className="text-xs mt-1">Cada canal tiene configuraciones específicas</p>
-      </div>
     </div>
   );
 }

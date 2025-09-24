@@ -4,10 +4,19 @@ import { useState, useEffect } from 'react';
 import { Smartphone, Mail, Camera, MessageCircle, Send, Bot, Link, Trash2, X } from 'lucide-react';
 import { sesionesServices } from '@/services/sesionesServices';
 import { SesionResponse } from '@/app/api/sesiones/domain/sesion';
-import { canalesServices, Canal, CanalData } from '@/services/canalesServices';
+// Tipos locales para canales (sin dependencias externas)
+type CanalTipo = 'whatsapp' | 'whatsappApi' | 'email' | 'instagram' | 'messenger' | 'telegram' | 'telegramBot' | 'webChat';
+
+interface Canal {
+  id: number;
+  tipo: CanalTipo;
+  descripcion: string;
+  usuario_id: number;
+  espacio_id: number;
+  creado_en?: string;
+}
 import { espacioTrabajoServices } from '@/services/espacioTrabajoServices';
 import { userServices } from '@/services/userServices';
-import { UsuarioResponse } from '@/app/api/usuarios/domain/usuario';
 import CanalSelector from './CanalSelector';
 import SesionesList from './SesionesList';
 import ConfirmDeleteCanalModal from './ConfirmDeleteCanalModal';
@@ -37,7 +46,6 @@ export default function SesionesTab() {
   const [sesiones, setSesiones] = useState<SesionResponse[]>([]);
   const [showAddCanal, setShowAddCanal] = useState(false);
   const [showAddSesion, setShowAddSesion] = useState(false);
-  const [selectedCanalType, setSelectedCanalType] = useState<Canal['tipo'] | null>(null);
   const [selectedCanalForSesion, setSelectedCanalForSesion] = useState<Canal | null>(null);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -78,10 +86,8 @@ export default function SesionesTab() {
   const loadCanales = async () => {
     setLoading(true);
     try {
-      const result = await canalesServices.getAllCanales();
-      if (result.success && result.data) {
-        setCanales(result.data);
-      }
+      // Canales eliminados - mantener lista vacía
+      setCanales([]);
     } catch (error) {
       console.error('Error loading canales:', error);
     } finally {
@@ -145,60 +151,8 @@ export default function SesionesTab() {
     }
   };
 
-  const handleAddCanal = async () => {
-    // Resetear formulario y abrir modal
-    setFormData({
-      tipo: '',
-      descripcion: '',
-      usuario_id: '',
-      espacio_id: '',
-      nombre: '',
-      embudo_id: '',
-    });
-    setShowAddCanal(true);
-  };
-
   const handleCreateCanal = async () => {
-    if (!formData.tipo || !formData.descripcion || !formData.usuario_id || !formData.espacio_id) {
-      alert('Por favor complete todos los campos requeridos');
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const canalData: CanalData = {
-        usuario_id: parseInt(formData.usuario_id),
-        espacio_id: parseInt(formData.espacio_id),
-        tipo: formData.tipo as Canal['tipo'],
-        descripcion: formData.descripcion,
-        configuracion: {},
-        activo: true,
-      };
-
-      const result = await canalesServices.createCanal(canalData);
-
-      if (result.success) {
-        setShowAddCanal(false);
-        setFormData({
-          tipo: '',
-          descripcion: '',
-          usuario_id: '',
-          espacio_id: '',
-          nombre: '',
-          embudo_id: '',
-        });
-        loadCanales();
-      } else {
-        console.error('Error creating canal:', result.error);
-        console.error('Error details:', result.details);
-        alert(`Error al crear canal: ${result.error}\n\nDetalles: ${result.details || 'Sin detalles adicionales'}`);
-      }
-    } catch (error) {
-      console.error('Error creating canal:', error);
-      alert('Error de conexión al crear canal');
-    } finally {
-      setLoading(false);
-    }
+    alert('Funcionalidad de canales deshabilitada');
   };
 
   const handleToggleSesionStatus = async (sesionId: number, estado: 'activo' | 'desconectado' | 'expirado') => {
@@ -245,25 +199,7 @@ export default function SesionesTab() {
   };
 
   const confirmDeleteCanal = async () => {
-    if (!canalToDelete?.id) return;
-    
-    setLoading(true);
-    try {
-      const result = await canalesServices.deleteCanal(canalToDelete.id);
-      if (result.success) {
-        setShowDeleteModal(false);
-        setCanalToDelete(null);
-        loadCanales();
-      } else {
-        console.error('Error deleting canal:', result.error);
-        alert(`Error al eliminar canal: ${result.error}`);
-      }
-    } catch (error) {
-      console.error('Error deleting canal:', error);
-      alert('Error de conexión al eliminar canal');
-    } finally {
-      setLoading(false);
-    }
+    alert('Funcionalidad de canales deshabilitada');
   };
 
   const cancelDeleteCanal = () => {
@@ -279,21 +215,6 @@ export default function SesionesTab() {
   const getCanalColor = (tipo: Canal['tipo']) => {
     const option = canalOptions.find(opt => opt.tipo === tipo);
     return option?.color || '#F29A1F';
-  };
-
-  // Funciones para manejar sesiones
-  const loadSesionesByCanal = async (canalId: number) => {
-    try {
-      const result = await sesionesServices.getSesionesByCanal(canalId);
-      if (result.success) {
-        setCanalSesiones(prev => ({
-          ...prev,
-          [canalId]: result.data || []
-        }));
-      }
-    } catch (error) {
-      console.error('Error loading sesiones del canal:', error);
-    }
   };
 
   const handleAddSesionToCanal = (canal: Canal) => {
@@ -335,15 +256,15 @@ export default function SesionesTab() {
         canal_id: selectedCanalForSesion.id!,
         usuario_id: parseInt(sesionFormData.usuario_id),
         nombre: sesionFormData.nombre,
-        api_key: sesionFormData.api_key || null,
-        access_token: sesionFormData.access_token || null,
-        phone_number: sesionFormData.phone_number || null,
-        email_user: sesionFormData.email_user || null,
-        email_password: sesionFormData.email_password || null,
-        smtp_host: sesionFormData.smtp_host || null,
-        smtp_port: sesionFormData.smtp_port ? parseInt(sesionFormData.smtp_port) : null,
-        imap_host: sesionFormData.imap_host || null,
-        imap_port: sesionFormData.imap_port ? parseInt(sesionFormData.imap_port) : null,
+        api_key: sesionFormData.api_key || undefined,
+        access_token: sesionFormData.access_token || undefined,
+        phone_number: sesionFormData.phone_number || undefined,
+        email_user: sesionFormData.email_user || undefined,
+        email_password: sesionFormData.email_password || undefined,
+        smtp_host: sesionFormData.smtp_host || undefined,
+        smtp_port: sesionFormData.smtp_port ? parseInt(sesionFormData.smtp_port) : undefined,
+        imap_host: sesionFormData.imap_host || undefined,
+        imap_port: sesionFormData.imap_port ? parseInt(sesionFormData.imap_port) : undefined,
         estado: sesionFormData.estado,
       };
 
@@ -387,7 +308,7 @@ export default function SesionesTab() {
         <div className="flex items-center space-x-3">
           <Link className="w-8 h-8" />
           <div>
-            <h2 className="text-white text-2xl font-semibold">Sesiones {sesiones.length}</h2>
+            <h2 className="text-white text-2xl font-semibold">Sesiones</h2>
             <p className="text-gray-400 text-sm">Crear, editar y eliminar tus sesiones vinculadas.</p>
           </div>
         </div>
@@ -396,27 +317,13 @@ export default function SesionesTab() {
 
       {/* Sección de Canales */}
       <div className="bg-[#2a2d35] rounded-lg p-6">
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-white text-lg font-medium">Canales</h3>
-          <button
-            onClick={() => setShowAddCanal(true)}
-            className="bg-[#F29A1F] hover:bg-[#F29A1F] text-white px-4 py-2 rounded-lg font-medium transition-colors"
-          >
-            + Añadir canal
-          </button>
-        </div>
 
         {/* Grid de opciones de canales - solo informativo */}
-        <div className="mb-6">
+        <div>
           <CanalSelector 
             onSelectCanal={() => {}} // Solo visual, no funcional
             showDescriptions={true}
           />
-          <div className="text-center mt-4">
-            <p className="text-gray-400 text-sm mb-3">
-              Haz clic en &quot;Añadir canal&quot; para configurar cualquiera de estos tipos
-            </p>
-          </div>
         </div>
 
         {/* Lista de canales existentes */}
@@ -515,25 +422,19 @@ export default function SesionesTab() {
       <div className="bg-[#2a2d35] rounded-lg p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-white text-lg font-medium">Sesiones activas</h3>
-          <div className="text-sm text-gray-400">
-            Funcionalidad en desarrollo
-          </div>
         </div>
         
         {sesiones.length === 0 ? (
           <div className="text-center py-8">
             <Link className="text-gray-400 w-24 h-24 mx-auto mb-4" />
-            <h4 className="text-white text-lg font-medium mb-2">Sesiones en desarrollo</h4>
+            <h4 className="text-white text-lg font-medium mb-2">No hay sesiones configuradas</h4>
             <p className="text-gray-400 text-sm mb-4">
-              La funcionalidad de sesiones estará disponible próximamente.
-            </p>
-            <p className="text-gray-500 text-xs">
-              Por ahora puedes gestionar tus canales de comunicación desde la sección superior.
+              Crea tu primera sesión para comenzar a gestionar tus canales.
             </p>
           </div>
         ) : (
           <SesionesList 
-            sesiones={sesiones}
+            sesiones={sesiones as any}
             canales={canales}
             onToggleStatus={handleToggleSesionStatus}
             onDeleteSesion={handleDeleteSesion}

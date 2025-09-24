@@ -9,24 +9,38 @@ export async function POST(request: NextRequest) {
     const mensajeData: MensajeData = await request.json();
     
     // Validar campos requeridos
-    if (!mensajeData.canal_id || !mensajeData.remitente_id || !mensajeData.contenido || 
-        !mensajeData.contacto_id || !mensajeData.sesion_id || !mensajeData.destinatario_id || 
-        !mensajeData.embudo_id) {
+    if (!mensajeData.remitente_id || !mensajeData.contacto_id || 
+        !mensajeData.chat_id || !mensajeData.type || !mensajeData.content) {
       return NextResponse.json({
         success: false,
-        error: 'Faltan campos requeridos: canal_id, remitente_id, contenido, contacto_id, sesion_id, destinatario_id, embudo_id'
+        error: 'Faltan campos requeridos: remitente_id, contacto_id, chat_id, type, content'
+      }, { status: 400 });
+    }
+
+    // Validar que el tipo sea válido
+    const tiposValidos = ['whatsapp_qr', 'whatsapp_api', 'messenger', 'instagram', 'telegram', 'telegram_bot', 'gmail', 'outlook'];
+    if (!tiposValidos.includes(mensajeData.type)) {
+      return NextResponse.json({
+        success: false,
+        error: `Tipo inválido. Debe ser uno de: ${tiposValidos.join(', ')}`
+      }, { status: 400 });
+    }
+
+    // Validar que el contenido sea un objeto válido
+    if (!mensajeData.content || typeof mensajeData.content !== 'object') {
+      return NextResponse.json({
+        success: false,
+        error: 'El campo content debe ser un objeto válido'
       }, { status: 400 });
     }
 
     // Preparar los datos
     const dataToSend = {
-      canal_id: mensajeData.canal_id,
       remitente_id: mensajeData.remitente_id,
-      contenido: mensajeData.contenido,
       contacto_id: mensajeData.contacto_id,
-      sesion_id: mensajeData.sesion_id,
-      destinatario_id: mensajeData.destinatario_id,
-      embudo_id: mensajeData.embudo_id,
+      chat_id: mensajeData.chat_id,
+      type: mensajeData.type,
+      content: mensajeData.content,
       creado_en: mensajeData.creado_en || new Date().toISOString()
     };
 
@@ -65,9 +79,41 @@ export async function POST(request: NextRequest) {
 }
 
 // GET /api/mensajes - Obtener todos los mensajes
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const response = await fetch(`${supabaseConfig.restUrl}/mensajes`, {
+    const { searchParams } = new URL(request.url);
+    const chatId = searchParams.get('chat_id');
+    const contactoId = searchParams.get('contacto_id');
+    const remitenteId = searchParams.get('remitente_id');
+    const type = searchParams.get('type');
+    const limit = searchParams.get('limit');
+    const offset = searchParams.get('offset');
+
+    // Construir query string para filtros
+    let queryString = '';
+    const filters = [];
+    
+    if (chatId) filters.push(`chat_id=eq.${chatId}`);
+    if (contactoId) filters.push(`contacto_id=eq.${contactoId}`);
+    if (remitenteId) filters.push(`remitente_id=eq.${remitenteId}`);
+    if (type) filters.push(`type=eq.${type}`);
+    
+    if (filters.length > 0) {
+      queryString = '?' + filters.join('&');
+    }
+    
+    // Agregar paginación
+    if (limit) {
+      queryString += (queryString ? '&' : '?') + `limit=${limit}`;
+    }
+    if (offset) {
+      queryString += (queryString ? '&' : '?') + `offset=${offset}`;
+    }
+
+    // Ordenar por fecha de creación descendente
+    queryString += (queryString ? '&' : '?') + 'order=creado_en.desc';
+
+    const response = await fetch(`${supabaseConfig.restUrl}/mensajes${queryString}`, {
       method: 'GET',
       headers: getHeaders()
     });

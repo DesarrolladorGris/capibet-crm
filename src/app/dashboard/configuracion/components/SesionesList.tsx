@@ -1,6 +1,17 @@
 'use client';
 
-import { SesionResponse, Canal } from '@/services/supabaseService';
+import { SesionResponse } from '@/services/supabaseService';
+// Tipos locales para canales (sin dependencias externas)
+type CanalTipo = 'whatsapp' | 'whatsappApi' | 'email' | 'instagram' | 'messenger' | 'telegram' | 'telegramBot' | 'webChat';
+
+interface Canal {
+  id: number;
+  tipo: CanalTipo;
+  descripcion: string;
+  usuario_id: number;
+  espacio_id: number;
+  creado_en?: string;
+}
 
 interface CanalOption {
   id: string;
@@ -12,13 +23,12 @@ interface CanalOption {
 
 const canalOptions: CanalOption[] = [
   { id: 'whatsapp', nombre: 'WhatsApp', icon: '📱', color: '#25D366', tipo: 'whatsapp' },
-
-  { id: 'whatsapp_api', nombre: 'Whatsapp API', icon: '📱', color: '#25D366', tipo: 'whatsapp_api' },
+  { id: 'whatsappApi', nombre: 'Whatsapp API', icon: '📱', color: '#25D366', tipo: 'whatsappApi' },
   { id: 'instagram', nombre: 'Instagram', icon: '📷', color: '#E4405F', tipo: 'instagram' },
   { id: 'messenger', nombre: 'Messenger', icon: '💬', color: '#0084FF', tipo: 'messenger' },
   { id: 'telegram', nombre: 'Telegram', icon: '✈️', color: '#0088CC', tipo: 'telegram' },
-  { id: 'telegram_bot', nombre: 'Telegram Bot', icon: '🤖', color: '#0088CC', tipo: 'telegram_bot' },
-  { id: 'web_chat', nombre: 'Web Chat', icon: '💬', color: '#F29A1F', tipo: 'web_chat' },
+  { id: 'telegramBot', nombre: 'Telegram Bot', icon: '🤖', color: '#0088CC', tipo: 'telegramBot' },
+  { id: 'webChat', nombre: 'Web Chat', icon: '💬', color: '#F29A1F', tipo: 'webChat' },
   { id: 'email', nombre: 'Email', icon: '✉️', color: '#EA4335', tipo: 'email' },
 ];
 
@@ -97,7 +107,7 @@ export default function SesionesList({
             <div>
               <p className="text-gray-400 text-sm">Sesiones Activas</p>
               <p className="text-white text-2xl font-bold">
-                {sesiones.filter(s => s.activa).length}
+                {sesiones.filter(s => s.estado === 'activo').length}
               </p>
             </div>
             <div className="text-2xl text-green-500">✅</div>
@@ -127,7 +137,7 @@ export default function SesionesList({
             key={sesion.id}
             className={`
               bg-[#1a1d23] rounded-lg p-4 transition-all duration-200 hover:bg-[#2a2d35]
-              ${sesion.activa ? 'border-l-4 border-[#F29A1F]' : 'border-l-4 border-gray-600'}
+              ${sesion.estado === 'activo' ? 'border-l-4 border-[#F29A1F]' : 'border-l-4 border-gray-600'}
             `}
           >
             <div className="flex items-center justify-between">

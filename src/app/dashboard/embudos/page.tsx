@@ -5,7 +5,17 @@ import { BarChart3 } from 'lucide-react';
 import { mensajesServices } from '@/services/mensajesServices';
 import { MensajeResponse } from '@/app/api/mensajes/domain/mensaje';
 import { EspacioConEmbudos } from '@/services/supabaseService';
-import { canalesServices, Canal } from '@/services/canalesServices';
+// Tipos locales para canales (sin dependencias externas)
+type CanalTipo = 'whatsapp' | 'whatsappApi' | 'email' | 'instagram' | 'messenger' | 'telegram' | 'telegramBot' | 'webChat';
+
+interface Canal {
+  id: number;
+  tipo: CanalTipo;
+  descripcion: string;
+  usuario_id: number;
+  espacio_id: number;
+  creado_en?: string;
+}
 import { embudoServices, EmbudoResponse } from '@/services/embudoServices';
 import { espacioTrabajoServices, EspacioTrabajoResponse } from '@/services/espacioTrabajoServices';
 import NuevoEmbudoModal from '@/app/dashboard/configuracion/components/NuevoEmbudoModal';
@@ -63,23 +73,20 @@ export default function EmbudosPage() {
     setError('');
     
     try {
-      // Cargar espacios, embudos, mensajes y canales en paralelo
-      const [espaciosResult, embudosResult, mensajesResult, canalesResult] = await Promise.all([
+      // Cargar espacios, embudos y mensajes en paralelo
+      const [espaciosResult, embudosResult, mensajesResult] = await Promise.all([
         espacioTrabajoServices.getAllEspaciosTrabajo(),
         embudoServices.getAllEmbudos(),
-        mensajesServices.getAllMensajes(),
-        canalesServices.getAllCanales()
+        mensajesServices.getAllMensajes()
       ]);
       
       if (espaciosResult.success && espaciosResult.data) {
         const espacios = espaciosResult.data;
         const embudos = embudosResult.success ? embudosResult.data || [] : [];
         const mensajesData = mensajesResult.success ? mensajesResult.data || [] : [];
-        const canalesData = canalesResult.success ? canalesResult.data || [] : [];
-        
-        // Guardar los mensajes y canales en el estado
+        // Guardar los mensajes en el estado
         setMensajes(mensajesData);
-        setCanales(canalesData);
+        setCanales([]); // Canales eliminados
         
         // Asociar embudos a sus espacios correspondientes y ordenarlos
         const espaciosConEmbudos: EspacioConEmbudos[] = espacios.map(espacio => ({

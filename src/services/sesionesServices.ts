@@ -90,11 +90,11 @@ class SesionesServices {
   }
 
   /**
-   * Obtiene las sesiones de un canal específico
+   * Obtiene las sesiones de un espacio de trabajo específico
    */
-  async getSesionesByCanal(canalId: number): Promise<ApiResponse<SesionResponse[]>> {
+  async getSesionesByEspacioTrabajo(espacioTrabajoId: number): Promise<ApiResponse<SesionResponse[]>> {
     try {
-      const response = await fetch(`${apiEndpoints.sesiones}?canal_id=eq.${canalId}`, {
+      const response = await fetch(`${apiEndpoints.sesiones}?espacio_de_trabajo_id=eq.${espacioTrabajoId}`, {
         method: 'GET',
         headers: this.getHeaders()
       });
@@ -103,11 +103,36 @@ class SesionesServices {
       return data;
 
     } catch (error) {
-      console.error('Error fetching sesiones by canal:', error);
+      console.error('Error fetching sesiones by espacio de trabajo:', error);
       
       return {
         success: false,
-        error: 'Error de conexión al obtener sesiones del canal',
+        error: 'Error de conexión al obtener sesiones del espacio de trabajo',
+        details: error instanceof Error ? error.message : 'Error desconocido',
+        data: []
+      };
+    }
+  }
+
+  /**
+   * Obtiene las sesiones por tipo
+   */
+  async getSesionesByType(type: string): Promise<ApiResponse<SesionResponse[]>> {
+    try {
+      const response = await fetch(`${apiEndpoints.sesiones}?type=eq.${type}`, {
+        method: 'GET',
+        headers: this.getHeaders()
+      });
+
+      const data = await this.handleResponse<ApiResponse<SesionResponse[]>>(response);
+      return data;
+
+    } catch (error) {
+      console.error('Error fetching sesiones by type:', error);
+      
+      return {
+        success: false,
+        error: 'Error de conexión al obtener sesiones por tipo',
         details: error instanceof Error ? error.message : 'Error desconocido',
         data: []
       };
@@ -212,6 +237,137 @@ class SesionesServices {
       return {
         success: false,
         error: 'Error de conexión al contar sesiones',
+        details: error instanceof Error ? error.message : 'Error desconocido'
+      };
+    }
+  }
+
+  /**
+   * Obtiene sesiones de Gmail por email
+   */
+  async getSesionesGmailByEmail(email: string): Promise<ApiResponse<SesionResponse[]>> {
+    try {
+      const response = await fetch(`${apiEndpoints.sesiones}?type=eq.gmail&email=eq.${email}`, {
+        method: 'GET',
+        headers: this.getHeaders()
+      });
+
+      const data = await this.handleResponse<ApiResponse<SesionResponse[]>>(response);
+      return data;
+
+    } catch (error) {
+      console.error('Error fetching Gmail sesiones by email:', error);
+      
+      return {
+        success: false,
+        error: 'Error de conexión al obtener sesiones de Gmail',
+        details: error instanceof Error ? error.message : 'Error desconocido',
+        data: []
+      };
+    }
+  }
+
+  /**
+   * Obtiene sesiones de Facebook por user_id
+   */
+  async getSesionesFacebookByUserId(facebookUserId: string): Promise<ApiResponse<SesionResponse[]>> {
+    try {
+      const response = await fetch(`${apiEndpoints.sesiones}?facebook_user_id=eq.${facebookUserId}`, {
+        method: 'GET',
+        headers: this.getHeaders()
+      });
+
+      const data = await this.handleResponse<ApiResponse<SesionResponse[]>>(response);
+      return data;
+
+    } catch (error) {
+      console.error('Error fetching Facebook sesiones by user_id:', error);
+      
+      return {
+        success: false,
+        error: 'Error de conexión al obtener sesiones de Facebook',
+        details: error instanceof Error ? error.message : 'Error desconocido',
+        data: []
+      };
+    }
+  }
+
+  /**
+   * Actualiza el estado de una sesión
+   */
+  async updateSesionEstado(id: number, estado: string): Promise<ApiResponse<SesionResponse>> {
+    try {
+      const response = await fetch(apiEndpoints.sesionesById(id), {
+        method: 'PATCH',
+        headers: this.getHeaders(),
+        body: JSON.stringify({ estado })
+      });
+
+      const result = await this.handleResponse<ApiResponse<SesionResponse>>(response);
+      return result;
+
+    } catch (error) {
+      console.error('Error updating sesion estado:', error);
+      
+      return {
+        success: false,
+        error: 'Error de conexión al actualizar estado de sesión',
+        details: error instanceof Error ? error.message : 'Error desconocido'
+      };
+    }
+  }
+
+  /**
+   * Actualiza tokens de Gmail
+   */
+  async updateGmailTokens(id: number, accessToken: string, refreshToken: string): Promise<ApiResponse<SesionResponse>> {
+    try {
+      const response = await fetch(apiEndpoints.sesionesById(id), {
+        method: 'PATCH',
+        headers: this.getHeaders(),
+        body: JSON.stringify({ 
+          gmail_access_token: accessToken,
+          gmail_refresh_token: refreshToken
+        })
+      });
+
+      const result = await this.handleResponse<ApiResponse<SesionResponse>>(response);
+      return result;
+
+    } catch (error) {
+      console.error('Error updating Gmail tokens:', error);
+      
+      return {
+        success: false,
+        error: 'Error de conexión al actualizar tokens de Gmail',
+        details: error instanceof Error ? error.message : 'Error desconocido'
+      };
+    }
+  }
+
+  /**
+   * Actualiza tokens de Facebook
+   */
+  async updateFacebookTokens(id: number, accessToken: string, userId: string): Promise<ApiResponse<SesionResponse>> {
+    try {
+      const response = await fetch(apiEndpoints.sesionesById(id), {
+        method: 'PATCH',
+        headers: this.getHeaders(),
+        body: JSON.stringify({ 
+          facebook_access_token: accessToken,
+          facebook_user_id: userId
+        })
+      });
+
+      const result = await this.handleResponse<ApiResponse<SesionResponse>>(response);
+      return result;
+
+    } catch (error) {
+      console.error('Error updating Facebook tokens:', error);
+      
+      return {
+        success: false,
+        error: 'Error de conexión al actualizar tokens de Facebook',
         details: error instanceof Error ? error.message : 'Error desconocido'
       };
     }

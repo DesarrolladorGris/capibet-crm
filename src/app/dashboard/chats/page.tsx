@@ -6,7 +6,17 @@ import { Smartphone, Camera, MessageCircle, Send, Bot, Mail, Facebook, Twitter, 
 import { isUserAuthenticated } from '@/utils/auth';
 import { mensajesServices } from '@/services/mensajesServices';
 import { MensajeResponse } from '@/app/api/mensajes/domain/mensaje';
-import { canalesServices, Canal } from '@/services/canalesServices';
+// Tipos locales para canales (sin dependencias externas)
+type CanalTipo = 'whatsapp' | 'whatsappApi' | 'email' | 'instagram' | 'messenger' | 'telegram' | 'telegramBot' | 'webChat';
+
+interface Canal {
+  id: number;
+  tipo: CanalTipo;
+  descripcion: string;
+  usuario_id: number;
+  espacio_id: number;
+  creado_en?: string;
+}
 import { espacioTrabajoServices } from '@/services/espacioTrabajoServices';
 import { EspacioTrabajoResponse } from '@/app/api/espacio_trabajos/domain/espacio_trabajo';
 import { contactoServices, ContactResponse } from '@/services/contactoServices';
@@ -79,10 +89,9 @@ export default function ChatsPage() {
       console.log('⚡ Cargando datos para chats...');
       
       // Cargar datos en paralelo
-      const [espaciosResult, mensajesResult, canalesResult, contactosResult] = await Promise.all([
+      const [espaciosResult, mensajesResult, contactosResult] = await Promise.all([
         espacioTrabajoServices.getAllEspaciosTrabajo(),
         mensajesServices.getAllMensajes(),
-        canalesServices.getAllCanales(),
         contactoServices.getAllContactos()
       ]);
       
@@ -94,9 +103,8 @@ export default function ChatsPage() {
         setMensajes(mensajesResult.data);
       }
       
-      if (canalesResult.success && canalesResult.data) {
-        setCanales(canalesResult.data);
-      }
+      // Canales eliminados - mantener lista vacía
+      setCanales([]);
       
       if (contactosResult.success && contactosResult.data) {
         setContactos(contactosResult.data);

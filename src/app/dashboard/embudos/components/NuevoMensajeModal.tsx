@@ -5,7 +5,17 @@ import { mensajesServices } from '@/services/mensajesServices';
 import { MensajeData } from '@/app/api/mensajes/domain/mensaje';
 import { sesionesServices } from '@/services/sesionesServices';
 import { SesionResponse } from '@/app/api/sesiones/domain/sesion';
-import { canalesServices, Canal } from '@/services/canalesServices';
+// Tipos locales para canales (sin dependencias externas)
+type CanalTipo = 'whatsapp' | 'whatsappApi' | 'email' | 'instagram' | 'messenger' | 'telegram' | 'telegramBot' | 'webChat';
+
+interface Canal {
+  id: number;
+  tipo: CanalTipo;
+  descripcion: string;
+  usuario_id: number;
+  espacio_id: number;
+  creado_en?: string;
+}
 import { embudoServices } from '@/services/embudoServices';
 import { EmbudoResponse } from '@/app/api/embudos/domain/embudo';
 import { contactoServices, ContactResponse } from '@/services/contactoServices';
@@ -53,19 +63,13 @@ export default function NuevoMensajeModal({
       setUserId(currentUserId);
 
       // Cargar datos en paralelo
-      const [canalesResult, contactosResult, embudosResult] = await Promise.all([
-        canalesServices.getAllCanales(),
+      const [contactosResult, embudosResult] = await Promise.all([
         contactoServices.getAllContactos(),
         espacioId ? embudoServices.getEmbudosByEspacio(espacioId) : embudoServices.getAllEmbudos()
       ]);
 
-      if (canalesResult.success && canalesResult.data) {
-        // Filtrar canales por espacio si está disponible
-        const canalesFiltrados = espacioId 
-          ? canalesResult.data.filter(canal => canal.espacio_id === espacioId)
-          : canalesResult.data;
-        setCanales(canalesFiltrados);
-      }
+      // Canales eliminados - mantener lista vacía
+      setCanales([]);
 
       if (contactosResult.success && contactosResult.data) {
         setContactos(contactosResult.data);

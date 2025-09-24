@@ -1,163 +1,134 @@
 # API de Mensajes
 
-Este módulo proporciona endpoints para el manejo de mensajes en el sistema CRM.
-
-## Estructura de Datos
-
-### MensajeData
-```typescript
-interface MensajeData {
-  id?: number;
-  canal_id: number;
-  remitente_id: number;
-  contenido: string;
-  contacto_id: number;
-  sesion_id: number;
-  destinatario_id: number;
-  embudo_id: number;
-  creado_en?: string;
-}
-```
-
-### MensajeResponse
-```typescript
-interface MensajeResponse {
-  id: number;
-  canal_id: number;
-  remitente_id: number;
-  contenido: string;
-  contacto_id: number;
-  sesion_id: number;
-  destinatario_id: number;
-  embudo_id: number;
-  creado_en: string;
-}
-```
+Este módulo maneja las operaciones CRUD para los mensajes del sistema de chat.
 
 ## Endpoints
 
 ### POST /api/mensajes
-Crear un nuevo mensaje.
+Crea un nuevo mensaje.
 
 **Body:**
 ```json
 {
-  "canal_id": 1,
-  "remitente_id": 2,
-  "contenido": "Hola, ¿cómo estás?",
-  "contacto_id": 3,
-  "sesion_id": 4,
-  "destinatario_id": 5,
-  "embudo_id": 6
-}
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "id": 1,
-    "canal_id": 1,
-    "remitente_id": 2,
-    "contenido": "Hola, ¿cómo estás?",
-    "contacto_id": 3,
-    "sesion_id": 4,
-    "destinatario_id": 5,
-    "embudo_id": 6,
-    "creado_en": "2024-01-01T00:00:00Z"
+  "remitente_id": 1,
+  "contacto_id": 2,
+  "chat_id": 3,
+  "type": "text",
+  "content": {
+    "text": "Hola, ¿cómo estás?"
   }
 }
 ```
 
 ### GET /api/mensajes
-Obtener todos los mensajes.
+Obtiene todos los mensajes con filtros opcionales.
 
-**Response:**
-```json
-{
-  "success": true,
-  "data": [
-    {
-      "id": 1,
-      "canal_id": 1,
-      "remitente_id": 2,
-      "contenido": "Hola, ¿cómo estás?",
-      "contacto_id": 3,
-      "sesion_id": 4,
-      "destinatario_id": 5,
-      "embudo_id": 6,
-      "creado_en": "2024-01-01T00:00:00Z"
-    }
-  ]
-}
+**Query Parameters:**
+- `chat_id`: Filtrar por chat específico
+- `contacto_id`: Filtrar por contacto específico
+- `remitente_id`: Filtrar por remitente específico
+- `type`: Filtrar por tipo de mensaje
+- `limit`: Límite de resultados
+- `offset`: Desplazamiento para paginación
+
+**Ejemplo:**
+```
+GET /api/mensajes?chat_id=1&limit=50&offset=0
 ```
 
 ### GET /api/mensajes/[id]
-Obtener un mensaje específico por ID.
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "id": 1,
-    "canal_id": 1,
-    "remitente_id": 2,
-    "contenido": "Hola, ¿cómo estás?",
-    "contacto_id": 3,
-    "sesion_id": 4,
-    "destinatario_id": 5,
-    "embudo_id": 6,
-    "creado_en": "2024-01-01T00:00:00Z"
-  }
-}
-```
+Obtiene un mensaje específico por ID.
 
 ### PATCH /api/mensajes/[id]
-Actualizar un mensaje existente.
+Actualiza un mensaje existente.
 
-**Body:**
+### DELETE /api/mensajes/[id]
+Elimina un mensaje.
+
+## Tipos de Mensaje
+
+- `text`: Mensaje de texto
+- `image`: Imagen
+- `video`: Video
+- `audio`: Audio
+- `document`: Documento
+- `location`: Ubicación
+- `contact`: Contacto
+- `sticker`: Sticker
+- `system`: Mensaje del sistema
+
+## Estructura del Content
+
+El campo `content` es un objeto JSON que varía según el tipo de mensaje:
+
+### Texto
 ```json
 {
-  "contenido": "Mensaje actualizado"
+  "text": "Contenido del mensaje"
 }
 ```
 
-**Response:**
+### Multimedia (image, video, audio, document)
 ```json
 {
-  "success": true,
-  "data": {
-    "id": 1,
-    "canal_id": 1,
-    "remitente_id": 2,
-    "contenido": "Mensaje actualizado",
-    "contacto_id": 3,
-    "sesion_id": 4,
-    "destinatario_id": 5,
-    "embudo_id": 6,
-    "creado_en": "2024-01-01T00:00:00Z"
+  "media_url": "https://ejemplo.com/archivo.jpg",
+  "media_type": "image/jpeg",
+  "file_name": "imagen.jpg",
+  "file_size": 1024000
+}
+```
+
+### Ubicación
+```json
+{
+  "location": {
+    "latitude": -34.6037,
+    "longitude": -58.3816,
+    "address": "Buenos Aires, Argentina"
   }
 }
 ```
 
-### DELETE /api/mensajes/[id]
-Eliminar un mensaje.
-
-**Response:**
+### Contacto
 ```json
 {
-  "success": true,
-  "data": undefined
+  "contact": {
+    "name": "Juan Pérez",
+    "phone": "+54911234567",
+    "email": "juan@ejemplo.com"
+  }
 }
 ```
+
+### Metadatos
+```json
+{
+  "metadata": {
+    "custom_field": "valor",
+    "priority": "high"
+  }
+}
+```
+
+## Servicios Disponibles
+
+El módulo incluye servicios especializados para diferentes tipos de mensajes:
+
+- `enviarMensajeTexto()`: Envía mensajes de texto
+- `enviarMensajeMultimedia()`: Envía archivos multimedia
+- `enviarMensajeUbicacion()`: Envía ubicaciones
+- `enviarMensajeContacto()`: Envía contactos
+- `getHistorialChat()`: Obtiene historial de chat con paginación
+- `getMensajesByChat()`: Obtiene mensajes de un chat específico
+- `getMensajesByContacto()`: Obtiene mensajes de un contacto específico
 
 ## Validaciones
 
-- Todos los campos son requeridos al crear un mensaje: `canal_id`, `remitente_id`, `contenido`, `contacto_id`, `sesion_id`, `destinatario_id`, `embudo_id`
+- Campos requeridos: `remitente_id`, `contacto_id`, `chat_id`, `type`, `content`
+- Para mensajes de tipo `text`: `content.text` es requerido
+- Para mensajes de tipo `location`: `content.location` es requerido
+- Para mensajes de tipo `contact`: `content.contact` es requerido
 - El campo `creado_en` se establece automáticamente si no se proporciona
-- El ID debe ser un número válido para operaciones de actualización y eliminación
 
 ## Manejo de Errores
 

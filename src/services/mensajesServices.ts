@@ -9,6 +9,16 @@ interface ApiResponse<T = any> {
   message?: string;
 }
 
+// Tipos para filtros de mensajes
+interface MensajeFilters {
+  chat_id?: number;
+  contacto_id?: number;
+  remitente_id?: number;
+  type?: string;
+  limit?: number;
+  offset?: number;
+}
+
 // Configuración de la API
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '';
 
@@ -48,13 +58,12 @@ class MensajesServices {
       console.log('Datos recibidos para crear mensaje:', mensajeData);
       
       const dataToSend = {
-        canal_id: mensajeData.canal_id,
         remitente_id: mensajeData.remitente_id,
-        contenido: mensajeData.contenido,
         contacto_id: mensajeData.contacto_id,
-        sesion_id: mensajeData.sesion_id,
-        destinatario_id: mensajeData.destinatario_id,
-        embudo_id: mensajeData.embudo_id
+        chat_id: mensajeData.chat_id,
+        type: mensajeData.type,
+        content: mensajeData.content,
+        creado_en: mensajeData.creado_en || new Date().toISOString()
       };
 
       console.log('Datos a enviar:', dataToSend);
@@ -80,34 +89,12 @@ class MensajesServices {
         };
       }
       
-      // Manejar respuesta vacía o JSON inválido
-      let responseData = null;
-      const contentType = response.headers.get('content-type');
-
-      if (contentType && contentType.includes('application/json')) {
-        try {
-          const responseText = await response.text();
-          console.log('Response text:', responseText);
-          
-          if (responseText.trim()) {
-            responseData = JSON.parse(responseText);
-          } else {
-            console.log('Respuesta vacía pero exitosa');
-            responseData = { success: true };
-          }
-        } catch (parseError) {
-          console.warn('Error al parsear JSON, pero respuesta exitosa:', parseError);
-          responseData = { success: true };
-        }
-      } else {
-        console.log('Respuesta no-JSON pero exitosa');
-        responseData = { success: true };
-      }
+      const data = await this.handleResponse<ApiResponse<MensajeResponse>>(response);
       
       // Log para debugging
-      console.log('Mensaje creado exitosamente:', responseData);
+      console.log('Mensaje creado exitosamente:', data);
       
-      return { success: true, data: responseData };
+      return data;
     } catch (error) {
       console.error('Error al crear mensaje:', error);
       return { 
@@ -119,11 +106,28 @@ class MensajesServices {
   }
 
   /**
-   * Obtiene todos los mensajes
+   * Obtiene todos los mensajes con filtros opcionales
    */
-  async getAllMensajes(): Promise<ApiResponse<MensajeResponse[]>> {
+  async getAllMensajes(filters?: MensajeFilters): Promise<ApiResponse<MensajeResponse[]>> {
     try {
-      const response = await fetch(apiEndpoints.mensajes, {
+      // Construir query string para filtros
+      let queryString = '';
+      const filterParams = [];
+      
+      if (filters) {
+        if (filters.chat_id) filterParams.push(`chat_id=${filters.chat_id}`);
+        if (filters.contacto_id) filterParams.push(`contacto_id=${filters.contacto_id}`);
+        if (filters.remitente_id) filterParams.push(`remitente_id=${filters.remitente_id}`);
+        if (filters.type) filterParams.push(`type=${filters.type}`);
+        if (filters.limit) filterParams.push(`limit=${filters.limit}`);
+        if (filters.offset) filterParams.push(`offset=${filters.offset}`);
+        
+        if (filterParams.length > 0) {
+          queryString = '?' + filterParams.join('&');
+        }
+      }
+
+      const response = await fetch(`${apiEndpoints.mensajes}${queryString}`, {
         method: 'GET',
         headers: this.getHeaders(),
       });
@@ -137,11 +141,11 @@ class MensajesServices {
         };
       }
       
-      const data = await response.json();
+      const data = await this.handleResponse<ApiResponse<MensajeResponse[]>>(response);
       
       console.log('📋 Mensajes obtenidos del API:', data);
       
-      return { success: true, data: Array.isArray(data) ? data : [] };
+      return data;
     } catch (error) {
       console.error('Error al obtener mensajes:', error);
       return { 
@@ -217,24 +221,97 @@ class MensajesServices {
   }
 
   /**
-   * Mueve un mensaje a otro embudo
+   * Obtiene mensajes por chat
    */
-  async moveMensajeToEmbudo(mensajeId: number, nuevoEmbudoId: number): Promise<ApiResponse<MensajeResponse>> {
+  async getMensajesByChat(chatId: number, limit?: number, offset?: number): Promise<ApiResponse<MensajeResponse[]>> {
     try {
-      console.log('Moviendo mensaje:', mensajeId, 'al embudo:', nuevoEmbudoId);
-
-      const result = await this.updateMensaje(mensajeId, { embudo_id: nuevoEmbudoId });
-      
-      if (result.success) {
-        console.log('Mensaje movido exitosamente');
-      }
-
-      return result;
+      return await this.getAllMensajes({
+        chat_id: chatId,
+        limit,
+        offset
+      });
     } catch (error) {
-      console.error('Error al mover mensaje:', error);
+      console.error('Error al obtener mensajes por chat:', error);
       return { 
         success: false, 
-        error: 'Error de conexión al mover mensaje',
+        error: 'Error de conexión al obtener mensajes por chat',
+        details: error instanceof Error ? error.message : 'Error desconocido'
+      };
+    }
+  }
+
+  /**
+   * Obtiene mensajes por contacto
+   */
+  async getMensajesByContacto(contactoId: number, limit?: number, offset?: number): Promise<ApiResponse<MensajeResponse[]>> {
+    try {
+      return await this.getAllMensajes({
+        contacto_id: contactoId,
+        limit,
+        offset
+      });
+    } catch (error) {
+      console.error('Error al obtener mensajes por contacto:', error);
+      return { 
+        success: false, 
+        error: 'Error de conexión al obtener mensajes por contacto',
+        details: error instanceof Error ? error.message : 'Error desconocido'
+      };
+    }
+  }
+
+  /**
+   * Obtiene mensajes por remitente
+   */
+  async getMensajesByRemitente(remitenteId: number, limit?: number, offset?: number): Promise<ApiResponse<MensajeResponse[]>> {
+    try {
+      return await this.getAllMensajes({
+        remitente_id: remitenteId,
+        limit,
+        offset
+      });
+    } catch (error) {
+      console.error('Error al obtener mensajes por remitente:', error);
+      return { 
+        success: false, 
+        error: 'Error de conexión al obtener mensajes por remitente',
+        details: error instanceof Error ? error.message : 'Error desconocido'
+      };
+    }
+  }
+
+  /**
+   * Obtiene mensajes por tipo
+   */
+  async getMensajesByType(type: string, limit?: number, offset?: number): Promise<ApiResponse<MensajeResponse[]>> {
+    try {
+      return await this.getAllMensajes({
+        type,
+        limit,
+        offset
+      });
+    } catch (error) {
+      console.error('Error al obtener mensajes por tipo:', error);
+      return { 
+        success: false, 
+        error: 'Error de conexión al obtener mensajes por tipo',
+        details: error instanceof Error ? error.message : 'Error desconocido'
+      };
+    }
+  }
+
+  /**
+   * Obtiene el historial de mensajes de un chat con paginación
+   */
+  async getHistorialChat(chatId: number, page: number = 1, pageSize: number = 50): Promise<ApiResponse<MensajeResponse[]>> {
+    try {
+      const offset = (page - 1) * pageSize;
+      return await this.getMensajesByChat(chatId, pageSize, offset);
+    } catch (error) {
+      console.error('Error al obtener historial de chat:', error);
+      return { 
+        success: false, 
+        error: 'Error de conexión al obtener historial de chat',
         details: error instanceof Error ? error.message : 'Error desconocido'
       };
     }
@@ -275,6 +352,253 @@ class MensajesServices {
         details: error instanceof Error ? error.message : 'Error desconocido'
       };
     }
+  }
+
+  /**
+   * Envía un mensaje de texto
+   */
+  async enviarMensajeTexto(
+    remitenteId: number, 
+    contactoId: number, 
+    chatId: number, 
+    texto: string,
+    tipoSesion: 'whatsapp_qr' | 'whatsapp_api' | 'messenger' | 'instagram' | 'telegram' | 'telegram_bot' | 'gmail' | 'outlook'
+  ): Promise<ApiResponse<MensajeResponse>> {
+    try {
+      const mensajeData: MensajeData = {
+        remitente_id: remitenteId,
+        contacto_id: contactoId,
+        chat_id: chatId,
+        type: tipoSesion,
+        content: {
+          text: texto,
+          message_type: 'text'
+        }
+      };
+
+      return await this.createMensaje(mensajeData);
+    } catch (error) {
+      console.error('Error al enviar mensaje de texto:', error);
+      return { 
+        success: false, 
+        error: 'Error al enviar mensaje de texto',
+        details: error instanceof Error ? error.message : 'Error desconocido'
+      };
+    }
+  }
+
+  /**
+   * Envía un mensaje con archivo multimedia
+   */
+  async enviarMensajeMultimedia(
+    remitenteId: number,
+    contactoId: number,
+    chatId: number,
+    tipoSesion: 'whatsapp_qr' | 'whatsapp_api' | 'messenger' | 'instagram' | 'telegram' | 'telegram_bot' | 'gmail' | 'outlook',
+    messageType: 'image' | 'video' | 'audio' | 'document',
+    mediaUrl: string,
+    fileName?: string,
+    fileSize?: number,
+    mediaType?: string
+  ): Promise<ApiResponse<MensajeResponse>> {
+    try {
+      const mensajeData: MensajeData = {
+        remitente_id: remitenteId,
+        contacto_id: contactoId,
+        chat_id: chatId,
+        type: tipoSesion,
+        content: {
+          message_type: messageType,
+          media_url: mediaUrl,
+          media_type: mediaType,
+          file_name: fileName,
+          file_size: fileSize
+        }
+      };
+
+      return await this.createMensaje(mensajeData);
+    } catch (error) {
+      console.error('Error al enviar mensaje multimedia:', error);
+      return { 
+        success: false, 
+        error: 'Error al enviar mensaje multimedia',
+        details: error instanceof Error ? error.message : 'Error desconocido'
+      };
+    }
+  }
+
+  /**
+   * Envía un mensaje de ubicación
+   */
+  async enviarMensajeUbicacion(
+    remitenteId: number,
+    contactoId: number,
+    chatId: number,
+    tipoSesion: 'whatsapp_qr' | 'whatsapp_api' | 'messenger' | 'instagram' | 'telegram' | 'telegram_bot' | 'gmail' | 'outlook',
+    latitude: number,
+    longitude: number,
+    address?: string
+  ): Promise<ApiResponse<MensajeResponse>> {
+    try {
+      const mensajeData: MensajeData = {
+        remitente_id: remitenteId,
+        contacto_id: contactoId,
+        chat_id: chatId,
+        type: tipoSesion,
+        content: {
+          message_type: 'location',
+          location: {
+            latitude,
+            longitude,
+            address
+          }
+        }
+      };
+
+      return await this.createMensaje(mensajeData);
+    } catch (error) {
+      console.error('Error al enviar mensaje de ubicación:', error);
+      return { 
+        success: false, 
+        error: 'Error al enviar mensaje de ubicación',
+        details: error instanceof Error ? error.message : 'Error desconocido'
+      };
+    }
+  }
+
+  /**
+   * Envía un mensaje de contacto
+   */
+  async enviarMensajeContacto(
+    remitenteId: number,
+    contactoId: number,
+    chatId: number,
+    tipoSesion: 'whatsapp_qr' | 'whatsapp_api' | 'messenger' | 'instagram' | 'telegram' | 'telegram_bot' | 'gmail' | 'outlook',
+    contactName: string,
+    contactPhone?: string,
+    contactEmail?: string
+  ): Promise<ApiResponse<MensajeResponse>> {
+    try {
+      const mensajeData: MensajeData = {
+        remitente_id: remitenteId,
+        contacto_id: contactoId,
+        chat_id: chatId,
+        type: tipoSesion,
+        content: {
+          message_type: 'contact',
+          contact: {
+            name: contactName,
+            phone: contactPhone,
+            email: contactEmail
+          }
+        }
+      };
+
+      return await this.createMensaje(mensajeData);
+    } catch (error) {
+      console.error('Error al enviar mensaje de contacto:', error);
+      return { 
+        success: false, 
+        error: 'Error al enviar mensaje de contacto',
+        details: error instanceof Error ? error.message : 'Error desconocido'
+      };
+    }
+  }
+
+  /**
+   * Envía un mensaje de texto por WhatsApp QR
+   */
+  async enviarMensajeWhatsAppQR(
+    remitenteId: number,
+    contactoId: number,
+    chatId: number,
+    texto: string
+  ): Promise<ApiResponse<MensajeResponse>> {
+    return this.enviarMensajeTexto(remitenteId, contactoId, chatId, texto, 'whatsapp_qr');
+  }
+
+  /**
+   * Envía un mensaje de texto por WhatsApp API
+   */
+  async enviarMensajeWhatsAppAPI(
+    remitenteId: number,
+    contactoId: number,
+    chatId: number,
+    texto: string
+  ): Promise<ApiResponse<MensajeResponse>> {
+    return this.enviarMensajeTexto(remitenteId, contactoId, chatId, texto, 'whatsapp_api');
+  }
+
+  /**
+   * Envía un mensaje de texto por Messenger
+   */
+  async enviarMensajeMessenger(
+    remitenteId: number,
+    contactoId: number,
+    chatId: number,
+    texto: string
+  ): Promise<ApiResponse<MensajeResponse>> {
+    return this.enviarMensajeTexto(remitenteId, contactoId, chatId, texto, 'messenger');
+  }
+
+  /**
+   * Envía un mensaje de texto por Instagram
+   */
+  async enviarMensajeInstagram(
+    remitenteId: number,
+    contactoId: number,
+    chatId: number,
+    texto: string
+  ): Promise<ApiResponse<MensajeResponse>> {
+    return this.enviarMensajeTexto(remitenteId, contactoId, chatId, texto, 'instagram');
+  }
+
+  /**
+   * Envía un mensaje de texto por Telegram
+   */
+  async enviarMensajeTelegram(
+    remitenteId: number,
+    contactoId: number,
+    chatId: number,
+    texto: string
+  ): Promise<ApiResponse<MensajeResponse>> {
+    return this.enviarMensajeTexto(remitenteId, contactoId, chatId, texto, 'telegram');
+  }
+
+  /**
+   * Envía un mensaje de texto por Telegram Bot
+   */
+  async enviarMensajeTelegramBot(
+    remitenteId: number,
+    contactoId: number,
+    chatId: number,
+    texto: string
+  ): Promise<ApiResponse<MensajeResponse>> {
+    return this.enviarMensajeTexto(remitenteId, contactoId, chatId, texto, 'telegram_bot');
+  }
+
+  /**
+   * Envía un mensaje de texto por Gmail
+   */
+  async enviarMensajeGmail(
+    remitenteId: number,
+    contactoId: number,
+    chatId: number,
+    texto: string
+  ): Promise<ApiResponse<MensajeResponse>> {
+    return this.enviarMensajeTexto(remitenteId, contactoId, chatId, texto, 'gmail');
+  }
+
+  /**
+   * Envía un mensaje de texto por Outlook
+   */
+  async enviarMensajeOutlook(
+    remitenteId: number,
+    contactoId: number,
+    chatId: number,
+    texto: string
+  ): Promise<ApiResponse<MensajeResponse>> {
+    return this.enviarMensajeTexto(remitenteId, contactoId, chatId, texto, 'outlook');
   }
 }
 
