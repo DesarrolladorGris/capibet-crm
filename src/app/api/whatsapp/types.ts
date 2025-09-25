@@ -102,7 +102,16 @@ export interface WhatsAppMediaInfo {
 export interface WhatsAppMessagePayload {
   session_id: string;
   sender_name: string;
-  sender_number: string;
+  sender_phone_number: string;
+  sender_account_type: string;
+  sender_jid: string;
+  sender_participant: string;
+  recipient_name: string;
+  recipient_phone_number: string;
+  recipient_whatsapp_id: string;
+  recipient_account_type: string;
+  recipient_session_id?: string | null;
+  chat_jid: string;
   message_content: string;
   message_type: WhatsAppMessageType;
   media_info: WhatsAppMediaInfo;

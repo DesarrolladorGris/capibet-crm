@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { Edit2 } from 'lucide-react';
 import { ContactData, ContactResponse, contactoServices } from '@/services/contactoServices';
 
 interface EditarContactoModalProps {
@@ -52,7 +53,7 @@ export default function EditarContactoModal({ isOpen, onClose, onContactUpdated,
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.nombre.trim() || !formData.telefono.trim() || !contact?.id) {
+    if (!contact?.id) {
       return;
     }
 
@@ -132,7 +133,6 @@ export default function EditarContactoModal({ isOpen, onClose, onContactUpdated,
                 onChange={handleInputChange}
                 placeholder="Nombre del contacto"
                 className="w-full pl-10 pr-4 py-3 bg-[#2a2d35] border border-[#3a3d45] rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#F29A1F] focus:border-[#F29A1F] text-sm"
-                required
               />
             </div>
 
@@ -167,7 +167,6 @@ export default function EditarContactoModal({ isOpen, onClose, onContactUpdated,
                 onChange={handleInputChange}
                 placeholder="Correo electrónico"
                 className="w-full pl-10 pr-4 py-3 bg-[#2a2d35] border border-[#3a3d45] rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#F29A1F] focus:border-[#F29A1F] text-sm"
-                required
               />
             </div>
 
@@ -185,7 +184,6 @@ export default function EditarContactoModal({ isOpen, onClose, onContactUpdated,
                 onChange={handleInputChange}
                 placeholder="Número de teléfono"
                 className="w-full pl-10 pr-4 py-3 bg-[#2a2d35] border border-[#3a3d45] rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#F29A1F] focus:border-[#F29A1F] text-sm"
-                required
               />
             </div>
 

@@ -20,6 +20,12 @@ interface ApiResponse<T = unknown> {
   message?: string;
 }
 
+// Tipo específico para la respuesta de eliminación de chat
+interface DeleteChatResponse {
+  message: string;
+  mensajesEliminados: number;
+}
+
 // Configuración de la API
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '';
 
@@ -199,16 +205,16 @@ class ChatServices {
   }
 
   /**
-   * Elimina un chat específico por ID
+   * Elimina un chat específico por ID (incluye eliminación en cascada de mensajes)
    */
-  async deleteChatById(id: number): Promise<ApiResponse> {
+  async deleteChatById(id: number): Promise<ApiResponse<DeleteChatResponse>> {
     try {
       const response = await fetch(apiEndpoints.chatsById(id), {
         method: 'DELETE',
         headers: this.getHeaders()
       });
 
-      const data = await this.handleResponse<ApiResponse>(response);
+      const data = await this.handleResponse<ApiResponse<DeleteChatResponse>>(response);
       return data;
 
     } catch (error) {

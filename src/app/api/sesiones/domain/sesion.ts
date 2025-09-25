@@ -13,7 +13,7 @@ export interface SesionData {
   email?: string;
   given_name?: string;
   picture?: string;
-  whatsapp_session?: string; // UUID para sesiones de WhatsApp
+  whatsapp_session?: number; // ID de la sesión de WhatsApp
 }
 
 export interface SesionResponse {
@@ -30,7 +30,7 @@ export interface SesionResponse {
   email?: string;
   given_name?: string;
   picture?: string;
-  whatsapp_session?: string; // UUID para sesiones de WhatsApp
+  whatsapp_session?: number; // ID de la sesión de WhatsApp
 }
 
 export interface ApiResponse<T = unknown> {

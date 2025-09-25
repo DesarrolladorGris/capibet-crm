@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseConfig } from '@/config/supabase';
-import { WhatsAppMessagePayload, WhatsAppApiResponse, ProcessedMessageData } from '../../types';
+import { WhatsAppMessagePayload } from '../../types';
 
 /**
  * Obtiene los headers para Supabase
@@ -31,10 +31,13 @@ async function handleResponse(response: Response) {
 /**
  * Busca o crea un contacto basado en el número de teléfono
  */
-async function findOrCreateContact(phoneNumber: string, senderName: string, userId: number): Promise<number | null> {
+async function findOrCreateContact(phoneNumber: string, contactName: string, userId: number): Promise<number | null> {
   try {
+    // Limpiar el número de teléfono (remover espacios, guiones, etc.)
+    const cleanPhoneNumber = phoneNumber.replace(/[\s-]/g, '');
+    
     // Buscar contacto existente por teléfono
-    const findContactResponse = await fetch(`${supabaseConfig.restUrl}/contactos?telefono=eq.${phoneNumber}`, {
+    const findContactResponse = await fetch(`${supabaseConfig.restUrl}/contactos?telefono=eq.${cleanPhoneNumber}`, {
       method: 'GET',
       headers: getHeaders()
     });
@@ -42,17 +45,56 @@ async function findOrCreateContact(phoneNumber: string, senderName: string, user
     if (findContactResponse.ok) {
       const contacts = await handleResponse(findContactResponse);
       if (Array.isArray(contacts) && contacts.length > 0) {
-        return contacts[0].id;
+        // Si encontramos el contacto, verificamos si necesita actualizar el nombre
+        const existingContact = contacts[0];
+        
+        // Solo actualizar si el nombre actual es genérico y tenemos un nombre mejor
+        const isGenericName = !existingContact.nombre || 
+                             existingContact.nombre.startsWith('Usuario ') ||
+                             existingContact.nombre === 'Destinatario' ||
+                             existingContact.nombre === 'Sin nombre';
+        
+        const hasValidName = contactName && 
+                           contactName !== 'Destinatario' && 
+                           contactName !== 'Sin nombre' &&
+                           contactName.trim() !== '';
+
+        if (isGenericName && hasValidName) {
+          // Actualizar el contacto con el nombre real
+          const updateContactResponse = await fetch(`${supabaseConfig.restUrl}/contactos?id=eq.${existingContact.id}`, {
+            method: 'PATCH',
+            headers: getHeaders(),
+            body: JSON.stringify({
+              nombre: contactName,
+              nombre_completo: contactName
+            })
+          });
+          
+          if (updateContactResponse.ok) {
+            console.log(`Contacto actualizado: ${existingContact.id} con nombre ${contactName}`);
+          }
+        }
+        
+        return existingContact.id;
       }
     }
 
-    // Si no existe, crear un nuevo contacto con el nombre real del sender
+    // Determinar el nombre a usar para el nuevo contacto
+    let finalName = contactName;
+    if (!finalName || finalName === 'Destinatario' || finalName === 'Sin nombre' || finalName.trim() === '') {
+      finalName = `Usuario ${cleanPhoneNumber}`;
+    }
+
+    // Si no existe, crear un nuevo contacto
     const newContactData = {
-      nombre: senderName || `Usuario ${phoneNumber}`,
-      telefono: phoneNumber,
-      creado_por: userId, // Usamos el usuario_id de la sesión
-      nombre_completo: senderName || `Usuario ${phoneNumber}`
+      nombre: finalName,
+      telefono: cleanPhoneNumber,
+      correo: null, // Campo requerido según el schema
+      creado_por: userId,
+      nombre_completo: finalName
     };
+
+    console.log('Creando nuevo contacto:', newContactData);
 
     const createContactResponse = await fetch(`${supabaseConfig.restUrl}/contactos`, {
       method: 'POST',
@@ -63,7 +105,11 @@ async function findOrCreateContact(phoneNumber: string, senderName: string, user
     if (createContactResponse.ok) {
       const newContact = await handleResponse(createContactResponse);
       const contact = Array.isArray(newContact) ? newContact[0] : newContact;
+      console.log(`Nuevo contacto creado: ${contact?.id} - ${finalName} (${cleanPhoneNumber})`);
       return contact?.id || null;
+    } else {
+      const errorText = await createContactResponse.text();
+      console.error('Error al crear contacto:', createContactResponse.status, errorText);
     }
 
     return null;
@@ -166,8 +212,25 @@ export async function POST(request: NextRequest) {
 
     const sesionData = (await handleResponse(sesion))[0];
 
-    // Buscar o crear contacto usando sender_number y sender_name
-    const contactId = await findOrCreateContact(body.sender_number, body.sender_name, sesionData.usuario_id);
+    // Determinar los datos del contacto según el flag fromMe
+    const isFromMe = body.raw_message.key.fromMe;
+    let contactPhone: string;
+    let contactName: string;
+
+    if (isFromMe) {
+      // Si el mensaje es fromMe: true, el contacto está en recipient_*
+      contactPhone = body.recipient_phone_number;
+      contactName = body.recipient_name;
+    } else {
+      // Si el mensaje es fromMe: false, el contacto está en sender_*
+      contactPhone = body.sender_phone_number;
+      contactName = body.sender_name;
+    }
+
+    console.log(`Procesando mensaje fromMe: ${isFromMe}`);
+    console.log(`Contacto: ${contactName} (${contactPhone})`);
+    
+    const contactId = await findOrCreateContact(contactPhone, contactName, sesionData.usuario_id);
     if (!contactId) {
       console.error('Error al procesar contacto');
       return NextResponse.json({
@@ -192,7 +255,9 @@ export async function POST(request: NextRequest) {
     const messageContent = {
       whatsapp_message_id: body.raw_message.key.id,
       sender_name: body.sender_name,
-      sender_number: body.sender_number,
+      sender_phone_number: body.sender_phone_number,
+      recipient_name: body.recipient_name,
+      recipient_phone_number: body.recipient_phone_number,
       message_content: body.message_content,
       message_type: body.message_type,
       media_info: body.media_info,
@@ -201,9 +266,9 @@ export async function POST(request: NextRequest) {
       phone_number_session: body.phone_number_session
     };
 
-    // Crear el mensaje
+    // Crear el mensaje - el remitente_id depende de quién envió el mensaje
     const newMessageData = {
-      remitente_id: sesionData.usuario_id,
+      remitente_id: isFromMe ? sesionData.usuario_id : null, // Si fromMe=true, lo envió el usuario; si false, lo envió el contacto (null)
       contacto_id: contactId,
       chat_id: chatId,
       type: 'whatsapp_api',
@@ -230,7 +295,11 @@ export async function POST(request: NextRequest) {
 
     const savedMessage = await handleResponse(createMessageResponse);
     
-    console.log(`[WhatsApp Message] Mensaje recibido de ${body.sender_name} (${body.sender_number}) en sesión ${body.session_id}`);
+    if (isFromMe) {
+      console.log(`[WhatsApp Message] Mensaje enviado por nosotros a ${body.recipient_name} (${body.recipient_phone_number}) en sesión ${body.session_id}`);
+    } else {
+      console.log(`[WhatsApp Message] Mensaje recibido de ${body.sender_name} (${body.sender_phone_number}) en sesión ${body.session_id}`);
+    }
     
     return NextResponse.json({
       success: true,

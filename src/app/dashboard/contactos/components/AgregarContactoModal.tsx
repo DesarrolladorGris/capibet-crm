@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { User } from 'lucide-react';
 import { ContactData } from '@/services/contactoServices';
 
 interface AgregarContactoModalProps {
@@ -34,10 +35,6 @@ export default function AgregarContactoModal({ isOpen, onClose, onSave, userId }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!formData.nombre.trim() || !formData.telefono.trim()) {
-      return;
-    }
 
     setLoading(true);
     try {
@@ -107,7 +104,6 @@ export default function AgregarContactoModal({ isOpen, onClose, onSave, userId }
                 onChange={handleInputChange}
                 placeholder="Nombre del contacto"
                 className="w-full pl-10 pr-4 py-3 bg-[#2a2d35] border border-[#3a3d45] rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#F29A1F] focus:border-[#F29A1F] text-sm"
-                required
               />
             </div>
 
@@ -144,7 +140,6 @@ export default function AgregarContactoModal({ isOpen, onClose, onSave, userId }
                 onChange={handleInputChange}
                 placeholder="Correo electrónico"
                 className="w-full pl-10 pr-4 py-3 bg-[#2a2d35] border border-[#3a3d45] rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#F29A1F] focus:border-[#F29A1F] text-sm"
-                required
               />
             </div>
 
@@ -162,7 +157,6 @@ export default function AgregarContactoModal({ isOpen, onClose, onSave, userId }
                 onChange={handleInputChange}
                 placeholder="Número de teléfono"
                 className="w-full pl-10 pr-4 py-3 bg-[#2a2d35] border border-[#3a3d45] rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#F29A1F] focus:border-[#F29A1F] text-sm"
-                required
               />
             </div>
 

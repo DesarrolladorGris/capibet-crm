@@ -16,6 +16,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '';
 const apiEndpoints = {
   sesiones: `${API_BASE_URL}/api/sesiones`,
   sesionesById: (id: number) => `${API_BASE_URL}/api/sesiones/${id}`,
+  whatsappSessions: `${API_BASE_URL}/api/whatsapp_sessions`,
 };
 
 class SesionesServices {
@@ -269,10 +270,38 @@ class SesionesServices {
 
   /**
    * Obtiene sesiones de WhatsApp por session UUID
+   * Primero busca en whatsapp_sessions por session_id, luego busca en sesiones por el id de whatsapp_session
    */
   async getSesionesWhatsAppBySession(whatsappSession: string): Promise<ApiResponse<SesionResponse[]>> {
     try {
-      const response = await fetch(`${apiEndpoints.sesiones}?whatsapp_session=eq.${whatsappSession}`, {
+      // Primero buscar la whatsapp_session por session_id para obtener su ID
+      const whatsappResponse = await fetch(`${apiEndpoints.whatsappSessions}?session_id=eq.${whatsappSession}`, {
+        method: 'GET',
+        headers: this.getHeaders()
+      });
+
+      if (!whatsappResponse.ok) {
+        return {
+          success: false,
+          error: 'Error al buscar sesión de WhatsApp',
+          data: []
+        };
+      }
+
+      const whatsappData = await this.handleResponse<ApiResponse<{ id: number; session_id: string }[]>>(whatsappResponse);
+      
+      if (!whatsappData.success || !whatsappData.data || whatsappData.data.length === 0) {
+        return {
+          success: false,
+          error: 'Sesión de WhatsApp no encontrada',
+          data: []
+        };
+      }
+
+      const whatsappSessionId = whatsappData.data[0].id;
+      
+      // Ahora buscar en sesiones usando el ID de la whatsapp_session
+      const response = await fetch(`${apiEndpoints.sesiones}?whatsapp_session=eq.${whatsappSessionId}`, {
         method: 'GET',
         headers: this.getHeaders()
       });
