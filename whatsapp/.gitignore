@@ -6,7 +6,7 @@ yarn-error.log*
 pnpm-debug.log*
 
 # Credenciales de WhatsApp (IMPORTANTE: NO SUBIR AL REPOSITORIO)
-auth_info_baileys/
+auth_sessions/
 
 # Archivos descargados de WhatsApp
 downloads/
