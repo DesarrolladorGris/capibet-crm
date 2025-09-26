@@ -1,19 +1,31 @@
 'use client';
 
-import { X, Paperclip, Filter } from 'lucide-react';
+import { X, Paperclip, Filter, Plus, Smile, RefreshCw, Trash2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import { supabaseService } from '@/services/supabaseService';
+import { chatInternoServices } from '@/services/chatInternoServices';
 import { userServices } from '@/services/userServices';
+
+// Lista de iconos para mensajes
+const EMOJI_LIST = [
+  '😀', '😃', '😄', '😁', '😂', '🤣', '😍', '😊', '😌', '😚',
+  '😘', '😋', '😉', '😎', '🤔', '🤗', '😏', '😒', '😜', '🤯',
+  '👍', '👎', '👌', '✌️', '🤞', '🤟', '❤️', '💙', '💚', '💛',
+  '💜', '🧡', '❤️', '💕', '💞', '💓', '💗', '💖', '✨', '🌟',
+  '🔥', '⚡', '💯', '🎉', '🎊', '🎈', '🎁', '✅', '❌', '⚠️',
+  '🚀', '💡', '🎯', '🏆', '💰', '💸', '💎', '🎪', '🎭', '🎨'
+];
 
 interface ChatInternoConversation {
   id: number;
   created_at: string;
-  cliente_id: number;
-  operador_id: number | null;
+  emisor_id: number;
+  receptor_id: number;
   estado: string;
-  cliente_nombre?: string;
-  cliente_email?: string;
-  operador_nombre?: string;
+  tema: string;
+  emisor_nombre?: string;
+  receptor_nombre?: string;
+  emisor_email?: string;
+  receptor_email?: string;
   unread_count?: number;
   total_messages?: number;
 }
@@ -23,7 +35,7 @@ interface MensajeInterno {
   chat_interno_id: number;
   mensaje: string;
   leido: boolean;
-  emisor: 'cliente' | 'operador';
+  emisor: 'emisor' | 'receptor';
   created_at: string;
 }
 
@@ -37,14 +49,51 @@ const ChatInternoPage = () => {
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
   const [showCloseModal, setShowCloseModal] = useState(false);
   const [showFilterModal, setShowFilterModal] = useState(false);
+  const [showNewChatModal, setShowNewChatModal] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
+  const [chatToDelete, setChatToDelete] = useState<{id: number, tema: string} | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>('TODOS');
+  
+  // Estados para nuevo chat
+  const [newChatTema, setNewChatTema] = useState('');
+  const [newChatReceptor, setNewChatReceptor] = useState<number | null>(null);
+  const [usuarios, setUsuarios] = useState<any[]>([]);
+  
+  // Estados para iconos en mensajes
+  const [selectedEmoji, setSelectedEmoji] = useState('');
+  
+  // Estados para polling de mensajes nuevas
+  const [lastMessageCount, setLastMessageCount] = useState(0);
+  const [isPollingEnabled, setIsPollingEnabled] = useState(true);
+  
+  // Estado para recarga manual
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Función para filtrar conversaciones por estado
   const getFilteredConversations = () => {
     if (statusFilter === 'TODOS') {
       return conversations;
     }
-    return conversations.filter(conv => conv.estado === statusFilter);
+    
+    // Aplicar filtro con normalización para asegurar que funciona independientemente 
+    // del formato que se use en la base de datos (EN_CURSO vs EN CURSO, etc.)
+    const filtered = conversations.filter(conv => {
+      const normalizedConvEstado = conv.estado?.toUpperCase().replace(/\s+/g, '_');
+      const normalizedFilter = statusFilter.toUpperCase().replace(/\s+/g, '_');
+      
+      return normalizedConvEstado === normalizedFilter || conv.estado === statusFilter;
+    });
+    
+    console.log('Filtrando conversaciones:', {
+      statusFilter,
+      totalConversations: conversations.length,
+      filteredConversations: filtered.length,
+      filterApplied: filtered,
+      allStates: conversations.map(c => ({ id: c.id, estado: c.estado }))
+    });
+    
+    return filtered;
   };
 
   // Cargar conversaciones al montar el componente
@@ -56,6 +105,9 @@ const ChatInternoPage = () => {
     if (userId) {
       setCurrentUserId(parseInt(userId));
     }
+    
+    // Cargar usuarios para el formulario de nuevo chat
+    loadUsuarios();
   }, []);
 
   // Cargar mensajes cuando se selecciona una conversación
@@ -65,53 +117,139 @@ const ChatInternoPage = () => {
     }
   }, [selectedConversation]);
 
+  // Cerrar emoji picker cuando se presiona Escape
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && showEmojiPicker) {
+        setShowEmojiPicker(false);
+      }
+    };
+
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [showEmojiPicker]);
+
+  // Cerrar emoji picker cuando se hace click fuera de él
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (showEmojiPicker) {
+        const target = event.target as Element;
+        const isInsidePicker = target.closest('.emoji-picker-container');
+        if (!isInsidePicker) {
+          setShowEmojiPicker(false);
+        }
+      }
+    };
+
+    if (showEmojiPicker) {
+      document.addEventListener('click', handleClickOutside);
+      return () => document.removeEventListener('click', handleClickOutside);
+    }
+  }, [showEmojiPicker]);
+
+  // Polling automático para verificar mensajes nuevos cada 7 segundos
+  useEffect(() => {
+    if (!isPollingEnabled || !selectedConversation) {
+      return;
+    }
+
+    console.log('🔄 Iniciando polling de mensajes cada 7 segundos');
+
+    const interval = setInterval(() => {
+      if (isPollingEnabled && selectedConversation) {
+        checkNewMessages();
+      }
+    }, 7000);
+
+    // Cleanup al cambiar de conversación o desmontar componente
+    return () => {
+      console.log('🛑 Limpiando polling de mensajes');
+      clearInterval(interval);
+    };
+  }, [isPollingEnabled, selectedConversation, lastMessageCount]);
+
+  // Deshabilitar polling cuando la ventana no está enfocada o página no visibles
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        setIsPollingEnabled(false);
+        console.log('🛑 Página no visible - polling deshabilitado');
+      } else {
+        setIsPollingEnabled(true);
+        console.log('🔄 Página visible - polling habilitado');
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', () => setIsPollingEnabled(true));
+    window.addEventListener('blur', () => setIsPollingEnabled(false));
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', () => setIsPollingEnabled(true));
+      window.removeEventListener('blur', () => setIsPollingEnabled(false));
+    };
+  }, []);
+
   const loadConversations = async () => {
     setLoading(true);
     try {
-      const result = await supabaseService.getAllChatInternoConversations();
-      if (result.success) {
-        // Enriquecer con datos del cliente y operador
-        const usuariosResult = await userServices.getAllUsuarios();
-        const usuarios = usuariosResult.success ? usuariosResult.data : [];
-        
-        // Obtener conteo de mensajes no leídos
-        const unreadCountsResult = await supabaseService.getUnreadMessagesCounts();
-        const unreadCounts = unreadCountsResult.success ? unreadCountsResult.data : {};
-        
-        // Obtener conteo total de mensajes
-        const totalCountsResult = await supabaseService.getTotalMessagesCounts();
-        const totalCounts = totalCountsResult.success ? totalCountsResult.data : {};
-        
-        const enrichedConversations = result.data.map((conv: {cliente_id: number, operador_id?: number}) => {
-          // Obtener datos del cliente
-          const cliente = usuarios.find((user: {id: number}) => user.id === conv.cliente_id);
+        // Usar el nuevo chatInternoServices para obtener conversaciones
+        const result = await chatInternoServices.getAllChatInterno();
+        if (result.success && result.data) {
+          // Enriquecer con datos de los usuarios (emisor y receptor)
+          const usuariosResult = await userServices.getAllUsuarios();
+          const usuarios = usuariosResult.success && usuariosResult.data ? usuariosResult.data : [];
           
-          // Obtener datos del operador (si está asignado)
-          const operador = conv.operador_id ? usuarios.find((user: {id: number}) => user.id === conv.operador_id) : null;
+          const enrichedConversations: ChatInternoConversation[] = result.data.map((conv) => ({
+            id: conv.id,
+            created_at: conv.created_at || new Date().toISOString(),
+            emisor_id: conv.emisor_id,
+            receptor_id: conv.receptor_id,
+            estado: conv.estado,
+            tema: conv.tema,
+            // Buscar datos del emisor y receptor
+            emisor_nombre: usuarios.find((user: {id: number}) => user.id === conv.emisor_id)?.nombre_usuario || `Usuario ${conv.emisor_id}`,
+            receptor_nombre: usuarios.find((user: {id: number}) => user.id === conv.receptor_id)?.nombre_usuario || `Usuario ${conv.receptor_id}`,
+            emisor_email: usuarios.find((user: {id: number}) => user.id === conv.emisor_id)?.correo_electronico || '',
+            receptor_email: usuarios.find((user: {id: number}) => user.id === conv.receptor_id)?.correo_electronico || '',
+            unread_count: 0,
+            total_messages: 0  // Se actualizará más abajo
+          }));
           
-          return {
-            ...conv,
-            cliente_nombre: cliente?.nombre_usuario || `Cliente ${conv.cliente_id}`,
-            cliente_email: cliente?.correo_electronico || '',
-            operador_nombre: operador?.nombre_usuario || null,
-            unread_count: unreadCounts[conv.id] || 0,
-            total_messages: totalCounts[conv.id] || 0
-          };
-        });
-        
-        setConversations(enrichedConversations);
-        
-        // Debug: Verificar estados de las conversaciones
-        console.log('🔍 Estados de conversaciones cargadas:', enrichedConversations.map(conv => ({
-          id: conv.id,
-          cliente: conv.cliente_nombre,
-          estado: conv.estado
-        })));
-        
-        // Seleccionar la primera conversación si existe
-        if (enrichedConversations.length > 0) {
-          setSelectedConversation(enrichedConversations[0]);
-        }
+          // Actualizar conversaciones inmediatamente con datos básicos
+          setConversations(enrichedConversations);
+          
+          // Cargar conteo de mensajes para cada conversación en paralelo
+          Promise.all(
+            enrichedConversations.map(async (conversation) => {
+              const messageCount = await loadMessageCountForConversation(conversation.id);
+              return {
+                ...conversation,
+                total_messages: messageCount
+              };
+            })
+          ).then((conversationsWithCounts) => {
+            console.log('📊 Conteos de mensajes actualizados:', conversationsWithCounts.map(c => ({
+              tema: c.tema,
+              total_messages: c.total_messages
+            })));
+            setConversations(conversationsWithCounts);
+          });
+          
+          // Debug: Verificar estados de las conversaciones
+          console.log('🔍 Conversaciones de chat interno cargadas:', enrichedConversations.map(conv => ({
+            id: conv.id,
+            tema: conv.tema,
+            emisor: conv.emisor_nombre,
+            receptor: conv.receptor_nombre,
+            estado: conv.estado
+          })));
+          
+          // Seleccionar la primera conversación si existe
+          if (enrichedConversations.length > 0) {
+            setSelectedConversation(enrichedConversations[0]);
+          }
       } else {
         console.error('Error al cargar conversaciones:', result.error);
       }
@@ -125,100 +263,322 @@ const ChatInternoPage = () => {
   const loadMessages = async (chatInternoId: number) => {
     setLoadingMessages(true);
     try {
-      const result = await supabaseService.getMensajesInternosByConversation(chatInternoId);
-      if (result.success) {
-        setMessages(result.data);
+      const result = await chatInternoServices.getMensajesByChat(chatInternoId);
+      if (result.success && result.data) {
+        // Mapear a la estructura esperada usando emisor_id/receptor_id en lugar del campo emisor string
+        const mensajes: MensajeInterno[] = result.data.map(msg => {
+          // Determinar si el mensaje fue enviado por el usuario actual usando emisor_id
+          const isCurrentUserSender = msg.emisor_id === currentUserId;
+          
+          return {
+            id: msg.id,
+            chat_interno_id: msg.chat_interno_id,
+            mensaje: msg.mensaje,
+            leido: msg.leido,
+            emisor: isCurrentUserSender ? 'emisor' : 'receptor', // Usuario actual es 'emisor', otro usuario es 'receptor'
+            created_at: msg.created_at || new Date().toISOString()
+          };
+        });
+        setMessages(mensajes);
+        setLastMessageCount(result.data.length);
       } else {
         console.error('Error al cargar mensajes:', result.error);
         setMessages([]);
+        setLastMessageCount(0);
       }
     } catch (error) {
       console.error('Error al cargar mensajes:', error);
       setMessages([]);
+      setLastMessageCount(0);
     } finally {
       setLoadingMessages(false);
+    }
+  };
+
+  const loadUsuarios = async () => {
+    try {
+      const result = await userServices.getAllUsuarios();
+      if (result.success && result.data) {
+        setUsuarios(result.data);
+      }
+    } catch (error) {
+      console.error('Error al cargar usuarios:', error);
+    }
+  };
+
+  // Función para seleccionar un emoji
+  const handleEmojiSelect = (emoji: string) => {
+    setSelectedEmoji(emoji);
+    setShowEmojiPicker(false);
+  };
+
+  // Función para cargar mensajes por conversación para obtener el conteo total
+  const loadMessageCountForConversation = async (convId: number): Promise<number> => {
+    try {
+      const result = await chatInternoServices.getMensajesByChat(convId);
+      if (result.success && result.data) {
+        return result.data.length;
+      }
+      return 0;
+    } catch (error) {
+      console.error('Error al cargar conteo de mensajes:', error);
+      return 0;
+    }
+  };
+
+  // Función para recarga manual de conversaciones
+  const handleManualRefresh = async () => {
+    if (isRefreshing) return;
+
+    setIsRefreshing(true);
+    try {
+      console.log('🔄 Recarga manual iniciada...');
+      await loadConversations();
+      console.log('✅ Recarga manual completada');
+    } catch (error) {
+      console.error('❌ Error en recarga manual:', error);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+  // Función para verificar mensajes nuevos con polling
+  const checkNewMessages = async () => {
+    if (!isPollingEnabled || !selectedConversation) {
+      return;
+    }
+
+    try {
+      console.log('🔄 Verificando mensajes nuevos...');
+      const result = await chatInternoServices.getMensajesByChat(selectedConversation.id);
+      
+      if (result.success && result.data && result.data.length > lastMessageCount) {
+        console.log(`📧 Nuevos mensajes detectados: ${result.data.length - lastMessageCount} mensajes`);
+        
+        // Actualizar mensajes
+        const mensajes: MensajeInterno[] = result.data.map(msg => {
+          const isCurrentUserSender = msg.emisor_id === currentUserId;
+          
+          return {
+            id: msg.id,
+            chat_interno_id: msg.chat_interno_id,
+            mensaje: msg.mensaje,
+            leido: msg.leido,
+            emisor: isCurrentUserSender ? 'emisor' : 'receptor',
+            created_at: msg.created_at || new Date().toISOString()
+          };
+        });
+        
+        setMessages(mensajes);
+        setLastMessageCount(result.data.length);
+        
+        // Actualizar también el total de mensajes en la lista de conversaciones
+        if (result.data) {
+          setConversations(prevConversations =>
+            prevConversations.map(conv =>
+              conv.id === selectedConversation.id
+                ? { ...conv, total_messages: result.data?.length || 0 }
+                : conv
+            )
+          );
+        }
+      }
+    } catch (error) {
+      console.error('❌ Error verificando mensajes nuevos:', error);
+    }
+  };
+
+  // Función para verificar si un chat es eliminable (PENDIENTE y sin mensajes)
+  const isChatEliminable = (conversation: any) => {
+    return conversation.estado === 'PENDIENTE' && (conversation.total_messages === 0 || !conversation.total_messages);
+  };
+
+  // Función para iniciar eliminación de chat interno (abre modal)
+  const handleDeleteChat = (conversationId: number, conversationTema: string) => {
+    setChatToDelete({ id: conversationId, tema: conversationTema });
+    setShowDeleteConfirmModal(true);
+  };
+
+  // Función para confirmar eliminación de chat interno
+  const confirmDeleteChat = async () => {
+    if (!chatToDelete) return;
+
+    try {
+      console.log(`🗑️ Eliminando chat: ${chatToDelete.id}`);
+      const result = await chatInternoServices.deleteChatInterno(chatToDelete.id);
+      
+      if (result.success) {
+        console.log('✅ Chat eliminado exitosamente');
+        // Recargar la lista de conversaciones
+        await loadConversations();
+        // Si el chat eliminado era el seleccionado, limpiar la selección
+        if (selectedConversation && selectedConversation.id === chatToDelete.id) {
+          setSelectedConversation(null);
+          setMessages([]);
+        }
+      } else {
+        console.error('❌ Error al eliminar chat:', result.error);
+        alert(`Error al eliminar chat: ${result.error}`);
+      }
+    } catch (error) {
+      console.error('❌ Error eliminando chat:', error);
+      alert('Error al eliminar chat. Inténtalo de nuevo.');
+    } finally {
+      // Cerrar el modal
+      setShowDeleteConfirmModal(false);
+      setChatToDelete(null);
+    }
+  };
+
+  // Función para cancelar eliminación
+  const cancelDeleteChat = () => {
+    setShowDeleteConfirmModal(false);
+    setChatToDelete(null);
+  };
+
+  const handleNewChat = async () => {
+    if (!newChatTema.trim() || !newChatReceptor || !currentUserId) {
+      alert('Por favor completa todos los campos');
+      return;
+    }
+
+    try {
+      console.log('🚀 Creando nueva conversación...');
+      
+      const result = await chatInternoServices.createChatInterno({
+        emisor_id: currentUserId,
+        receptor_id: newChatReceptor,
+        tema: newChatTema.trim(),
+        estado: 'PENDIENTE'
+      });
+
+      if (result.success) {
+        console.log('✅ Nueva conversación creada exitosamente');
+        
+        // Limpiar formulario
+        setNewChatTema('');
+        setNewChatReceptor(null);
+        setShowNewChatModal(false);
+        
+        // Recargar conversaciones
+        await loadConversations();
+      } else {
+        console.error('❌ Error al crear conversación:', result.error);
+        alert('Error al crear la conversación. Por favor intenta nuevamente.');
+      }
+    } catch (error) {
+      console.error('❌ Error al crear conversación:', error);
+      alert('Error inesperado al crear la conversación');
     }
   };
 
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !selectedConversation || !currentUserId) return;
 
+    const mensajeToSend = newMessage.trim();
+    const finalMessage = selectedEmoji ? `${selectedEmoji} ${mensajeToSend}` : mensajeToSend;
+    
+    // Desactivar polling temporalmente mientras se envía mensaje
+    setIsPollingEnabled(false);
+    
+    setNewMessage(''); // Limpiamos inmediatamente para mejor UX
+    setSelectedEmoji(''); // Limpiamos el emoji seleccionado
+
+    // Actualizar mensajes de forma optimista (agregamos el mensaje inmediatamente)
+    const newMensajeFromUser: MensajeInterno = {
+      id: Date.now(), // ID temporal mientras se carga el real
+      chat_interno_id: selectedConversation.id,
+      mensaje: finalMessage,
+      leido: false,
+      emisor: 'emisor', // Usuario actual es siempre 'emisor' cuando envía
+      created_at: new Date().toISOString()
+    };
+
+    // Agregar mensaje inmediatamente a la UI para mostrar el mensaje rápidamente
+    setMessages(prev => [...prev, newMensajeFromUser]);
+
     try {
-      // Paso 1: Crear el mensaje
-      const messageResult = await supabaseService.createMensajeInterno(
-        selectedConversation.id,
-        newMessage.trim(),
-        'operador'
-      );
+      // Determinar si el usuario actual es emisor o receptor del chat
+      const isEmisor = selectedConversation.emisor_id === currentUserId;
+
+      console.log(`💬 Enviando mensaje...`);
+
+      // Paso 1: Crear el mensaje con la nueva estructura
+      const messageResult = await chatInternoServices.createMensajeInterno({
+        chat_interno_id: selectedConversation.id,
+        mensaje: finalMessage,
+        emisor_id: currentUserId,
+        receptor_id: isEmisor ? selectedConversation.receptor_id : selectedConversation.emisor_id
+      });
 
       if (messageResult.success) {
-        // Paso 2: Actualizar la conversación con el operador_id
-        console.log('🚀 Asignando operador a la conversación:', {
-          chatInternoId: selectedConversation.id,
-          operadorId: currentUserId
-        });
+        console.log('✅ Mensaje creado exitosamente');
         
-        const updateResult = await supabaseService.updateChatInternoConversation(
-          selectedConversation.id,
-          currentUserId
-        );
-
-        if (updateResult.success) {
-          console.log('✅ Operador asignado exitosamente a la conversación');
+        // Paso 2: Actualizar el estado de la conversación a EN_CURSO si está PENDIENTE
+        if (selectedConversation.estado === 'PENDIENTE') {
+          console.log('🚀 Actualizando estado a EN_CURSO...');
           
-          // Obtener el nombre del operador actual
-          const currentUserName = localStorage.getItem('userName') || 'Operador';
-          
-          // Actualizar el estado local de la conversación
-          setSelectedConversation(prev => prev ? {
-            ...prev,
-            operador_id: currentUserId,
-            operador_nombre: currentUserName,
-            estado: 'EN CURSO'
-          } : null);
+          const updateResult = await chatInternoServices.updateChatInternoById(
+            selectedConversation.id,
+            { estado: 'EN_CURSO' }
+          );
 
-          // Actualizar también en la lista de conversaciones
-          setConversations(prev => prev.map(conv => 
-            conv.id === selectedConversation.id 
-              ? { ...conv, operador_id: currentUserId, operador_nombre: currentUserName, estado: 'EN CURSO' }
-              : conv
-          ));
-        } else {
-          console.error('❌ Error al asignar operador:', updateResult.error);
+          if (updateResult.success) {
+            console.log('✅ Estado actualizado a EN_CURSO');
+            
+            // Actualizar el estado local de la conversación
+            setSelectedConversation(prev => prev ? {
+              ...prev,
+              estado: 'EN_CURSO'
+            } : null);
+          } else {
+            console.error('❌ Error al actualizar estado:', updateResult.error);
+          }
         }
 
-        // Paso 3: Marcar mensajes del cliente como leídos
-        console.log('🚀 Marcando mensajes del cliente como leídos...');
-        const readResult = await supabaseService.markMensajesInternosAsRead(selectedConversation.id);
+        // Paso 3: Marcar mensajes pendientes como leídos
+        console.log('🚀 Marcando mensajes como leídos...');
+        const readResult = await chatInternoServices.marcarMensajesComoLeidos(selectedConversation.id);
         
         if (readResult.success) {
           console.log('✅ Mensajes marcados como leídos exitosamente');
-          
-          // Actualizar el conteo de no leídos en la conversación seleccionada
-          setSelectedConversation(prev => prev ? {
-            ...prev,
-            unread_count: 0,
-            total_messages: (prev.total_messages || 0) + 1
-          } : null);
-
-          // Actualizar también en la lista de conversaciones
-          setConversations(prev => prev.map(conv => 
-            conv.id === selectedConversation.id 
-              ? { ...conv, unread_count: 0, total_messages: (conv.total_messages || 0) + 1 }
-              : conv
-          ));
         } else {
           console.error('❌ Error al marcar mensajes como leídos:', readResult.error);
         }
 
-        setNewMessage('');
-        // Recargar mensajes para reflejar el estado de leído
-        loadMessages(selectedConversation.id);
+        // Recargar mensajes en segundo plano para obtener datos correctos desde el servidor
+        // y reemplazar el mensaje temporal con el del servidor
+        setTimeout(async () => {
+          await loadMessages(selectedConversation.id);
+          // En efecto recargar el conteo de mensajes para la conversación actual
+          // pero también obtener la lista fresca actualizada de conversaciones desde la server to avoid inconsistency.
+          const currentCount = await loadMessageCountForConversation(selectedConversation.id);
+          
+          setConversations(prevConversations => 
+            prevConversations.map(conv => 
+              conv.id === selectedConversation.id 
+                ? { ...conv, total_messages: currentCount }
+                : conv
+            )
+          );
+          setIsPollingEnabled(true);
+        }, 300);
       } else {
         console.error('Error al enviar mensaje:', messageResult.error);
+        // Si hay error al crear el mensaje, remover el mensaje temporal
+        setMessages(prev => prev.filter(msg => msg.id !== newMensajeFromUser.id));
+        setNewMessage(mensajeToSend); // Devolver el mensaje al input para que pueda reintentarlo
+        alert('Error al enviar mensaje. Por favor intenta de nuevo.');
+        // Reactivar polling en caso de error
+        setIsPollingEnabled(true);
       }
     } catch (error) {
       console.error('Error al enviar mensaje:', error);
+      // Si hay error, remover el mensaje temporal
+      setMessages(prev => prev.filter(msg => msg.id !== newMensajeFromUser.id));
+      setNewMessage(mensajeToSend); // Devolver el mensaje al input para que pueda reintentarlo
+      // Reactivar polling en caso de error
+      setIsPollingEnabled(true);
     }
   };
 
@@ -240,7 +600,7 @@ const ChatInternoPage = () => {
 
     try {
       console.log('🔒 Cerrando conversación:', selectedConversation.id);
-      const result = await supabaseService.finalizeChatInternoConversation(selectedConversation.id);
+      const result = await chatInternoServices.finalizarChatInterno(selectedConversation.id);
 
       if (result.success) {
         console.log('✅ Conversación cerrada exitosamente');
@@ -315,6 +675,30 @@ const ChatInternoPage = () => {
             <div className="flex items-center space-x-2">
               <span className="text-sm text-[var(--text-muted)]">{getFilteredConversations().length}</span>
               <button 
+                onClick={() => setShowNewChatModal(true)}
+                className="p-1 hover:bg-[var(--bg-secondary)] rounded-full transition-colors text-green-500 hover:text-green-400"
+                title="Nuevo mensaje interno"
+              >
+                <Plus size={20} />
+              </button>
+              <button 
+                onClick={handleManualRefresh}
+                disabled={isRefreshing}
+                className={`p-1 transition-colors rounded-full ${
+                  isRefreshing 
+                    ? 'bg-[var(--bg-secondary)] cursor-not-allowed animate-spin' 
+                    : 'hover:bg-[var(--bg-secondary)]'
+                }`}
+                title={isRefreshing ? "Recargando..." : "Recargar conversaciones"}
+              >
+                <RefreshCw 
+                  size={20} 
+                  className={`transition-colors ${
+                    isRefreshing ? 'text-blue-400' : 'hover:text-blue-400'
+                  }`}
+                />
+              </button>
+              <button 
                 onClick={() => setShowFilterModal(true)}
                 className="p-1 hover:bg-[var(--bg-secondary)] rounded-full transition-colors"
                 title="Filtrar conversaciones"
@@ -344,23 +728,22 @@ const ChatInternoPage = () => {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
                     </svg>
                   </div>
-                  {conversation.total_messages && conversation.total_messages > 0 && (
-                    <div className="absolute -top-1 -right-1 bg-black text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                      {conversation.total_messages > 9 ? '9+' : conversation.total_messages}
-                    </div>
-                  )}
+                  {/* Mostrar siempre el conteo total de mensajes */}
+                  <div className="absolute -top-1 -right-1 bg-black text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                    {conversation.total_messages && conversation.total_messages > 9 ? '9+' : (conversation.total_messages || 0)}
+                  </div>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold truncate">{conversation.cliente_nombre}</h3>
-                  <p className="text-sm text-[var(--text-muted)] truncate">{conversation.cliente_email}</p>
-                  {conversation.operador_nombre && (
-                    <p className="text-xs text-[var(--accent-primary)] truncate">
-                      👤 {conversation.operador_nombre}
-                    </p>
-                  )}
+                  <h3 className="font-semibold truncate">{conversation.tema}</h3>
+                  <p className="text-sm text-[var(--text-muted)] truncate">
+                    {conversation.emisor_nombre} → {conversation.receptor_nombre}
+                  </p>
+                  <p className="text-xs text-[var(--text-muted)] truncate">
+                    {new Date(conversation.created_at).toLocaleDateString('es-ES')}
+                  </p>
                   <div className="flex items-center justify-between mt-1">
                     <span className={`text-xs px-2 py-1 rounded-full font-medium ${
-                      conversation.estado === 'EN CURSO' || conversation.estado === 'CURSO'
+                      conversation.estado === 'EN CURSO' || conversation.estado === 'CURSO' || conversation.estado === 'EN_CURSO'
                         ? 'bg-green-500 bg-opacity-30 text-green-600 border border-green-500' 
                         : conversation.estado === 'PENDIENTE'
                         ? 'bg-yellow-500 bg-opacity-30 text-yellow-600 border border-yellow-500'
@@ -370,9 +753,24 @@ const ChatInternoPage = () => {
                     }`}>
                       {conversation.estado || 'SIN ESTADO'}
                     </span>
-                    <span className="text-xs text-[var(--text-muted)]">
-                      {formatDate(conversation.created_at)}
-                    </span>
+                    <div className="flex items-center space-x-2">
+                      <span className="text-xs text-[var(--text-muted)]">
+                        {formatDate(conversation.created_at)}
+                      </span>
+                      {/* Botón de eliminar solo para chats eliminables (PENDIENTE y sin mensajes) */}
+                      {isChatEliminable(conversation) && (
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation(); // Evitar que se ejecute la selección de chat
+                            handleDeleteChat(conversation.id, conversation.tema);
+                          }}
+                          className="p-1 hover:bg-red-100 rounded-full transition-colors"
+                          title="Eliminar chat"
+                        >
+                          <Trash2 size={14} className="text-red-500 hover:text-red-700" />
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -394,18 +792,18 @@ const ChatInternoPage = () => {
                   </svg>
                 </div>
                 <div>
-                  <h3 className="font-semibold">{selectedConversation.cliente_nombre}</h3>
-                  <p className="text-sm text-[var(--text-muted)]">{selectedConversation.cliente_email}</p>
-                  {selectedConversation.operador_nombre && (
-                    <p className="text-xs text-[var(--accent-primary)]">
-                      👤 Asignado a: {selectedConversation.operador_nombre}
-                    </p>
-                  )}
+                  <h3 className="font-semibold">{selectedConversation.tema}</h3>
+                  <p className="text-sm text-[var(--text-muted)]">
+                    {selectedConversation.emisor_nombre} → {selectedConversation.receptor_nombre}
+                  </p>
+                  <p className="text-xs text-[var(--text-muted)]">
+                    {new Date(selectedConversation.created_at).toLocaleDateString('es-ES')}
+                  </p>
                 </div>
               </div>
               <div className="flex items-center space-x-4">
                 <span className={`text-xs px-3 py-1 rounded-full font-medium ${
-                  selectedConversation.estado === 'EN CURSO' || selectedConversation.estado === 'CURSO'
+                  selectedConversation.estado === 'EN CURSO' || selectedConversation.estado === 'CURSO' || selectedConversation.estado === 'EN_CURSO'
                     ? 'bg-green-500 bg-opacity-30 text-green-600 border border-green-500' 
                     : selectedConversation.estado === 'PENDIENTE'
                     ? 'bg-yellow-500 bg-opacity-30 text-yellow-600 border border-yellow-500'
@@ -434,7 +832,7 @@ const ChatInternoPage = () => {
             </div>
 
             {/* Messages Area */}
-            <div className="flex-1 overflow-y-auto p-4 bg-no-repeat bg-center" style={{ backgroundImage: 'url(/chat-bg-pattern.svg)', backgroundSize: '100px', backgroundRepeat: 'repeat' }}>
+            <div className="flex-1 overflow-y-auto p-4 bg-no-repeat bg-center" style={{ backgroundImage: 'url(/chat-bg-dice-pattern.svg)', backgroundSize: '140px', backgroundRepeat: 'repeat' }}>
               {loadingMessages ? (
                 <div className="flex items-center justify-center h-full">
                   <div className="text-center">
@@ -455,23 +853,23 @@ const ChatInternoPage = () => {
                   {messages.map((message) => (
                     <div 
                       key={message.id} 
-                      className={`flex ${message.emisor === 'operador' ? 'justify-end' : 'justify-start'}`}
+                      className={`flex ${message.emisor === 'emisor' ? 'justify-end' : 'justify-start'}`}
                     >
                       <div className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                        message.emisor === 'operador' 
+                        message.emisor === 'emisor' 
                           ? 'bg-[var(--accent-primary)] text-white' 
                           : 'bg-[var(--bg-secondary)] text-[var(--text-primary)]'
                       }`}>
                         <p className="text-sm">{message.mensaje}</p>
                         <div className={`flex items-center justify-between mt-1 ${
-                          message.emisor === 'operador' 
+                          message.emisor === 'emisor' 
                             ? 'text-white text-opacity-70' 
                             : 'text-[var(--text-muted)]'
                         }`}>
                           <span className="text-xs">
                             {formatTime(message.created_at)}
                           </span>
-                          {message.emisor === 'cliente' && (
+                          {message.emisor === 'receptor' && (
                             <span className="text-xs flex items-center ml-2">
                               {message.leido ? (
                                 <span className="text-[var(--accent-primary)]">✓✓</span>
@@ -498,14 +896,66 @@ const ChatInternoPage = () => {
                 </div>
               ) : (
                 <>
-                  <input
-                    type="text"
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    onKeyPress={handleKeyPress}
-                    placeholder="Mensaje"
-                    className="flex-1 bg-transparent focus:outline-none text-[var(--text-primary)] placeholder-[var(--text-muted)]"
-                  />
+                  {/* Emoji selector y input */}
+                  <div className="flex items-center flex-1 relative">
+                    {selectedEmoji && (
+                      <span className="absolute left-2 text-lg">{selectedEmoji}</span>
+                    )}
+                    <input
+                      type="text"
+                      value={newMessage}
+                      onChange={(e) => setNewMessage(e.target.value)}
+                      onKeyPress={handleKeyPress}
+                      placeholder="Mensaje"
+                      className={`w-full bg-transparent focus:outline-none text-[var(--text-primary)] placeholder-[var(--text-muted)] ${selectedEmoji ? 'pl-8' : ''}`}
+                      disabled={showEmojiPicker}
+                    />
+                    
+                    {/* Emoji picker */}
+                    {showEmojiPicker && (
+                      <div className="emoji-picker-container absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-2xl p-4 w-96 max-h-96 overflow-y-auto z-50 shadow-2xl">
+                        <div className="grid grid-cols-10 gap-1">
+                          {EMOJI_LIST.map((emoji, index) => (
+                            <button
+                              key={index}
+                              onClick={() => handleEmojiSelect(emoji)}
+                              className="p-1.5 hover:bg-[var(--bg-primary)] rounded-lg text-lg transition-colors"
+                              title={emoji}
+                            >
+                              {emoji}
+                            </button>
+                          ))}
+                        </div>
+                        <div className="flex justify-between items-center mt-3 pt-3 border-t border-[var(--border-primary)]">
+                          <button
+                            onClick={() => setSelectedEmoji('')}
+                            className="text-sm text-[var(--text-muted)] hover:text-[var(--text-primary)] px-3 py-1 rounded-lg hover:bg-[var(--bg-primary)] transition-colors"
+                          >
+                            Limpiar
+                          </button>
+                          <button
+                            onClick={() => setShowEmojiPicker(false)}
+                            className="text-sm text-white bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] px-3 py-1 rounded-lg transition-colors"
+                          >
+                            Cerrar
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Emoji button */}
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setShowEmojiPicker(!showEmojiPicker);
+                    }}
+                    className="p-2 hover:bg-[var(--bg-secondary)] rounded-full transition-colors text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                  >
+                    <Smile size={20} />
+                  </button>
+
+                  {/* Send button */}
                   <button 
                     onClick={handleSendMessage}
                     disabled={!newMessage.trim()}
@@ -557,7 +1007,7 @@ const ChatInternoPage = () => {
               >
                 <option value="TODOS">Todos los estados</option>
                 <option value="PENDIENTE">Pendiente</option>
-                <option value="EN CURSO">En Curso</option>
+                <option value="EN_CURSO">En Curso</option>
                 <option value="FINALIZADO">Finalizado</option>
               </select>
             </div>
@@ -573,10 +1023,79 @@ const ChatInternoPage = () => {
                 Limpiar
               </button>
               <button
-                onClick={() => setShowFilterModal(false)}
+                onClick={() => {
+                  // El filtro se aplica automáticamente al cerrar
+                  setShowFilterModal(false);
+                }}
                 className="px-4 py-2 bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] text-white rounded-md transition-colors"
               >
                 Aplicar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal para crear nueva conversación */}
+      {showNewChatModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded-lg p-6 w-full max-w-md mx-4">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-[var(--text-primary)]">
+                Nuevo Chat Interno
+              </h3>
+              <button
+                onClick={() => setShowNewChatModal(false)}
+                className="text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
+                Tema del Chat
+              </label>
+              <input
+                type="text"
+                value={newChatTema}
+                onChange={(e) => setNewChatTema(e.target.value)}
+                placeholder="Ej: MORA, Consulta sobre inversión..."
+                className="w-full bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-md px-3 py-2 text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-primary)]"
+              />
+            </div>
+            
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
+                Enviar a
+              </label>
+              <select
+                value={newChatReceptor || ''}
+                onChange={(e) => setNewChatReceptor(e.target.value ? parseInt(e.target.value) : null)}
+                className="w-full bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-md px-3 py-2 text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-primary)]"
+              >
+                <option value="">Seleccionar usuario...</option>
+                {usuarios.filter(user => user.id !== currentUserId).map((user) => (
+                  <option key={user.id} value={user.id}>
+                    {user.nombre_usuario} ({user.correo_electronico})
+                  </option>
+                ))}
+              </select>
+            </div>
+            
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setShowNewChatModal(false)}
+                className="px-4 py-2 border border-[var(--border-primary)] text-[var(--text-primary)] rounded-md hover:bg-[var(--bg-secondary)] transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleNewChat}
+                className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={!newChatTema.trim() || !newChatReceptor}
+              >
+                Crear Chat
               </button>
             </div>
           </div>
@@ -615,6 +1134,49 @@ const ChatInternoPage = () => {
                 className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-md transition-colors"
               >
                 Cerrar Conversación
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal para confirmar eliminación de chat */}
+      {showDeleteConfirmModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded-lg p-6 max-w-md mx-4">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-[var(--text-primary)]">
+                Eliminar Chat
+              </h3>
+              <button
+                onClick={cancelDeleteChat}
+                className="text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            
+            <p className="text-[var(--text-secondary)] mb-6">
+              ¿Estás seguro de que quieres eliminar el chat "<strong>{chatToDelete?.tema}</strong>"?
+              <br /><br />
+              Esta acción no se puede deshacer.
+            </p>
+            
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={cancelDeleteChat}
+                className="px-4 py-2 border border-[var(--border-primary)] text-[var(--text-primary)] rounded-md hover:bg-[var(--bg-secondary)] transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={confirmDeleteChat}
+                className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-md transition-colors"
+              >
+                <div className="flex items-center space-x-2">
+                  <Trash2 size={16} />
+                  <span>Eliminar</span>
+                </div>
               </button>
             </div>
           </div>
