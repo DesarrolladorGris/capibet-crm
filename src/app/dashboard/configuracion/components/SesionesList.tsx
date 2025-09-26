@@ -1,6 +1,7 @@
 'use client';
 
 import { SesionResponse } from '@/app/api/sesiones/domain/sesion';
+import Image from 'next/image';
 // Tipos locales para canales (sin dependencias externas)
 type CanalTipo = 'whatsapp' | 'whatsappApi' | 'email' | 'instagram' | 'messenger' | 'telegram' | 'telegramBot' | 'webChat';
 
@@ -17,24 +18,39 @@ interface CanalOption {
   id: string;
   nombre: string;
   icon: string;
+  logoPath: string;
   color: string;
   tipo: Canal['tipo'];
 }
 
 const canalOptions: CanalOption[] = [
-  { id: 'whatsapp', nombre: 'WhatsApp', icon: '📱', color: '#25D366', tipo: 'whatsapp' },
-  { id: 'whatsappApi', nombre: 'Whatsapp API', icon: '📱', color: '#25D366', tipo: 'whatsappApi' },
-  { id: 'instagram', nombre: 'Instagram', icon: '📷', color: '#E4405F', tipo: 'instagram' },
-  { id: 'messenger', nombre: 'Messenger', icon: '💬', color: '#0084FF', tipo: 'messenger' },
-  { id: 'telegram', nombre: 'Telegram', icon: '✈️', color: '#0088CC', tipo: 'telegram' },
-  { id: 'telegramBot', nombre: 'Telegram Bot', icon: '🤖', color: '#0088CC', tipo: 'telegramBot' },
-  { id: 'webChat', nombre: 'Web Chat', icon: '💬', color: '#F29A1F', tipo: 'webChat' },
-  { id: 'email', nombre: 'Email', icon: '✉️', color: '#EA4335', tipo: 'email' },
+  { id: 'whatsapp', nombre: 'WhatsApp', icon: '📱', logoPath: '/wpp_logo.svg', color: '#25D366', tipo: 'whatsapp' },
+  { id: 'whatsappApi', nombre: 'Whatsapp API', icon: '📱', logoPath: '/wpp_logo.svg', color: '#25D366', tipo: 'whatsappApi' },
+  { id: 'instagram', nombre: 'Instagram', icon: '📷', logoPath: '/instagram_logo.svg', color: '#E4405F', tipo: 'instagram' },
+  { id: 'messenger', nombre: 'Messenger', icon: '💬', logoPath: '/messenger_logo.svg', color: '#0084FF', tipo: 'messenger' },
+  { id: 'telegram', nombre: 'Telegram', icon: '✈️', logoPath: '/telegram_logo.svg', color: '#0088CC', tipo: 'telegram' },
+  { id: 'telegramBot', nombre: 'Telegram Bot', icon: '🤖', logoPath: '/telegram_logo.svg', color: '#0088CC', tipo: 'telegramBot' },
+  { id: 'webChat', nombre: 'Web Chat', icon: '💬', logoPath: '/chat_logo.svg', color: '#F29A1F', tipo: 'webChat' },
+  { id: 'email', nombre: 'Email', icon: '✉️', logoPath: '/email_logo.svg', color: '#EA4335', tipo: 'email' },
 ];
+
+interface Contacto {
+  id: number;
+  nombre: string;
+  apellido?: string;
+  nombre_completo?: string;
+}
+
+interface Embudo {
+  id: number;
+  nombre: string;
+}
 
 interface SesionesListProps {
   sesiones: SesionResponse[];
   canales: Canal[];
+  contactos?: Contacto[];
+  embudos?: Embudo[];
   onEditSesion?: (sesion: SesionResponse) => void;
   onDeleteSesion?: (sesionId: number) => void;
   onToggleStatus?: (sesionId: number, estado: 'activo' | 'desconectado' | 'expirado') => void;
@@ -43,23 +59,50 @@ interface SesionesListProps {
 export default function SesionesList({ 
   sesiones, 
   canales,
+  contactos = [],
+  embudos = [],
   onEditSesion, 
   onDeleteSesion, 
   onToggleStatus 
 }: SesionesListProps) {
-  const getCanalByType = (type: string): Canal | undefined => {
-    return canales.find(canal => canal.tipo === type);
+
+  const getCanalLogo = (tipo: Canal['tipo']) => {
+    const option = canalOptions.find(opt => opt.tipo === tipo);
+    return option?.logoPath || '/wpp_logo.svg';
   };
 
-  const getCanalIcon = (tipo: Canal['tipo']) => {
-    const option = canalOptions.find(opt => opt.tipo === tipo);
-    return option?.icon || '📱';
+  const getCanalDisplayName = (tipo: string) => {
+    const typeMap: { [key: string]: string } = {
+      'whatsapp': 'WhatsApp',
+      'whatsappApi': 'WhatsApp API',
+      'whatsapp_qr': 'WhatsApp QR',
+      'whatsapp-api': 'WhatsApp API',
+      'instagram': 'Instagram',
+      'messenger': 'Messenger',
+      'telegram': 'Telegram',
+      'telegramBot': 'Telegram Bot',
+      'telegram-bot': 'Telegram Bot',
+      'webChat': 'Web Chat',
+      'web-chat': 'Web Chat',
+      'email': 'Email'
+    };
+    
+    return typeMap[tipo] || tipo.charAt(0).toUpperCase() + tipo.slice(1);
   };
 
-  const getCanalColor = (tipo: Canal['tipo']) => {
-    const option = canalOptions.find(opt => opt.tipo === tipo);
-    return option?.color || '#F29A1F';
+  const getContactoName = (contactoId: number) => {
+    const contacto = contactos.find(c => c.id === contactoId);
+    if (contacto) {
+      return contacto.nombre_completo || `${contacto.nombre} ${contacto.apellido || ''}`.trim();
+    }
+    return `Contacto ${contactoId}`;
   };
+
+  const getEmbudoName = (embudoId: number) => {
+    const embudo = embudos.find(e => e.id === embudoId);
+    return embudo ? embudo.nombre : `Embudo ${embudoId}`;
+  };
+
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('es-ES', {
@@ -133,23 +176,26 @@ export default function SesionesList({
           <div
             key={sesion.id}
             className={`
-              bg-[#1a1d23] rounded-lg p-4 transition-all duration-200 hover:bg-[#2a2d35]
-              ${sesion.estado === 'activo' ? 'border-l-4 border-[#F29A1F]' : 'border-l-4 border-gray-600'}
-            `}
+              bg-[#1a1d23] rounded-lg p-4 pl-10 transition-all duration-200 hover:bg-[#111318]`}
           >
             <div className="flex items-center justify-between">
               {/* Información principal */}
               <div className="flex items-center space-x-4 flex-1">
                 {/* Icono del canal */}
                 <div 
-                  className="text-2xl p-3 rounded-full bg-[#2a2d35]"
-                  style={{ color: getCanalColor(sesion.type as any || 'whatsapp') }}
+                  className="w-10 h-10 flex items-center justify-center"
                 >
-                  {getCanalIcon(sesion.type as any || 'whatsapp')}
+                  <Image
+                    src={getCanalLogo((sesion.type as Canal['tipo']) || 'whatsapp')}
+                    alt={`${sesion.type} logo`}
+                    width={75}
+                    height={75}
+                    className="w-full h-full object-contain"
+                  />
                 </div>
                 
                 {/* Detalles de la sesión */}
-                <div className="flex-1">
+                <div className="flex-1 ml-2">
                   <div className="flex items-center space-x-2 mb-1">
                     <h4 className="text-white font-medium">{sesion.nombre}</h4>
                     <span className={`px-2 py-1 rounded-full text-xs ${
@@ -159,14 +205,14 @@ export default function SesionesList({
                         ? 'bg-yellow-100 text-yellow-800'
                         : 'bg-red-100 text-red-800'
                     }`}>
-                      {sesion.estado}
+                      {sesion.estado.charAt(0).toUpperCase() + sesion.estado.slice(1)}
                     </span>
                   </div>
                   
                    <div className="text-gray-400 text-sm space-y-1">
-                     <p>Tipo: <span className="text-white">{sesion.type}</span></p>
-                     <p>Usuario ID: <span className="text-white">{sesion.usuario_id}</span></p>
-                     <p>Embudo ID: <span className="text-white">{sesion.embudo_id}</span></p>
+                     <p>Tipo: <span className="text-white">{getCanalDisplayName(sesion.type || 'whatsapp')}</span></p>
+                     <p>Usuario: <span className="text-white">{getContactoName(sesion.usuario_id)}</span></p>
+                     <p>Embudo: <span className="text-white">{getEmbudoName(sesion.embudo_id)}</span></p>
                      <p>Creada: <span className="text-white">{formatDate(sesion.creado_en)}</span></p>
                    </div>
                 </div>
@@ -175,21 +221,7 @@ export default function SesionesList({
               {/* Acciones */}
               <div className="flex items-center space-x-2">
                 {/* Toggle de estado */}
-                <button
-                  onClick={() => {
-                    const nuevoEstado = sesion.estado === 'activo' ? 'desconectado' : 'activo';
-                    onToggleStatus?.(sesion.id, nuevoEstado);
-                  }}
-                  className={`
-                    px-3 py-1 rounded-full text-xs font-medium transition-colors
-                    ${sesion.estado === 'activo'
-                      ? 'bg-red-100 text-red-800 hover:bg-red-200' 
-                      : 'bg-green-100 text-green-800 hover:bg-green-200'
-                    }
-                  `}
-                >
-                  {sesion.estado === 'activo' ? 'Desconectar' : 'Activar'}
-                </button>
+                
                 
                 {/* Botón editar */}
                 {onEditSesion && (
@@ -215,18 +247,7 @@ export default function SesionesList({
               </div>
             </div>
             
-            {/* Información adicional */}
-            {(sesion.email || sesion.given_name || sesion.whatsapp_session || sesion.description) && (
-              <div className="mt-3 pt-3 border-t border-[#3a3d45]">
-                <p className="text-gray-400 text-xs">
-                  Configuración:
-                  {sesion.email && <span className="ml-1">Email: {sesion.email}</span>}
-                  {sesion.given_name && <span className="ml-1">Nombre: {sesion.given_name}</span>}
-                  {sesion.whatsapp_session && <span className="ml-1">WhatsApp Session: {sesion.whatsapp_session}</span>}
-                  {sesion.description && <span className="ml-1">Descripción: {sesion.description}</span>}
-                </p>
-              </div>
-            )}
+            
           </div>
         ))}
       </div>

@@ -9,6 +9,7 @@ export const WHATSAPP_CONFIG = {
   
   // Endpoints del orquestador
   GENERATE_QR_ENDPOINT: '/generate-qr',
+  DISCONNECT_SESSION_ENDPOINT: '/sessions',
   
   // Timeout para las peticiones (en milisegundos)
   REQUEST_TIMEOUT: 30000,
@@ -111,6 +112,44 @@ export class WhatsAppApiService {
         status: 'disconnected',
         message: 'Error al verificar estado de sesión'
       };
+    }
+  }
+
+  /**
+   * Desconecta una sesión de WhatsApp QR
+   */
+  async disconnectSession(sessionId: string): Promise<{
+    success: boolean;
+    message: string;
+  }> {
+    try {
+      const response = await fetch(`${this.baseUrl}${WHATSAPP_CONFIG.DISCONNECT_SESSION_ENDPOINT}/${sessionId}/disconnect`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        signal: AbortSignal.timeout(WHATSAPP_CONFIG.REQUEST_TIMEOUT),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error del orquestador: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      
+      if (!data.success) {
+        throw new Error(data.message || 'Error al desconectar sesión');
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Error desconectando sesión:', error);
+      
+      if (error instanceof Error) {
+        throw new Error(`Error al desconectar sesión: ${error.message}`);
+      }
+      
+      throw new Error('Error desconocido al desconectar sesión');
     }
   }
 }

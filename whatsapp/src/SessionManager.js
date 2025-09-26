@@ -1,21 +1,22 @@
-import { makeWASocket, DisconnectReason, useMultiFileAuthState, fetchLatestBaileysVersion, downloadMediaMessage } from '@whiskeysockets/baileys';
+import { makeWASocket, DisconnectReason, useMultiFileAuthState, fetchLatestBaileysVersion, downloadMediaMessage, } from '@whiskeysockets/baileys';
 import QRCode from 'qrcode';
 import fs from 'fs';
 import path from 'path';
+import sharp from 'sharp';
 
 /**
  * Gestor de múltiples sesiones de WhatsApp
  */
 export class SessionManager {
     constructor(options = {}) {
-        this.sessions = new Map(); // Map<sessionId, SessionData>
+        this.sessions = new Map();
         this.options = {
             downloadMedia: false,
             onStatusChange: null,
             onMessage: null,
             onQRUpdate: null,
             baseAuthPath: './auth_sessions',
-            autoRestoreSessions: true, // Nueva opción para restaurar sesiones automáticamente
+            autoRestoreSessions: true, 
             ...options
         };
         
@@ -59,7 +60,8 @@ export class SessionManager {
             connectedUserPhoneNumber: null, // Número del usuario que se conectó
             createdAt: new Date(),
             reconnectAttempts: 0,
-            maxReconnectAttempts: 5
+            maxReconnectAttempts: 5,
+            isIntentionallyDisconnecting: false // Bandera para desconexiones intencionales
         };
 
         this.sessions.set(sessionId, sessionData);
@@ -108,7 +110,7 @@ export class SessionManager {
             const sock = makeWASocket({
                 version,
                 auth: state,
-                printQRInTerminal: false // Deshabilitamos QR en terminal para múltiples sesiones
+                printQRInTerminal: false
             });
 
             sessionData.sock = sock;
@@ -170,12 +172,19 @@ export class SessionManager {
             console.log(`[${sessionId}] === CONEXIÓN CERRADA ===`);
             console.log(`[${sessionId}] ¿Debería reconectar?`, shouldReconnect);
             console.log(`[${sessionId}] Información del último desconectado:`, lastDisconnect);
+            console.log(`[${sessionId}] Desconexión intencional:`, sessionData.isIntentionallyDisconnecting);
             
             sessionData.status = 'disconnected';
             sessionData.lastSeen = new Date();
-            this._notifyStatusChange(sessionId, 'disconnected');
             
-            if (shouldReconnect && sessionData.reconnectAttempts < sessionData.maxReconnectAttempts) {
+            // Solo notificar al backend si NO es una desconexión intencional
+            if (!sessionData.isIntentionallyDisconnecting) {
+                this._notifyStatusChange(sessionId, 'disconnected');
+            } else {
+                console.log(`[${sessionId}] Omitiendo notificación al backend (desconexión intencional)`);
+            }
+            
+            if (shouldReconnect && sessionData.reconnectAttempts < sessionData.maxReconnectAttempts && !sessionData.isIntentionallyDisconnecting) {
                 console.log(`[${sessionId}] Reconectando... (intento ${sessionData.reconnectAttempts + 1})`);
                 sessionData.reconnectAttempts++;
                 setTimeout(() => {
@@ -242,6 +251,9 @@ export class SessionManager {
 
         console.log(`[${sessionId}] === MENSAJE PROCESADO ===`);
         console.log(`[${sessionId}] Información completa del mensaje:`, JSON.stringify(m, null, 2));
+
+        console.log('Número de teléfono del remitente:', message.key.remoteJid, await sessionData.sock.onWhatsApp(message.key.remoteJid));
+        
         
         console.log(`[${sessionId}] === DETALLES DEL MENSAJE ===`);
         
@@ -354,7 +366,7 @@ export class SessionManager {
         }
         
         // Procesar contenido del mensaje
-        const messageInfo = this._processMessageContent(message);
+        const messageInfo = await this._processMessageContent(message, sessionId);
         
         // Crear objeto de datos del mensaje con información completa
         const messageData = {
@@ -380,6 +392,7 @@ export class SessionManager {
             messageContent: messageInfo.content,
             messageType: messageInfo.type,
             mediaInfo: messageInfo.mediaInfo,
+            downloadInfo: messageInfo.downloadInfo, // Nueva información para descarga
             
             // Metadatos
             timestamp: new Date(),
@@ -392,12 +405,15 @@ export class SessionManager {
         console.log(`[${sessionId}] Destinatario: ${recipientInfo.name} (${recipientInfo.phoneNumber})`);
         console.log(`[${sessionId}] Contenido: ${messageInfo.content}`);
         console.log(`[${sessionId}] Tipo de mensaje: ${messageInfo.type}`);
+        if (messageInfo.type === 'image' && messageInfo.mediaInfo?.image_compressed) {
+            console.log(`[${sessionId}] Imagen comprimida incluida (${messageInfo.mediaInfo.image_compressed.length} caracteres base64)`);
+        }
 
         // Notificar mensaje recibido
         this._notifyMessage(sessionId, messageData);
 
-        // Opcional: Descargar archivo multimedia si está habilitado
-        if (this.options.downloadMedia && ['image', 'video', 'audio', 'sticker', 'document'].includes(messageInfo.type)) {
+        // Opcional: Descargar archivo multimedia adicional (no imágenes, ya procesadas automáticamente)
+        if (this.options.downloadMedia && ['video', 'audio', 'sticker', 'document'].includes(messageInfo.type)) {
             await this._downloadMediaFile(sessionId, message, messageInfo, senderPhoneNumber);
         }
     }
@@ -560,11 +576,13 @@ export class SessionManager {
 
     /**
      * Procesa el contenido de un mensaje y extrae la información relevante
+     * Incluye TODA la información multimedia disponible para que el backend decida qué hacer
      */
-    _processMessageContent(message) {
+    async _processMessageContent(message, sessionId) {
         let messageContent = '';
         let messageType = 'text';
         let mediaInfo = {};
+        let downloadInfo = null; // Información para descarga de archivos
         
         if (message.message) {
             if (message.message.conversation) {
@@ -575,85 +593,266 @@ export class SessionManager {
                 messageType = 'text';
             } else if (message.message.imageMessage) {
                 const imageMsg = message.message.imageMessage;
-                messageContent = imageMsg.caption || '[Imagen]';
+                messageContent = imageMsg.caption || '';
                 messageType = 'image';
+                
+                // Descargar y comprimir imagen automáticamente
+                let imageCompressed = null;
+                try {
+                    console.log(`[${sessionId}] Descargando y comprimiendo imagen...`);
+                    const buffer = await downloadMediaMessage(message, 'buffer', {});
+                    if (buffer) {
+                        // Comprimir imagen manteniendo la calidad
+                        const compressedBuffer = await sharp(buffer)
+                            .jpeg({ 
+                                quality: 85, // Calidad alta pero comprimida
+                                progressive: true,
+                                mozjpeg: true // Mejor compresión
+                            })
+                            .resize(1920, 1920, { // Limitar tamaño máximo manteniendo aspecto
+                                fit: 'inside',
+                                withoutEnlargement: true
+                            })
+                            .toBuffer();
+                        
+                        // Convertir a base64
+                        imageCompressed = compressedBuffer.toString('base64');
+                        console.log(`[${sessionId}] Imagen comprimida: ${buffer.length} bytes -> ${compressedBuffer.length} bytes (${Math.round((1 - compressedBuffer.length / buffer.length) * 100)}% reducción)`);
+                    }
+                } catch (error) {
+                    console.error(`[${sessionId}] Error al procesar imagen:`, error);
+                }
+                
                 mediaInfo = {
+                    // Información básica
                     url: imageMsg.url,
                     mimetype: imageMsg.mimetype,
                     fileLength: imageMsg.fileLength,
                     width: imageMsg.width,
                     height: imageMsg.height,
+                    
+                    // Imagen comprimida en base64
+                    image_compressed: imageCompressed,
+                    
+                    // Identificadores únicos
                     fileSha256: imageMsg.fileSha256,
                     mediaKey: imageMsg.mediaKey,
                     directPath: imageMsg.directPath,
-                    jpegThumbnail: imageMsg.jpegThumbnail ? '[Thumbnail Base64]' : null
+                    
+                    // Thumbnail y preview
+                    jpegThumbnail: imageMsg.jpegThumbnail ? '[Thumbnail Base64]' : null,
+                    thumbnail: imageMsg.thumbnail ? '[Thumbnail]' : null,
+                    
+                    // Metadatos adicionales
+                    contextInfo: imageMsg.contextInfo || null,
+                    caption: imageMsg.caption || null,
+                    
+                    // Información de descarga
+                    canDownload: !!(imageMsg.url || imageMsg.mediaKey),
+                    downloadMethod: imageMsg.url ? 'direct_url' : 'media_key',
+                    
+                    // Timestamps
+                    timestamp: imageMsg.timestamp || null,
+                    messageTimestamp: imageMsg.messageTimestamp || null
                 };
+                
+                // Información específica para descarga
+                downloadInfo = {
+                    type: 'image',
+                    url: imageMsg.url,
+                    mediaKey: imageMsg.mediaKey,
+                    mimetype: imageMsg.mimetype,
+                    fileLength: imageMsg.fileLength,
+                    fileName: `image_${imageMsg.timestamp || Date.now()}.${this._getExtensionFromMimetype(imageMsg.mimetype)}`
+                };
+                
             } else if (message.message.videoMessage) {
                 const videoMsg = message.message.videoMessage;
                 messageContent = videoMsg.caption || '[Video]';
                 messageType = 'video';
                 mediaInfo = {
+                    // Información básica
                     url: videoMsg.url,
                     mimetype: videoMsg.mimetype,
                     fileLength: videoMsg.fileLength,
                     seconds: videoMsg.seconds,
+                    width: videoMsg.width,
+                    height: videoMsg.height,
+                    
+                    // Identificadores únicos
                     fileSha256: videoMsg.fileSha256,
                     mediaKey: videoMsg.mediaKey,
-                    directPath: videoMsg.directPath
+                    directPath: videoMsg.directPath,
+                    
+                    // Thumbnail y preview
+                    jpegThumbnail: videoMsg.jpegThumbnail ? '[Thumbnail Base64]' : null,
+                    thumbnail: videoMsg.thumbnail ? '[Thumbnail]' : null,
+                    
+                    // Metadatos adicionales
+                    contextInfo: videoMsg.contextInfo || null,
+                    caption: videoMsg.caption || null,
+                    gifPlayback: videoMsg.gifPlayback || false,
+                    
+                    // Información de descarga
+                    canDownload: !!(videoMsg.url || videoMsg.mediaKey),
+                    downloadMethod: videoMsg.url ? 'direct_url' : 'media_key',
+                    
+                    // Timestamps
+                    timestamp: videoMsg.timestamp || null,
+                    messageTimestamp: videoMsg.messageTimestamp || null
                 };
+                
+                // Información específica para descarga
+                downloadInfo = {
+                    type: 'video',
+                    url: videoMsg.url,
+                    mediaKey: videoMsg.mediaKey,
+                    mimetype: videoMsg.mimetype,
+                    fileLength: videoMsg.fileLength,
+                    fileName: `video_${videoMsg.timestamp || Date.now()}.${this._getExtensionFromMimetype(videoMsg.mimetype)}`
+                };
+                
             } else if (message.message.audioMessage) {
                 const audioMsg = message.message.audioMessage;
                 messageContent = '[Audio]';
                 messageType = 'audio';
                 mediaInfo = {
+                    // Información básica
                     url: audioMsg.url,
                     mimetype: audioMsg.mimetype,
                     fileLength: audioMsg.fileLength,
                     seconds: audioMsg.seconds,
-                    ptt: audioMsg.ptt,
+                    
+                    // Identificadores únicos
                     fileSha256: audioMsg.fileSha256,
                     mediaKey: audioMsg.mediaKey,
                     directPath: audioMsg.directPath,
-                    waveform: audioMsg.waveform
+                    
+                    // Metadatos de audio
+                    ptt: audioMsg.ptt, // Push-to-talk (nota de voz)
+                    waveform: audioMsg.waveform,
+                    contextInfo: audioMsg.contextInfo || null,
+                    
+                    // Información de descarga
+                    canDownload: !!(audioMsg.url || audioMsg.mediaKey),
+                    downloadMethod: audioMsg.url ? 'direct_url' : 'media_key',
+                    
+                    // Timestamps
+                    timestamp: audioMsg.timestamp || null,
+                    messageTimestamp: audioMsg.messageTimestamp || null
                 };
+                
+                // Información específica para descarga
+                downloadInfo = {
+                    type: 'audio',
+                    url: audioMsg.url,
+                    mediaKey: audioMsg.mediaKey,
+                    mimetype: audioMsg.mimetype,
+                    fileLength: audioMsg.fileLength,
+                    fileName: `audio_${audioMsg.timestamp || Date.now()}.${this._getExtensionFromMimetype(audioMsg.mimetype)}`,
+                    isVoiceNote: audioMsg.ptt || false
+                };
+                
             } else if (message.message.stickerMessage) {
                 const stickerMsg = message.message.stickerMessage;
                 messageContent = '[Sticker]';
                 messageType = 'sticker';
                 mediaInfo = {
+                    // Información básica
                     url: stickerMsg.url,
                     mimetype: stickerMsg.mimetype,
                     fileLength: stickerMsg.fileLength,
+                    width: stickerMsg.width,
+                    height: stickerMsg.height,
+                    
+                    // Identificadores únicos
                     fileSha256: stickerMsg.fileSha256,
                     mediaKey: stickerMsg.mediaKey,
                     directPath: stickerMsg.directPath,
+                    
+                    // Metadatos específicos de sticker
                     isAnimated: stickerMsg.isAnimated,
                     isAvatar: stickerMsg.isAvatar,
                     isAiSticker: stickerMsg.isAiSticker,
                     isLottie: stickerMsg.isLottie,
-                    firstFrameLength: stickerMsg.firstFrameLength
+                    firstFrameLength: stickerMsg.firstFrameLength,
+                    contextInfo: stickerMsg.contextInfo || null,
+                    
+                    // Información de descarga
+                    canDownload: !!(stickerMsg.url || stickerMsg.mediaKey),
+                    downloadMethod: stickerMsg.url ? 'direct_url' : 'media_key',
+                    
+                    // Timestamps
+                    timestamp: stickerMsg.timestamp || null,
+                    messageTimestamp: stickerMsg.messageTimestamp || null
                 };
+                
+                // Información específica para descarga
+                downloadInfo = {
+                    type: 'sticker',
+                    url: stickerMsg.url,
+                    mediaKey: stickerMsg.mediaKey,
+                    mimetype: stickerMsg.mimetype,
+                    fileLength: stickerMsg.fileLength,
+                    fileName: `sticker_${stickerMsg.timestamp || Date.now()}.${this._getExtensionFromMimetype(stickerMsg.mimetype)}`,
+                    isAnimated: stickerMsg.isAnimated || false
+                };
+                
             } else if (message.message.documentMessage) {
                 const docMsg = message.message.documentMessage;
                 messageContent = `[Documento: ${docMsg.fileName || 'Sin nombre'}]`;
                 messageType = 'document';
                 mediaInfo = {
+                    // Información básica
                     url: docMsg.url,
                     mimetype: docMsg.mimetype,
                     fileLength: docMsg.fileLength,
                     fileName: docMsg.fileName,
+                    
+                    // Identificadores únicos
                     fileSha256: docMsg.fileSha256,
                     mediaKey: docMsg.mediaKey,
-                    directPath: docMsg.directPath
+                    directPath: docMsg.directPath,
+                    
+                    // Thumbnail y preview
+                    jpegThumbnail: docMsg.jpegThumbnail ? '[Thumbnail Base64]' : null,
+                    thumbnail: docMsg.thumbnail ? '[Thumbnail]' : null,
+                    
+                    // Metadatos adicionales
+                    contextInfo: docMsg.contextInfo || null,
+                    caption: docMsg.caption || null,
+                    
+                    // Información de descarga
+                    canDownload: !!(docMsg.url || docMsg.mediaKey),
+                    downloadMethod: docMsg.url ? 'direct_url' : 'media_key',
+                    
+                    // Timestamps
+                    timestamp: docMsg.timestamp || null,
+                    messageTimestamp: docMsg.messageTimestamp || null
                 };
+                
+                // Información específica para descarga
+                downloadInfo = {
+                    type: 'document',
+                    url: docMsg.url,
+                    mediaKey: docMsg.mediaKey,
+                    mimetype: docMsg.mimetype,
+                    fileLength: docMsg.fileLength,
+                    fileName: docMsg.fileName || `document_${docMsg.timestamp || Date.now()}.${this._getExtensionFromMimetype(docMsg.mimetype)}`
+                };
+                
             } else if (message.message.contactMessage) {
                 const contactMsg = message.message.contactMessage;
                 messageContent = `[Contacto: ${contactMsg.displayName}]`;
                 messageType = 'contact';
                 mediaInfo = {
                     displayName: contactMsg.displayName,
-                    vcard: contactMsg.vcard
+                    vcard: contactMsg.vcard,
+                    contextInfo: contactMsg.contextInfo || null,
+                    timestamp: contactMsg.timestamp || null,
+                    messageTimestamp: contactMsg.messageTimestamp || null
                 };
+                
             } else if (message.message.locationMessage) {
                 const locationMsg = message.message.locationMessage;
                 messageContent = '[Ubicación]';
@@ -662,20 +861,33 @@ export class SessionManager {
                     latitude: locationMsg.degreesLatitude,
                     longitude: locationMsg.degreesLongitude,
                     name: locationMsg.name,
-                    address: locationMsg.address
+                    address: locationMsg.address,
+                    contextInfo: locationMsg.contextInfo || null,
+                    timestamp: locationMsg.timestamp || null,
+                    messageTimestamp: locationMsg.messageTimestamp || null
                 };
+                
             } else {
                 messageContent = '[Mensaje no soportado]';
                 messageType = 'unknown';
                 console.log('=== TIPO DE MENSAJE NO RECONOCIDO ===');
                 console.log('Tipos disponibles en message:', Object.keys(message.message));
+                
+                // Para mensajes no reconocidos, incluir toda la información disponible
+                mediaInfo = {
+                    rawMessageType: Object.keys(message.message)[0],
+                    fullMessage: message.message,
+                    timestamp: message.timestamp || null,
+                    messageTimestamp: message.messageTimestamp || null
+                };
             }
         }
 
         return {
             content: messageContent,
             type: messageType,
-            mediaInfo
+            mediaInfo,
+            downloadInfo // Nueva información para descarga
         };
     }
 
@@ -743,6 +955,13 @@ export class SessionManager {
         };
         
         return mimeToExt[mimeType] || '.bin';
+    }
+
+    /**
+     * Obtiene la extensión de archivo basada en el MIME type (alias para compatibilidad)
+     */
+    _getExtensionFromMimetype(mimeType) {
+        return this._getFileExtension(mimeType);
     }
 
     /**
@@ -821,8 +1040,16 @@ export class SessionManager {
 
         console.log(`[${sessionId}] === REINICIANDO SESIÓN ===`);
         
-        if (sessionData.sock) {
-            sessionData.sock.end();
+        try {
+            // Hacer logout antes de reiniciar
+            if (sessionData.sock) {
+                console.log(`[${sessionId}] Haciendo logout antes de reiniciar...`);
+                await sessionData.sock.logout();
+                console.log(`[${sessionId}] Logout completado`);
+            }
+        } catch (logoutError) {
+            console.log(`[${sessionId}] Error durante logout (continuando):`, logoutError.message);
+            // Continuar con el reinicio aunque falle el logout
         }
         
         sessionData.status = 'disconnected';
@@ -838,23 +1065,58 @@ export class SessionManager {
     }
 
     /**
-     * Elimina una sesión
+     * Elimina una sesión completamente (logout + eliminación de archivos)
+     * @param {string} sessionId - ID de la sesión a eliminar
+     * @param {boolean} notifyBackend - Si debe notificar al backend (default: true)
      */
-    async removeSession(sessionId) {
+    async removeSession(sessionId, notifyBackend = true) {
         const sessionData = this.sessions.get(sessionId);
         if (!sessionData) {
             return false;
         }
 
-        console.log(`[${sessionId}] === ELIMINANDO SESIÓN ===`);
+        console.log(`[${sessionId}] === ELIMINANDO SESIÓN COMPLETAMENTE ===`);
+        console.log(`[${sessionId}] Auth folder: ${sessionData.authFolderPath}`);
+        console.log(`[${sessionId}] Notificar al backend: ${notifyBackend}`);
         
-        if (sessionData.sock) {
-            sessionData.sock.end();
+        // Marcar como desconexión intencional para evitar notificaciones automáticas
+        sessionData.isIntentionallyDisconnecting = true;
+        
+        try {
+            // Hacer logout completo de WhatsApp
+            if (sessionData.sock) {
+                console.log(`[${sessionId}] Haciendo logout de WhatsApp...`);
+                await sessionData.sock.logout();
+                console.log(`[${sessionId}] Logout completado`);
+            }
+        } catch (logoutError) {
+            console.log(`[${sessionId}] Error durante logout (continuando):`, logoutError.message);
+            // Continuar con la eliminación aunque falle el logout
         }
         
-        this.sessions.delete(sessionId);
-        this._notifyStatusChange(sessionId, 'disconnected');
+        // Eliminar la carpeta de autenticación si existe
+        if (sessionData.authFolderPath && fs.existsSync(sessionData.authFolderPath)) {
+            try {
+                console.log(`[${sessionId}] Eliminando carpeta de autenticación...`);
+                fs.rmSync(sessionData.authFolderPath, { recursive: true, force: true });
+                console.log(`[${sessionId}] Carpeta de autenticación eliminada: ${sessionData.authFolderPath}`);
+            } catch (fsError) {
+                console.log(`[${sessionId}] Error eliminando carpeta de autenticación:`, fsError.message);
+                // Continuar aunque falle la eliminación de archivos
+            }
+        }
         
+        // Remover de la colección de sesiones
+        this.sessions.delete(sessionId);
+        
+        // Solo notificar al backend si se solicita explícitamente
+        if (notifyBackend) {
+            this._notifyStatusChange(sessionId, 'disconnected');
+        } else {
+            console.log(`[${sessionId}] Omitiendo notificación al backend (desconexión intencional)`);
+        }
+        
+        console.log(`[${sessionId}] ✅ Sesión eliminada completamente`);
         return true;
     }
 
@@ -1053,7 +1315,8 @@ export class SessionManager {
                 connectedUserPhoneNumber: null, // Número del usuario que se conectó
                 createdAt: new Date(), // Usar fecha actual para sesiones restauradas
                 reconnectAttempts: 0,
-                maxReconnectAttempts: 5
+                maxReconnectAttempts: 5,
+                isIntentionallyDisconnecting: false // Bandera para desconexiones intencionales
             };
 
             // Agregar a la colección de sesiones

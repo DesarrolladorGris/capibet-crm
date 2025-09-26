@@ -98,6 +98,7 @@ export class BackendNotifier {
 
     /**
      * Notifica mensajes recibidos al backend principal
+     * Para mensajes de imagen, envía la imagen comprimida en base64
      * 
      * @param {string} sessionId - ID de la sesión
      * @param {Object} messageData - Datos del mensaje
@@ -126,13 +127,58 @@ export class BackendNotifier {
             // Contenido del mensaje
             message_content: messageData.messageContent,
             message_type: messageData.messageType,
-            media_info: messageData.mediaInfo,
             
             // Metadatos
             raw_message: messageData.rawMessage, // Mensaje completo de Baileys
             received_at: messageData.timestamp,
             phone_number_session: messageData.recipientPhoneNumber // Mantener compatibilidad
         };
+
+        // Para mensajes de imagen, agregar imagen comprimida en base64
+        if (messageData.messageType === 'image') {
+            if (messageData.mediaInfo?.image_compressed) {
+                payload.image_compressed = messageData.mediaInfo.image_compressed;
+                payload.image_caption = messageData.mediaInfo.caption || null;
+                payload.image_width = messageData.mediaInfo.width || null;
+                payload.image_height = messageData.mediaInfo.height || null;
+                payload.image_mimetype = messageData.mediaInfo.mimetype || 'image/jpeg';
+                
+                console.log(`[BACKEND NOTIFY] === MENSAJE DE IMAGEN COMPRIMIDA ===`);
+                console.log(`[BACKEND NOTIFY] Imagen comprimida: ${payload.image_compressed.length} caracteres base64`);
+                console.log(`[BACKEND NOTIFY] Dimensiones: ${payload.image_width}x${payload.image_height}`);
+                console.log(`[BACKEND NOTIFY] MIME Type: ${payload.image_mimetype}`);
+                console.log(`[BACKEND NOTIFY] Caption: ${payload.image_caption || 'Sin caption'}`);
+            } else if (messageData.mediaInfo?.url) {
+                // Fallback a URL si no se pudo comprimir
+                payload.image_url = messageData.mediaInfo.url;
+                payload.image_caption = messageData.mediaInfo.caption || null;
+                payload.image_mimetype = messageData.mediaInfo.mimetype || 'image/jpeg';
+                payload.image_width = messageData.mediaInfo.width || null;
+                payload.image_height = messageData.mediaInfo.height || null;
+                
+                console.log(`[BACKEND NOTIFY] === IMAGEN FALLBACK URL ===`);
+                console.log(`[BACKEND NOTIFY] URL de imagen: ${messageData.mediaInfo.url}`);
+                console.log(`[BACKEND NOTIFY] MIME Type: ${payload.image_mimetype}`);
+                console.log(`[BACKEND NOTIFY] Dimensiones: ${payload.image_width}x${payload.image_height}`);
+                console.log(`[BACKEND NOTIFY] Caption: ${payload.image_caption || 'Sin caption'}`);
+            }
+        }
+
+        // Log para otros tipos de multimedia (mantener información completa)
+        if (messageData.messageType !== 'text' && messageData.messageType !== 'image') {
+            payload.media_info = messageData.mediaInfo;
+            payload.download_info = messageData.downloadInfo;
+            
+            console.log(`[BACKEND NOTIFY] === INFORMACIÓN MULTIMEDIA ENVIADA ===`);
+            console.log(`[BACKEND NOTIFY] Tipo: ${messageData.messageType}`);
+            console.log(`[BACKEND NOTIFY] Puede descargar: ${messageData.mediaInfo?.canDownload || false}`);
+            console.log(`[BACKEND NOTIFY] Método de descarga: ${messageData.mediaInfo?.downloadMethod || 'N/A'}`);
+            console.log(`[BACKEND NOTIFY] Tamaño: ${messageData.mediaInfo?.fileLength || 'N/A'} bytes`);
+            console.log(`[BACKEND NOTIFY] MIME type: ${messageData.mediaInfo?.mimetype || 'N/A'}`);
+            if (messageData.downloadInfo) {
+                console.log(`[BACKEND NOTIFY] Nombre sugerido: ${messageData.downloadInfo.fileName}`);
+            }
+        }
 
         try {
             // Endpoint para procesar mensajes recibidos
@@ -220,27 +266,6 @@ export class BackendNotifier {
         }
     }
 
-    /**
-     * Reporta métricas de rendimiento al backend
-     * 
-     * @param {Object} metrics - Métricas del sistema
-     */
-    async reportMetrics(metrics) {
-        const payload = {
-            timestamp: new Date().toISOString(),
-            total_sessions: metrics.totalSessions,
-            connected_sessions: metrics.connectedSessions,
-            memory_usage: metrics.memoryUsage,
-            uptime: metrics.uptime,
-            message_count_last_hour: metrics.messageCountLastHour || 0
-        };
-
-        try {
-            await this.makeRequest('/api/whatsapp/metrics', payload);
-        } catch (err) {
-            console.error(`[BACKEND NOTIFY] Error reportando métricas:`, err);
-        }
-    }
 
     /**
      * Ping de health check al backend

@@ -57,8 +57,6 @@ const sessionManager = new SessionManager({
     onMessage: async (sessionId, messageData) => {
         console.log(`[CALLBACK] Mensaje recibido en sesión ${sessionId}`);
         
-        // Incrementar contador de mensajes
-        messageCountLastHour++;
         
         // Notificar mensaje al backend principal
         try {
@@ -99,35 +97,6 @@ const sessionManager = new SessionManager({
     }
 });
 
-// Métricas para reportar al backend
-let messageCountLastHour = 0;
-let lastMetricsReport = new Date();
-
-// Resetear contador de mensajes cada hora
-setInterval(() => {
-    messageCountLastHour = 0;
-    lastMetricsReport = new Date();
-}, 60 * 60 * 1000); // 1 hora
-
-// Reportar métricas al backend cada 5 minutos
-setInterval(async () => {
-    try {
-        const sessions = sessionManager.getAllSessionsStatus();
-        const connectedCount = sessions.filter(s => s.status === 'connected').length;
-        
-        const metrics = {
-            totalSessions: sessions.length,
-            connectedSessions: connectedCount,
-            memoryUsage: process.memoryUsage(),
-            uptime: process.uptime(),
-            messageCountLastHour
-        };
-        
-        await backendNotifier.reportMetrics(metrics);
-    } catch (error) {
-        console.error('[METRICS] Error reportando métricas:', error.message);
-    }
-}, 5 * 60 * 1000); // 5 minutos
 
 // =============================================================================
 // ENDPOINTS PARA GESTIÓN DE SESIONES
@@ -306,6 +275,72 @@ app.post('/sessions/:sessionId/restart', async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Error al reiniciar sesión',
+            error: error.message
+        });
+    }
+});
+
+/**
+ * POST /sessions/:sessionId/disconnect - Desconectar una sesión específica
+ * Este endpoint permite al backend principal desconectar una sesión usando el session_id
+ * Realiza logout completo de WhatsApp y elimina los archivos de autenticación
+ */
+app.post('/sessions/:sessionId/disconnect', async (req, res) => {
+    try {
+        const { sessionId } = req.params;
+        
+        console.log(`=== DESCONECTANDO SESIÓN COMPLETAMENTE ===`);
+        console.log(`Session ID: ${sessionId}`);
+        
+        // Verificar que la sesión existe antes de intentar desconectarla
+        const sessionStatus = sessionManager.getSessionStatus(sessionId);
+        if (!sessionStatus) {
+            return res.status(404).json({
+                success: false,
+                message: 'Sesión no encontrada',
+                sessionId: sessionId
+            });
+        }
+        
+        console.log(`Estado actual de la sesión: ${sessionStatus.status}`);
+        console.log(`Número de teléfono: ${sessionStatus.phoneNumber}`);
+        console.log(`Auth folder: ${sessionStatus.authPath || 'No disponible'}`);
+        
+        // Realizar logout completo y eliminar archivos de autenticación
+        // No notificar al backend ya que es una acción intencional del backend
+        const removed = await sessionManager.removeSession(sessionId, false);
+        
+        if (!removed) {
+            return res.status(500).json({
+                success: false,
+                message: 'Error al desconectar la sesión',
+                sessionId: sessionId
+            });
+        }
+
+        console.log(`✅ Sesión ${sessionId} desconectada y eliminada completamente`);
+        
+        res.json({
+            success: true,
+            message: 'Sesión desconectada y eliminada completamente',
+            sessionId: sessionId,
+            previousStatus: sessionStatus.status,
+            phoneNumber: sessionStatus.phoneNumber,
+            actions: [
+                'Logout completo de WhatsApp realizado',
+                'Archivos de autenticación eliminados',
+                'Sesión removida del sistema',
+                'Backend no notificado (desconexión intencional)'
+            ],
+            disconnectedAt: new Date().toISOString()
+        });
+
+    } catch (error) {
+        console.log('Error al desconectar sesión:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error al desconectar sesión',
+            sessionId: req.params.sessionId,
             error: error.message
         });
     }
@@ -500,6 +535,64 @@ app.get('/sessions/detect', (req, res) => {
 });
 
 /**
+ * GET /sessions/:sessionId/media-info - Obtener información de descarga de archivos multimedia
+ * Útil para que el backend obtenga información detallada sobre archivos multimedia
+ */
+app.get('/sessions/:sessionId/media-info', (req, res) => {
+    try {
+        const { sessionId } = req.params;
+        const sessionStatus = sessionManager.getSessionStatus(sessionId);
+        
+        if (!sessionStatus) {
+            return res.status(404).json({
+                success: false,
+                message: 'Sesión no encontrada'
+            });
+        }
+
+        if (sessionStatus.status !== 'connected') {
+            return res.status(400).json({
+                success: false,
+                message: 'La sesión no está conectada',
+                status: sessionStatus.status
+            });
+        }
+
+        // Este endpoint es principalmente informativo
+        // La información real de multimedia se envía automáticamente con cada mensaje
+        res.json({
+            success: true,
+            message: 'Información de multimedia disponible en mensajes recibidos',
+            sessionId: sessionId,
+            status: sessionStatus.status,
+            multimediaSupport: {
+                supportedTypes: ['image', 'video', 'audio', 'sticker', 'document', 'contact', 'location'],
+                downloadMethods: ['direct_url', 'media_key'],
+                autoDownload: sessionManager.options.downloadMedia,
+                infoIncluded: [
+                    'URLs directas',
+                    'Media keys para descarga',
+                    'Metadatos completos (tamaño, tipo, dimensiones)',
+                    'Thumbnails y previews',
+                    'Información de contexto',
+                    'Timestamps',
+                    'Nombres de archivo sugeridos'
+                ]
+            },
+            note: 'Toda la información multimedia se envía automáticamente al backend en cada mensaje recibido'
+        });
+
+    } catch (error) {
+        console.log('Error al obtener información de multimedia:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error al obtener información de multimedia',
+            error: error.message
+        });
+    }
+});
+
+/**
  * GET /health - Endpoint de salud del servicio
  */
 app.get('/health', (req, res) => {
@@ -548,9 +641,11 @@ async function initializeServer() {
             console.log(`📱 Estado sesión: GET http://localhost:${PORT}/sessions/:sessionId`);
             console.log(`📤 Enviar mensaje: POST http://localhost:${PORT}/sessions/:sessionId/send-message`);
             console.log(`🔄 Reiniciar sesión: POST http://localhost:${PORT}/sessions/:sessionId/restart`);
+            console.log(`🔌 Desconectar sesión: POST http://localhost:${PORT}/sessions/:sessionId/disconnect`);
             console.log(`🗑️ Eliminar sesión: DELETE http://localhost:${PORT}/sessions/:sessionId`);
             console.log(`🔍 Detectar sesiones: GET http://localhost:${PORT}/sessions/detect`);
             console.log(`♻️ Restaurar sesiones: POST http://localhost:${PORT}/sessions/restore`);
+            console.log(`📁 Info multimedia: GET http://localhost:${PORT}/sessions/:sessionId/media-info`);
             console.log('');
             console.log('=== CONFIGURACIÓN Y MONITOREO ===');
             console.log(`⚙️ Health Check: http://localhost:${PORT}/health`);

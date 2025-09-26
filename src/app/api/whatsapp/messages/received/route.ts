@@ -263,7 +263,9 @@ export async function POST(request: NextRequest) {
       media_info: body.media_info,
       raw_message: body.raw_message,
       received_at: body.received_at,
-      phone_number_session: body.phone_number_session
+      phone_number_session: body.phone_number_session,
+      ...(body.message_type === 'image' ? {image_compressed: body.image_compressed} : {}),
+      ...(body.message_type === 'image' ? {image_mimetype: body.image_mimetype} : {})
     };
 
     // Crear el mensaje - el remitente_id depende de quién envió el mensaje
@@ -294,12 +296,6 @@ export async function POST(request: NextRequest) {
     }
 
     const savedMessage = await handleResponse(createMessageResponse);
-    
-    if (isFromMe) {
-      console.log(`[WhatsApp Message] Mensaje enviado por nosotros a ${body.recipient_name} (${body.recipient_phone_number}) en sesión ${body.session_id}`);
-    } else {
-      console.log(`[WhatsApp Message] Mensaje recibido de ${body.sender_name} (${body.sender_phone_number}) en sesión ${body.session_id}`);
-    }
     
     return NextResponse.json({
       success: true,

@@ -13,6 +13,7 @@ const apiEndpoints = {
   whatsappSessions: `${API_BASE_URL}/api/whatsapp_sessions`,
   whatsappSessionsById: (id: number) => `${API_BASE_URL}/api/whatsapp_sessions/${id}`,
   newSessionConnected: `${API_BASE_URL}/api/whatsapp_sessions/new-session-connected`,
+  disconnectSession: (id: number) => `${API_BASE_URL}/api/whatsapp_sessions/${id}/disconnect`,
 };
 
 class WhatsAppSessionsServices {
@@ -284,6 +285,43 @@ class WhatsAppSessionsServices {
         success: false,
         error: `Error de conexión al obtener sesiones de WhatsApp con estado ${status}`,
         data: []
+      };
+    }
+  }
+
+  /**
+   * Desconecta una sesión de WhatsApp QR
+   */
+  async disconnectSession(id: number): Promise<ApiResponse<{
+    session_id: string;
+    orchestrator_disconnect: {
+      success: boolean;
+      message: string;
+    };
+    updated_session?: WhatsAppSessionResponse;
+  }>> {
+    try {
+      const response = await fetch(apiEndpoints.disconnectSession(id), {
+        method: 'POST',
+        headers: this.getHeaders()
+      });
+
+      const data = await this.handleResponse<ApiResponse<{
+        session_id: string;
+        orchestrator_disconnect: {
+          success: boolean;
+          message: string;
+        };
+        updated_session?: WhatsAppSessionResponse;
+      }>>(response);
+      return data;
+
+    } catch (error) {
+      console.error('Error disconnecting WhatsApp session:', error);
+      
+      return {
+        success: false,
+        error: 'Error de conexión al desconectar sesión de WhatsApp'
       };
     }
   }

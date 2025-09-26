@@ -202,9 +202,15 @@ Actualiza los datos de una sesión existente.
 
 ---
 
-### 5. **DELETE** `/api/sesiones/[id]` - Eliminar Sesión
+### 5. **DELETE** `/api/sesiones/[id]` - Eliminar Sesión con Eliminación en Cascada
 
-Elimina una sesión del sistema.
+Elimina una sesión del sistema junto con todos sus chats, mensajes y sesiones de WhatsApp asociadas. El proceso de eliminación sigue el siguiente orden:
+
+1. **Obtiene la sesión** para verificar su tipo y datos asociados
+2. **Elimina todos los mensajes** de todos los chats de la sesión
+3. **Elimina todos los chats** de la sesión
+4. **Si es whatsapp_qr**: Elimina la `whatsapp_session` asociada
+5. **Elimina la sesión** final
 
 **Parámetros:**
 - `id` (number): ID de la sesión
@@ -213,7 +219,29 @@ Elimina una sesión del sistema.
 ```json
 {
   "success": true,
-  "data": undefined
+  "data": {
+    "message": "Sesión 47 eliminada exitosamente",
+    "deletedChats": 3,
+    "deletedMessages": "Todos los mensajes de los chats fueron eliminados",
+    "deletedWhatsAppSession": true,
+    "sessionType": "whatsapp_qr"
+  }
+}
+```
+
+**Response (400):**
+```json
+{
+  "success": false,
+  "error": "ID de sesión inválido"
+}
+```
+
+**Response (500):**
+```json
+{
+  "success": false,
+  "error": "Error al eliminar sesión"
 }
 ```
 
@@ -250,7 +278,22 @@ Elimina una sesión del sistema.
 
 5. **Seguridad**: Los campos sensibles como `api_key`, `access_token`, `email_password` deben manejarse con cuidado en producción.
 
-6. **Campos Opcionales**:
+6. **Eliminación en Cascada**: El endpoint DELETE implementa eliminación en cascada:
+   - **Paso 1**: Obtiene la sesión para verificar su tipo y datos asociados
+   - **Paso 2**: Elimina todos los mensajes de todos los chats de la sesión
+   - **Paso 3**: Elimina todos los chats de la sesión
+   - **Paso 4**: Si es `whatsapp_qr`, elimina la `whatsapp_session` asociada
+   - **Paso 5**: Elimina la sesión final
+   - Si falla la eliminación de mensajes o whatsapp_session, se registra un warning pero continúa con la eliminación
+   - La respuesta incluye información detallada sobre qué fue eliminado
+
+7. **Eliminación de WhatsApp Sessions**: Para sesiones de tipo `whatsapp_qr`:
+   - Se verifica automáticamente si la sesión tiene una `whatsapp_session` asociada
+   - Si existe, se elimina la `whatsapp_session` antes de eliminar la sesión principal
+   - La respuesta incluye `deletedWhatsAppSession: true/false` para confirmar la eliminación
+   - Si falla la eliminación de la `whatsapp_session`, se registra un warning pero continúa con la eliminación de la sesión
+
+8. **Campos Opcionales**:
    - `api_key`, `access_token`, `phone_number`, `email_user`, `email_password`, `smtp_host`, `smtp_port`, `imap_host`, `imap_port` son opcionales
    - `estado` tiene valor por defecto 'Activo'
    - `id` es opcional en creación (se genera automáticamente)

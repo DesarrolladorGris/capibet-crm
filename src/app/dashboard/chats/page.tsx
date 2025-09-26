@@ -103,7 +103,6 @@ export default function ChatsPage() {
   // Función para cargar datos cuando se selecciona un espacio
   const loadDataForEspacio = useCallback(async (espacioId: number) => {
     try {
-      console.log('⚡ Cargando embudos y sesiones para espacio:', espacioId);
       
       // Cargar embudos y sesiones del espacio en paralelo
       const [embudosResult, sesionesResult] = await Promise.all([
@@ -111,34 +110,25 @@ export default function ChatsPage() {
         sesionesServices.getAllSesiones()
       ]);
       
-      console.log('📊 Resultado embudos:', embudosResult);
-      console.log('📊 Resultado sesiones:', sesionesResult);
       
       if (embudosResult.success && embudosResult.data) {
-        console.log('✅ Embudos cargados:', embudosResult.data.length);
         setEmbudos(embudosResult.data);
       } else {
-        console.log('❌ Error cargando embudos');
         setEmbudos([]);
       }
       
       if (sesionesResult.success && sesionesResult.data) {
-        console.log('✅ Sesiones totales:', sesionesResult.data.length);
         
         // Filtrar sesiones que pertenecen a embudos de este espacio
         const embudosIds = embudosResult.data?.map(e => e.id) || [];
-        console.log('📊 IDs de embudos del espacio:', embudosIds);
         
         const sesionesDelEspacio = sesionesResult.data.filter(sesion => 
           embudosIds.includes(sesion.embudo_id)
         );
-        console.log('✅ Sesiones del espacio filtradas:', sesionesDelEspacio.length);
-        console.log('📊 Tipos de sesiones:', [...new Set(sesionesDelEspacio.map(s => s.type))]);
         
         setSesiones(sesionesDelEspacio);
         setSesionesDelEmbudo(sesionesDelEspacio.map(s => s.id));
       } else {
-        console.log('❌ Error cargando sesiones');
         setSesiones([]);
         setSesionesDelEmbudo([]);
       }
@@ -160,8 +150,6 @@ export default function ChatsPage() {
     setError('');
     
     try {
-      console.log('⚡ Cargando datos para chats...');
-      
       // Cargar datos en paralelo
       const [espaciosResult, contactosResult] = await Promise.all([
         espacioTrabajoServices.getAllEspaciosTrabajo(),
@@ -213,6 +201,37 @@ export default function ChatsPage() {
     return 'Mensaje multimedia o no disponible';
   };
 
+  // Función para verificar si un mensaje es de tipo imagen
+  const isImageMessage = (message: MensajeResponse): boolean => {
+    if (typeof message.content === 'object' && message.content) {
+      // Verificar message_type
+      if ('message_type' in message.content && message.content.message_type === 'image') {
+        return true;
+      }
+    }
+    return false;
+  };
+
+  // Función para obtener la imagen comprimida en base64
+  const getImageCompressed = (message: MensajeResponse): string | null => {
+    if (typeof message.content === 'object' && message.content) {
+      if ('image_compressed' in message.content && typeof message.content.image_compressed === 'string') {
+        return message.content.image_compressed;
+      }
+    }
+    return null;
+  };
+
+  // Función para obtener el MIME type de la imagen
+  const getImageMimetype = (message: MensajeResponse): string | null => {
+    if (typeof message.content === 'object' && message.content) {
+      if ('image_mimetype' in message.content && typeof message.content.image_mimetype === 'string') {
+        return message.content.image_mimetype;
+      }
+    }
+    return null;
+  };
+
   // Función para determinar si un mensaje de WhatsApp QR fue enviado por nosotros
   const isMessageFromMe = (message: MensajeResponse): boolean => {
     // Solo procesar mensajes de WhatsApp QR
@@ -256,20 +275,13 @@ export default function ChatsPage() {
 
   // Función para cargar chats reales de la API por sesiones
   const loadChatsFromSesiones = useCallback(async () => {
-    console.log('🔍 DEBUG - loadChatsFromSesiones called');
-    console.log('🔍 sesionesDelEmbudo:', sesionesDelEmbudo);
-    console.log('🔍 contactos.length:', contactos.length);
-    console.log('🔍 sesiones.length:', sesiones.length);
-
     if (sesionesDelEmbudo.length === 0 || !contactos.length) {
-      console.log('❌ No hay sesiones del embudo o contactos, limpiando chats');
       setChats([]);
       return;
     }
 
     setIsLoadingChats(true);
     try {
-      console.log('⚡ Cargando chats para sesiones:', sesionesDelEmbudo);
       
       // Obtener chats y mensajes en paralelo para optimizar
       const [chatsResult, mensajesResult] = await Promise.all([
@@ -277,29 +289,20 @@ export default function ChatsPage() {
         mensajesServices.getAllMensajes()
       ]);
       
-      console.log('🔍 chatsResult:', chatsResult);
-      console.log('🔍 mensajesResult success:', mensajesResult.success);
-      
       if (chatsResult.success && chatsResult.data) {
-        console.log('📊 Total chats obtenidos de la API:', chatsResult.data.length);
         
         // Filtrar chats que pertenecen a las sesiones del embudo seleccionado
         const chatsDelEmbudo = chatsResult.data.filter(chat => 
           sesionesDelEmbudo.includes(chat.sesion_id)
         );
         
-        console.log('📊 Chats del embudo después del filtrado:', chatsDelEmbudo.length);
-        console.log('📊 Chats del embudo:', chatsDelEmbudo);
-
         // Crear un mapa de mensajes por chat_id para optimizar búsqueda
         const mensajesPorChat = new Map<number, MensajeResponse>();
         
         if (mensajesResult.success && mensajesResult.data) {
-          console.log('📊 Total mensajes obtenidos:', mensajesResult.data.length);
           
           // TEMPORAL: Procesar todos los tipos de mensajes para debugging
           const todosMensajes = mensajesResult.data;
-          console.log('📊 Tipos de mensajes encontrados:', [...new Set(todosMensajes.map(m => m.type))]);
           
           // Agrupar por chat_id y obtener el más reciente
           todosMensajes.forEach(mensaje => {
@@ -308,8 +311,6 @@ export default function ChatsPage() {
               mensajesPorChat.set(mensaje.chat_id, mensaje);
             }
           });
-          
-          console.log('📊 Mensajes por chat mapeados:', mensajesPorChat.size);
         }
 
         // Crear objetos Chat completos
@@ -319,16 +320,10 @@ export default function ChatsPage() {
           const contacto = contactos.find(c => c.id === chatData.contact_id);
           const sesion = sesiones.find(s => s.id === chatData.sesion_id);
 
-          console.log('🔍 Procesando chat:', chatData.id);
-          console.log('🔍 Contacto encontrado:', !!contacto, contacto?.nombre);
-          console.log('🔍 Sesión encontrada:', !!sesion, sesion?.type);
-
           if (contacto && sesion) {
-            console.log('🔍 Tipo de sesión:', sesion.type);
             
             // TEMPORAL: Mostrar todos los tipos para debugging
             const ultimoMensaje = mensajesPorChat.get(chatData.id);
-            console.log('🔍 Último mensaje encontrado:', !!ultimoMensaje);
 
             chatsCompletos.push({
               id: chatData.id,
@@ -340,11 +335,6 @@ export default function ChatsPage() {
               estado: 'activo'
             });
             
-            if (sesion.type !== 'whatsapp_api') {
-              console.log('⚠️ Sesión no es whatsapp_api pero incluida para debugging:', sesion.type);
-            }
-          } else {
-            console.log('❌ Faltan datos - contacto:', !!contacto, 'sesión:', !!sesion);
           }
         }
 
@@ -355,15 +345,11 @@ export default function ChatsPage() {
           return dateB.getTime() - dateA.getTime();
         });
 
-        console.log('✅ Chats completos finales:', chatsCompletos.length);
-        console.log('✅ Chats finales:', chatsCompletos);
         setChats(chatsCompletos);
       } else {
-        console.log('❌ Error en chatsResult:', chatsResult);
         setChats([]);
       }
     } catch (error) {
-      console.error('❌ Error cargando chats:', error);
       setChats([]);
     } finally {
       setIsLoadingChats(false);
@@ -400,9 +386,7 @@ export default function ChatsPage() {
     console.log('🔍 selectedEmbudo:', selectedEmbudo);
     
     if (embudos.length > 0 && sesiones.length > 0 && selectedEmbudo === null) {
-      console.log('✅ Auto-seleccionando "Todos"');
       const allSesionIds = sesiones.map(s => s.id);
-      console.log('🔍 IDs de sesiones para "Todos":', allSesionIds);
       setSesionesDelEmbudo(allSesionIds);
     }
   }, [embudos, sesiones, selectedEmbudo]);
@@ -418,14 +402,6 @@ export default function ChatsPage() {
     chat.contacto.telefono.includes(searchQuery) ||
     (chat.ultimoMensaje && getMessageContent(chat.ultimoMensaje).toLowerCase().includes(searchQuery.toLowerCase()))
   );
-
-  // Log para debugging
-  console.log('🔍 DEBUG - Render:');
-  console.log('🔍 chats.length:', chats.length);
-  console.log('🔍 filteredChats.length:', filteredChats.length);
-  console.log('🔍 isLoading:', isLoading);
-  console.log('🔍 isLoadingChats:', isLoadingChats);
-  console.log('🔍 selectedEspacio:', selectedEspacio?.nombre);
 
   // Seleccionar chat y cargar mensajes por chat_id
   const handleSelectChat = async (chat: Chat) => {
@@ -457,10 +433,6 @@ export default function ChatsPage() {
         
         setMessages(chatMessages);
         
-        console.log(`🔍 Mensajes cargados para chat ${chat.id} (${chat.sesion.type}):`, chatMessages.length);
-        if (chat.sesion.type === 'whatsapp_qr') {
-          console.log('📱 Procesando mensajes de WhatsApp QR con lógica fromMe');
-        }
       } else {
         setMessages([]);
       }
@@ -557,7 +529,6 @@ export default function ChatsPage() {
           setMessages([]);
         }
         
-        console.log('✅ Chat eliminado exitosamente');
       } else {
         console.error('❌ Error eliminando chat:', result.error);
         setError('Error al eliminar el chat');
@@ -571,7 +542,7 @@ export default function ChatsPage() {
   };
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden">
+    <div className="h-[847px] flex flex-col overflow-hidden">
       {/* Header de Chats */}
       <div className="bg-[var(--bg-primary)] border-b border-[var(--border-primary)] px-6 py-4 flex-shrink-0">
         <div className="flex items-center justify-between">
@@ -643,7 +614,7 @@ export default function ChatsPage() {
       )}
 
       {/* Contenido principal */}
-      <div className="flex-1 flex min-h-0">
+      <div className="flex-1 flex min-h-0 max-h-[750px]">
         {/* Lista de chats */}
         <div className="w-1/3 bg-[var(--bg-primary)] border-r border-[var(--border-primary)] flex flex-col min-h-0">
            {/* Loading state */}
@@ -737,7 +708,7 @@ export default function ChatsPage() {
                       </div>
                     </div>
                      <div className="flex items-center justify-between">
-                       <p className="text-[var(--text-muted)] text-sm truncate flex-1">
+                       <p className="text-[var(--text-muted)] text-sm truncate flex-1 max-w-[400px]">
                          {chat.ultimoMensaje ? getMessageContent(chat.ultimoMensaje) : 'Sin mensajes'}
                        </p>
                      </div>
@@ -807,6 +778,9 @@ export default function ChatsPage() {
               <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-[var(--bg-primary)] min-h-0">
                 {messages.map((message) => {
                   const fromMe = isMessageFromMe(message);
+                  const isImage = isImageMessage(message);
+                  const imageCompressed = getImageCompressed(message);
+                  const imageMimetype = getImageMimetype(message);
                   return (
                     <div
                       key={message.id}
@@ -819,9 +793,37 @@ export default function ChatsPage() {
                             : 'bg-[var(--bg-secondary)] text-[var(--text-primary)] border border-[var(--border-primary)]'
                         }`}
                       >
-                         <p className="text-sm">
-                           {getMessageContent(message)}
-                         </p>
+                        {/* Mostrar imagen si es un mensaje de tipo imagen */}
+                        {isImage && imageCompressed && (
+                          <div className="mb-2 max-h-[400px] overflow-hidden">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={`data:${imageMimetype};base64,` + imageCompressed}
+                              alt="Imagen del mensaje"
+                              className="rounded-lg max-w-full max-h-[400px] w-auto h-auto object-contain cursor-pointer hover:opacity-90 transition-opacity"
+                              onClick={() => {
+                                // Crear un blob y abrirlo en nueva pestaña
+                                const byteCharacters = atob(imageCompressed);
+                                const byteNumbers = new Array(byteCharacters.length);
+                                for (let i = 0; i < byteCharacters.length; i++) {
+                                  byteNumbers[i] = byteCharacters.charCodeAt(i);
+                                }
+                                const byteArray = new Uint8Array(byteNumbers);
+                                const blob = new Blob([byteArray], { type: imageMimetype || 'image/jpeg' });
+                                const url = URL.createObjectURL(blob);
+                                window.open(url, '_blank');
+                                // Limpiar la URL después de un tiempo para liberar memoria
+                                setTimeout(() => URL.revokeObjectURL(url), 1000);
+                              }}
+                            />
+                          </div>
+                        )}
+                        
+                        {/* Mostrar contenido del mensaje */}
+                        <p className="text-sm">
+                          {getMessageContent(message)}
+                        </p>
+                        
                         <div className={`text-xs mt-1 ${
                           fromMe ? 'text-green-100' : 'text-[var(--text-muted)]'
                         }`}>

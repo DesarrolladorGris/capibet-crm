@@ -41,7 +41,6 @@ export interface NewSessionConnectedData {
   status: 'connected';
   last_seen?: string; // Puede venir vacío del orquestador
   auth_folder_path?: string; // Puede venir vacío del orquestador
-  server_port?: number | null;
   whatsapp_user_id?: string; // Puede venir vacío del orquestador
   created_at?: string;
   updated_at?: string;
@@ -60,7 +59,6 @@ export interface UpdateWhatsAppSessionData {
   status: 'connected';
   last_seen?: string;
   auth_folder_path?: string;
-  server_port?: number | null;
   whatsapp_user_id?: string;
   updated_at: string;
 }

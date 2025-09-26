@@ -118,6 +118,8 @@ export interface WhatsAppMessagePayload {
   raw_message: WhatsAppRawMessage;
   received_at: string;
   phone_number_session: string;
+  image_compressed?: string;
+  image_mimetype?: string;
 }
 
 /**

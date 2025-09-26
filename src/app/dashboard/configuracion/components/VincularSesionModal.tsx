@@ -163,10 +163,29 @@ export default function VincularSesionModal({
       setQrStep('generating');
       setErrorMessage('');
       
+      // Verificar que no hay sesiones de WhatsApp conectadas previas que puedan interferir
+      console.log('🔍 Verificando sesiones de WhatsApp existentes antes de generar QR...');
+      const existingSessionsResponse = await fetch('/api/whatsapp_sessions?status=eq.connected', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+      
+      if (existingSessionsResponse.ok) {
+        const existingSessions = await existingSessionsResponse.json();
+        if (existingSessions.success && existingSessions.data && existingSessions.data.length > 0) {
+          console.log('⚠️ Se encontraron sesiones de WhatsApp conectadas existentes:', existingSessions.data.length);
+          // No es un error, solo informativo
+        }
+      }
+      
       // Solo generar el QR, NO crear ninguna sesión todavía
       const qrResponse = await whatsAppApiService.generateQR();
       setQrData(qrResponse);
       qrGenerated = true; // Marcar que el QR se generó exitosamente
+      
+      console.log('✅ QR generado con sessionId:', qrResponse.sessionId);
       
       // Obtener datos del usuario actual desde localStorage
       const userDataStr = localStorage.getItem('userData');
@@ -260,12 +279,33 @@ export default function VincularSesionModal({
       
       if (result.success && result.data && result.data.length > 0) {
         const whatsappSession = result.data[0];
+        
+        // Verificar que la sesión corresponde exactamente al sessionId solicitado
+        if (whatsappSession.session_id !== sessionId) {
+          console.log('⚠️ Sesión encontrada pero session_id no coincide:', {
+            expected: sessionId,
+            found: whatsappSession.session_id
+          });
+          return false;
+        }
+        
         // Solo considerar conectada si tiene status 'connected' y datos de conexión
-        return whatsappSession.status === 'connected' && 
-               whatsappSession.phone_number && 
-               whatsappSession.whatsapp_user_id;
+        const isConnected = whatsappSession.status === 'connected' && 
+                           whatsappSession.phone_number && 
+                           whatsappSession.whatsapp_user_id;
+        
+        console.log('🔍 Verificación de sesión WhatsApp:', {
+          sessionId,
+          status: whatsappSession.status,
+          hasPhoneNumber: !!whatsappSession.phone_number,
+          hasWhatsAppUserId: !!whatsappSession.whatsapp_user_id,
+          isConnected
+        });
+        
+        return isConnected;
       }
       
+      console.log('⏳ No se encontró sesión WhatsApp para sessionId:', sessionId);
       return false;
     } catch (error) {
       console.error('Error verificando estado de WhatsApp session:', error);
@@ -275,18 +315,23 @@ export default function VincularSesionModal({
 
   // Función para iniciar polling y verificar cuando la sesión se cree y active
   const startPollingForConnection = (sessionId: string) => {
+    console.log('🔄 Iniciando polling para sessionId:', sessionId);
+    
     const interval = setInterval(async () => {
       try {
         // Primero verificar el estado real de la sesión de WhatsApp
         const isWhatsAppConnected = await checkWhatsAppSessionStatus(sessionId);
         
         if (isWhatsAppConnected) {
+          console.log('✅ WhatsApp session conectada, buscando sesión principal...');
+          
           // Ahora buscar la sesión principal asociada
           const result = await sesionesServices.getSesionesWhatsAppBySession(sessionId);
           
           console.log('🔍 Resultado del polling de sesión principal:', {
             success: result.success,
             dataLength: result.data?.length || 0,
+            sessionId
           });
           
           if (result.success && result.data && result.data.length > 0) {
@@ -295,6 +340,14 @@ export default function VincularSesionModal({
             const whatsappSessionResult = await whatsappSessionsServices.getWhatsAppSessionBySessionId(sessionId);
             if (whatsappSessionResult.success && whatsappSessionResult.data) {
               const whatsappSessionId = whatsappSessionResult.data.id;
+              
+              console.log('🔍 Verificando coincidencia de sesiones:', {
+                sesionEstado: sesion.estado,
+                sesionWhatsAppSession: sesion.whatsapp_session,
+                whatsappSessionId,
+                coinciden: Number(sesion.whatsapp_session) === whatsappSessionId
+              });
+              
               if (sesion.estado === 'activo' && Number(sesion.whatsapp_session) === whatsappSessionId) {
                 console.log('✅ Sesión conectada exitosamente detectada via polling');
                 
@@ -304,18 +357,25 @@ export default function VincularSesionModal({
                   sesionId: sesion.id
                 } : null);
                 
-                // Limpiar datos temporales del servidor
-                fetch(`/api/whatsapp_sessions/temp-data?sessionId=${sessionId}`, {
-                  method: 'DELETE'
-                }).catch(err => console.error('Error limpiando datos temporales:', err));
-                
-                handleWhatsAppConnection();
-                
-                // Limpiar polling
+                // Limpiar polling primero
                 clearInterval(interval);
                 setPollingInterval(null);
+                
+                // Llamar a la función de conexión exitosa
+                handleWhatsAppConnection();
+                
+                // Limpiar datos temporales del servidor después de un breve delay
+                setTimeout(() => {
+                  fetch(`/api/whatsapp_sessions/temp-data?sessionId=${sessionId}`, {
+                    method: 'DELETE'
+                  }).catch(err => console.error('Error limpiando datos temporales:', err));
+                }, 1000);
               } else {
-                console.log('⏳ Sesión principal encontrada pero no está activa o no coincide:');
+                console.log('⏳ Sesión principal encontrada pero no está activa o no coincide:', {
+                  estado: sesion.estado,
+                  whatsappSessionId: sesion.whatsapp_session,
+                  expectedWhatsappSessionId: whatsappSessionId
+                });
               }
             } else {
               console.log('⏳ No se pudo obtener la sesión de WhatsApp para sessionId:', sessionId);
@@ -390,7 +450,8 @@ export default function VincularSesionModal({
         });
       }
       
-      resetQRState();
+      // NO limpiar tempSesionData aquí, se limpiará cuando se cierre el modal
+      // resetQRState();
     } else {
       console.error('❌ No se puede completar conexión: falta tempSesionData o sesionId');
     }
@@ -433,6 +494,19 @@ export default function VincularSesionModal({
     });
     resetQRState();
     onClose();
+  };
+
+  const handleFinalizar = () => {
+    // Si estamos en estado 'connected' y tenemos tempSesionData, llamar a onVincular
+    if (qrStep === 'connected' && tempSesionData && tempSesionData.sesionId) {
+      onVincular({
+        ...tempSesionData,
+        sesionId: tempSesionData.sesionId
+      });
+    }
+    
+    // Cerrar el modal
+    handleClose();
   };
 
   if (!isOpen) return null;
@@ -567,7 +641,7 @@ export default function VincularSesionModal({
             <div className="flex space-x-4 pt-4 border-t border-[#3a3d45]">
               <button
                 type="button"
-                onClick={handleClose}
+                onClick={qrStep === 'connected' ? handleFinalizar : handleClose}
                 className="flex-1 bg-[#3a3d45] hover:bg-[#4a4d55] text-white px-6 py-3 rounded-lg transition-colors font-medium"
               >
                 {qrStep === 'connected' ? 'Finalizar' : 'Cancelar'}

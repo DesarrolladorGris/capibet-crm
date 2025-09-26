@@ -103,7 +103,6 @@ export async function POST(request: NextRequest) {
         status: 'connected',
         last_seen: body.last_seen || new Date().toISOString(),
         auth_folder_path: body.auth_folder_path || '',
-        server_port: body.server_port || null,
         whatsapp_user_id: body.whatsapp_user_id || '',  
         created_at: body.created_at || new Date().toISOString(),
         updated_at: body.updated_at || new Date().toISOString()
@@ -214,9 +213,6 @@ export async function POST(request: NextRequest) {
       }
       if (body.auth_folder_path !== undefined) {
         updateData.auth_folder_path = body.auth_folder_path;
-      }
-      if (body.server_port !== undefined) {
-        updateData.server_port = body.server_port;
       }
       if (body.whatsapp_user_id !== undefined) {
         updateData.whatsapp_user_id = body.whatsapp_user_id;

@@ -17,6 +17,7 @@ interface Canal {
 }
 import { embudoServices } from '@/services/embudoServices';
 import { userServices } from '@/services/userServices';
+import { contactoServices } from '@/services/contactoServices';
 import CanalSelector from './CanalSelector';
 import SesionesList from './SesionesList';
 import ConfirmDeleteCanalModal from './ConfirmDeleteCanalModal';
@@ -73,6 +74,7 @@ export default function SesionesTab() {
   });
   const [usuarios, setUsuarios] = useState<{id: number, nombre_usuario: string, correo_electronico: string}[]>([]);
   const [embudos, setEmbudos] = useState<{id: number, nombre: string}[]>([]);
+  const [contactos, setContactos] = useState<{id: number, nombre: string, apellido?: string, nombre_completo?: string}[]>([]);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [canalToDelete, setCanalToDelete] = useState<Canal | null>(null);
   const [canalSesiones, setCanalSesiones] = useState<Record<string, SesionResponse[]>>({});
@@ -82,6 +84,7 @@ export default function SesionesTab() {
     loadSesiones();
     loadUsuarios();
     loadEmbudos();
+    loadContactos();
   }, []);
 
   const loadCanales = async () => {
@@ -149,6 +152,17 @@ export default function SesionesTab() {
       }
     } catch (error) {
       console.error('Error loading embudos:', error);
+    }
+  };
+
+  const loadContactos = async () => {
+    try {
+      const result = await contactoServices.getAllContactos();
+      if (result.success && result.data) {
+        setContactos(result.data);
+      }
+    } catch (error) {
+      console.error('Error loading contactos:', error);
     }
   };
 
@@ -346,19 +360,21 @@ export default function SesionesTab() {
     // Para otros tipos, cerrar inmediatamente
     if (data.type === 'whatsapp_qr') {
       if (data.sesionId) {
-        // Conexión exitosa de WhatsApp, cerrar modal
+        // Conexión exitosa de WhatsApp, cerrar modal y actualizar lista
         console.log('✅ Conexión WhatsApp exitosa, cerrando modal');
         setShowVincularSesion(false);
         setTipoSesionSeleccionado('');
-        // Aquí podrías refrescar la lista de sesiones si es necesario
+        // Actualizar la lista de sesiones
+        loadSesiones();
       } else {
         // WhatsApp QR iniciado pero aún no conectado, mantener modal abierto
         console.log('🔄 WhatsApp QR iniciado, manteniendo modal abierto para escaneo');
       }
     } else {
-      // Para otros tipos de sesión, cerrar inmediatamente
+      // Para otros tipos de sesión, cerrar inmediatamente y actualizar lista
       setShowVincularSesion(false);
       setTipoSesionSeleccionado('');
+      loadSesiones();
     }
   };
 
@@ -497,6 +513,8 @@ export default function SesionesTab() {
           <SesionesList 
             sesiones={sesiones}
             canales={canales}
+            contactos={contactos}
+            embudos={embudos}
             onToggleStatus={handleToggleSesionStatus}
             onDeleteSesion={handleDeleteSesion}
           />
