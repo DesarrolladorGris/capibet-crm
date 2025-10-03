@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Tag, Search, Edit2, Trash2, X, AlertTriangle } from 'lucide-react';
 import { etiquetasServices } from '@/services/etiquetasServices';
+import { getUserData } from '@/utils/auth';
 
 // Importar la interfaz del servicio
 import type { EtiquetaResponse } from '@/app/api/etiquetas/domain/etiqueta';
@@ -16,44 +17,44 @@ interface EtiquetaFormData {
 // Datos de prueba
 const etiquetasPrueba: EtiquetaResponse[] = [
   {
-    id: 1,
+    id: '00000000-0000-0000-0000-000000000001',
     nombre: 'Cliente VIP',
     color: '#F29A1F',
     descripcion: 'Clientes de alto valor',
-    creado_por: 1,
+    creado_por: '00000000-0000-0000-0000-000000000000',
+    organizacion_id: '00000000-0000-0000-0000-000000000000',
     creado_en: '2024-12-28T10:00:00Z'
   },
   {
-    id: 2,
+    id: '00000000-0000-0000-0000-000000000002',
     nombre: 'Urgente',
     color: '#d63031',
     descripcion: 'Tareas prioritarias',
-    creado_por: 1,
+    creado_por: '00000000-0000-0000-0000-000000000000',
+    organizacion_id: '00000000-0000-0000-0000-000000000000',
     creado_en: '2024-12-28T10:00:00Z'
   },
   {
-    id: 3,
+    id: '00000000-0000-0000-0000-000000000003',
     nombre: 'Nuevo',
     color: '#0984e3',
     descripcion: 'Elementos recientes',
-    creado_por: 1,
+    creado_por: '00000000-0000-0000-0000-000000000000',
+    organizacion_id: '00000000-0000-0000-0000-000000000000',
     creado_en: '2024-12-28T10:00:00Z'
   },
   {
-    id: 4,
+    id: '00000000-0000-0000-0000-000000000004',
     nombre: 'Oferta',
     color: '#fd79a8',
     descripcion: 'Promociones activas',
-    creado_por: 1,
+    creado_por: '00000000-0000-0000-0000-000000000000',
+    organizacion_id: '00000000-0000-0000-0000-000000000000',
     creado_en: '2024-12-28T10:00:00Z'
   }
 ];
 
-interface EtiquetasTabProps {
-  onEtiquetasCountChange?: (count: number) => void;
-}
-
-export default function EtiquetasTab({ onEtiquetasCountChange }: EtiquetasTabProps = {}) {
+export default function EtiquetasTab() {
   const [etiquetas, setEtiquetas] = useState<EtiquetaResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -81,19 +82,15 @@ export default function EtiquetasTab({ onEtiquetasCountChange }: EtiquetasTabPro
       if (response.success && response.data) {
         console.log('Etiquetas recargadas exitosamente:', response.data);
         setEtiquetas(response.data);
-        // Notificar el cambio de contador al componente padre
-        onEtiquetasCountChange?.(response.data.length);
       } else {
         console.error('Error al recargar etiquetas:', response.error);
         // En caso de error, usar datos de prueba como fallback
         setEtiquetas(etiquetasPrueba);
-        onEtiquetasCountChange?.(etiquetasPrueba.length);
       }
     } catch (error) {
       console.error('Error al recargar etiquetas:', error);
       // En caso de error, usar datos de prueba como fallback
       setEtiquetas(etiquetasPrueba);
-      onEtiquetasCountChange?.(etiquetasPrueba.length);
     }
   };
 
@@ -120,7 +117,7 @@ export default function EtiquetasTab({ onEtiquetasCountChange }: EtiquetasTabPro
 
     try {
       if (editingEtiqueta && editingEtiqueta.id) {
-        // Actualizar etiqueta existente
+        // Actualizar etiqueta existente - NO enviar creado_por ni organizacion_id
         const response = await etiquetasServices.updateEtiqueta(editingEtiqueta.id, {
           nombre: formData.nombre,
           color: formData.color,
@@ -135,12 +132,20 @@ export default function EtiquetasTab({ onEtiquetasCountChange }: EtiquetasTabPro
           throw new Error(response.error || 'Error al actualizar etiqueta');
         }
       } else {
-        // Crear nueva etiqueta
+        // Crear nueva etiqueta - Incluir organizacion_id y creado_por
+        const userData = getUserData();
+        
+        if (!userData?.id || !userData?.organizacion_id) {
+          alert('No se pudo obtener la información del usuario. Por favor, recarga la página.');
+          return;
+        }
+
         const response = await etiquetasServices.createEtiqueta({
           nombre: formData.nombre,
           color: formData.color,
           descripcion: formData.descripcion,
-          creado_por: 1 // TODO: Obtener el ID del usuario logueado
+          creado_por: userData.id,
+          organizacion_id: userData.organizacion_id
         });
 
         if (response.success && response.data) {
@@ -245,10 +250,12 @@ export default function EtiquetasTab({ onEtiquetasCountChange }: EtiquetasTabPro
     <div className="p-6">
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
-        <div>
-          <h3 className="text-white text-xl font-semibold mb-2">Gestión de Etiquetas</h3>
-          <p className="text-gray-400">Organiza y categoriza tu contenido con etiquetas personalizadas</p>
-          <p className="text-gray-500 text-sm mt-1">Total de etiquetas: {etiquetas.length}</p>
+        <div className="flex items-center space-x-3">
+          <Tag className="w-8 h-8" />
+          <div>
+            <h2 className="text-white text-2xl font-semibold">Etiquetas</h2>
+            <p className="text-gray-400 text-sm">Crear, editar y eliminar tus etiquetas personalizadas.</p>
+          </div>
         </div>
         <button
           onClick={() => abrirModal()}

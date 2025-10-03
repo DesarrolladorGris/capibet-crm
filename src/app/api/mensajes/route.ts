@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseConfig } from '@/config/supabase';
 import { MensajeData } from './domain/mensaje';
-import { getHeaders, handleResponse } from './utils';
+import { handleResponse } from './utils';
+import { getSupabaseHeaders } from '@/utils/supabaseHeaders';
 
 // POST /api/mensajes - Crear mensaje
 export async function POST(request: NextRequest) {
@@ -46,7 +47,7 @@ export async function POST(request: NextRequest) {
 
     const response = await fetch(`${supabaseConfig.restUrl}/mensajes`, {
       method: 'POST',
-      headers: getHeaders(),
+      headers: getSupabaseHeaders(request, { preferRepresentation: true }),
       body: JSON.stringify(dataToSend)
     });
 
@@ -88,8 +89,33 @@ export async function GET(request: NextRequest) {
     const type = searchParams.get('type');
     const limit = searchParams.get('limit');
     const offset = searchParams.get('offset');
+    const lastPerChat = searchParams.get('last_per_chat'); // Nuevo parámetro para obtener solo el último mensaje por chat
 
-    // Construir query string para filtros
+    // Si se solicita solo el último mensaje por chat, usamos una consulta optimizada
+    // Esta consulta utiliza una función RPC en Supabase que ejecuta DISTINCT ON a nivel de DB
+    if (lastPerChat === 'true') {
+      const response = await fetch(`${supabaseConfig.restUrl}/rpc/get_last_messages_per_chat`, {
+        method: 'POST',
+        headers: getSupabaseHeaders(request, { preferRepresentation: true }),
+        body: JSON.stringify({})
+      });
+
+      if (!response.ok) {
+        return NextResponse.json({
+          success: false,
+          error: 'Error al obtener los últimos mensajes por chat'
+        }, { status: response.status });
+      }
+
+      const data = await handleResponse(response);
+      
+      return NextResponse.json({
+        success: true,
+        data: Array.isArray(data) ? data : []
+      });
+    }
+
+    // Consulta normal con filtros
     let queryString = '';
     const filters = [];
     
@@ -115,7 +141,7 @@ export async function GET(request: NextRequest) {
 
     const response = await fetch(`${supabaseConfig.restUrl}/mensajes${queryString}`, {
       method: 'GET',
-      headers: getHeaders()
+      headers: getSupabaseHeaders(request, { preferRepresentation: true })
     });
 
     if (!response.ok) {

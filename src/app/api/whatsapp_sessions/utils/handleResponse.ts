@@ -1,5 +1,13 @@
 import { NextResponse } from 'next/server';
-import { getHeaders } from './getHeaders';
+
+/**
+ * Headers básicos para las respuestas HTTP
+ */
+function getResponseHeaders(): HeadersInit {
+  return {
+    'Content-Type': 'application/json'
+  };
+}
 
 /**
  * Maneja las respuestas exitosas de la API
@@ -12,7 +20,7 @@ export function handleSuccess<T>(data: T, status: number = 200): NextResponse {
     },
     {
       status,
-      headers: getHeaders(),
+      headers: getResponseHeaders(),
     }
   );
 }
@@ -35,7 +43,7 @@ export function handleError(
     },
     {
       status,
-      headers: getHeaders(),
+      headers: getResponseHeaders(),
     }
   );
 }

@@ -1,23 +1,21 @@
 export interface ProductData {
-  id?: number;
+  id?: string;
   nombre: string;
-  moneda: string;
   precio: number;
-  cantidad: number;
-  descripcion?: string;
-  creado_por: number;
+  stock: number;
+  descripcion: string;
+  organizacion_id?: string;
+  created_at?: string;
 }
 
 export interface ProductResponse {
-  id: number;
+  id: string;
   nombre: string;
-  moneda: string;
   precio: number;
-  cantidad: number;
-  descripcion?: string;
-  creado_por: number;
-  created_at?: string;
-  updated_at?: string;
+  stock: number;
+  descripcion: string;
+  organizacion_id: string;
+  created_at: string;
 }
 
 export interface ApiResponse<T = unknown> {

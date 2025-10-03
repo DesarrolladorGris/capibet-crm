@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseConfig } from '@/config/supabase';
 import { EtiquetaData } from './domain/etiqueta';
-import { getHeaders, handleResponse } from './utils';
+import { handleResponse } from './utils';
+import { getSupabaseHeaders } from '@/utils/supabaseHeaders';
 
 // POST /api/etiquetas - Crear etiqueta
 export async function POST(request: NextRequest) {
@@ -9,25 +10,25 @@ export async function POST(request: NextRequest) {
     const etiquetaData: EtiquetaData = await request.json();
     
     // Validar campos requeridos
-    if (!etiquetaData.nombre || !etiquetaData.color || !etiquetaData.descripcion || !etiquetaData.creado_por) {
+    if (!etiquetaData.nombre || !etiquetaData.color || !etiquetaData.organizacion_id || !etiquetaData.creado_por) {
       return NextResponse.json({
         success: false,
-        error: 'Faltan campos requeridos: nombre, color, descripcion, creado_por'
+        error: 'Faltan campos requeridos'
       }, { status: 400 });
     }
 
     // Preparar los datos
-    const dataToSend = {
+    const dataToSend: Record<string, unknown> = {
       nombre: etiquetaData.nombre,
       color: etiquetaData.color,
       descripcion: etiquetaData.descripcion,
-      creado_por: etiquetaData.creado_por,
-      creado_en: etiquetaData.creado_en || new Date().toISOString()
+      organizacion_id: etiquetaData.organizacion_id,
+      creado_por: etiquetaData.creado_por
     };
 
     const response = await fetch(`${supabaseConfig.restUrl}/etiquetas`, {
       method: 'POST',
-      headers: getHeaders(),
+      headers: getSupabaseHeaders(request, { preferRepresentation: true }),
       body: JSON.stringify(dataToSend)
     });
 
@@ -60,11 +61,11 @@ export async function POST(request: NextRequest) {
 }
 
 // GET /api/etiquetas - Obtener todas las etiquetas
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const response = await fetch(`${supabaseConfig.restUrl}/etiquetas`, {
       method: 'GET',
-      headers: getHeaders()
+      headers: getSupabaseHeaders(request, { preferRepresentation: true })
     });
 
     if (!response.ok) {

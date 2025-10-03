@@ -6,7 +6,8 @@ import {
   NewSessionConnectedData,
   UpdateWhatsAppSessionData
 } from '../domain/whatsapp_session';
-import { getHeaders, handleResponse } from '../utils';
+import { handleResponse } from '../utils';
+import { getSupabaseHeaders } from '@/utils/supabaseHeaders';
 
 // Directorio temporal para archivos JSON
 const TEMP_DIR = path.join(process.cwd(), 'temp-sessions');
@@ -46,7 +47,7 @@ export async function POST(request: NextRequest) {
     // Buscar si ya existe una whatsapp_session con este session_id
     const fetchResponse = await fetch(`${supabaseConfig.restUrl}/whatsapp_sessions?session_id=eq.${body.session_id}`, {
       method: 'GET',
-      headers: getHeaders()
+      headers: getSupabaseHeaders(request, { preferRepresentation: true })
     });
 
     let whatsappSession = null;
@@ -73,19 +74,6 @@ export async function POST(request: NextRequest) {
       try {
         const fileContent = await fs.readFile(filePath, 'utf-8');
         const data = JSON.parse(fileContent);
-        
-        // // Verificar si los datos no han expirado (10 minutos)
-        // if (Date.now() - data.timestamp > 600000) {
-        //   // Eliminar archivo expirado
-        //   await fs.unlink(filePath);
-        //   console.error('Temp data expired for session_id:', body.session_id);
-        //   return NextResponse.json({
-        //     success: false,
-        //     error: 'Datos temporales de sesión expirados',
-        //     details: `Los datos del formulario para session_id ${body.session_id} expiraron. Reintenta el proceso de vinculación.`
-        //   }, { status: 404 });
-        // }
-        
         tempData = data;
       } catch {
         console.error('Temp data not found for session_id:', body.session_id);
@@ -110,13 +98,13 @@ export async function POST(request: NextRequest) {
 
       const createWhatsAppSessionResponse = await fetch(`${supabaseConfig.restUrl}/whatsapp_sessions`, {
         method: 'POST',
-        headers: getHeaders(),
+        headers: getSupabaseHeaders(request, { preferRepresentation: true }),
         body: JSON.stringify(whatsappSessionData)
       });
 
       if (!createWhatsAppSessionResponse.ok) {
         console.error('Error creating whatsapp_session:', createWhatsAppSessionResponse.status, createWhatsAppSessionResponse.statusText);
-        console.log(createWhatsAppSessionResponse);
+        console.log(await createWhatsAppSessionResponse.json());
 
         return NextResponse.json({
           success: false,
@@ -131,7 +119,7 @@ export async function POST(request: NextRequest) {
       // Hacer una consulta adicional para obtener el registro completo con el ID generado
       const fetchNewSessionResponse = await fetch(`${supabaseConfig.restUrl}/whatsapp_sessions?session_id=eq.${body.session_id}`, {
         method: 'GET',
-        headers: getHeaders()
+        headers: getSupabaseHeaders(request, { preferRepresentation: true })
       });
 
       if (!fetchNewSessionResponse.ok) {
@@ -164,6 +152,7 @@ export async function POST(request: NextRequest) {
         estado: 'activo',
         whatsapp_session: newWhatsAppSession.id,
         usuario_id: tempData.usuario_id,
+        organizacion_id: tempData.organizacion_id,
         creado_por: tempData.creado_por,
         creado_en: new Date().toISOString(),
         actualizado_en: new Date().toISOString()
@@ -171,7 +160,7 @@ export async function POST(request: NextRequest) {
 
       const createSesionResponse = await fetch(`${supabaseConfig.restUrl}/sesiones`, {
         method: 'POST',
-        headers: getHeaders(),
+        headers: getSupabaseHeaders(request, { preferRepresentation: true }),
         body: JSON.stringify(newSesionData)
       });
 
@@ -220,7 +209,7 @@ export async function POST(request: NextRequest) {
 
       const updateResponse = await fetch(`${supabaseConfig.restUrl}/whatsapp_sessions?session_id=eq.${body.session_id}`, {
         method: 'PATCH',
-        headers: getHeaders(),
+        headers: getSupabaseHeaders(request, { preferRepresentation: true }),
         body: JSON.stringify(updateData)
       });
 
@@ -239,7 +228,7 @@ export async function POST(request: NextRequest) {
       // Actualizar el estado de la sesión principal a 'activo'
       const sesionUpdateResponse = await fetch(`${supabaseConfig.restUrl}/sesiones?id=eq.${sesionId}`, {
         method: 'PATCH',
-        headers: getHeaders(),
+        headers: getSupabaseHeaders(request, { preferRepresentation: true }),
         body: JSON.stringify({ 
           estado: 'activo',
           actualizado_en: new Date().toISOString()

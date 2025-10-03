@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseConfig } from '@/config/supabase';
 import { MensajeData, MensajeResponse } from '../domain/mensaje';
-import { getHeaders, handleResponse } from '../utils';
+import { handleResponse } from '../utils';
+import { getSupabaseHeaders } from '@/utils/supabaseHeaders';
 
 // GET /api/mensajes/[id] - Obtener mensaje por ID
 export async function GET(
@@ -11,7 +12,7 @@ export async function GET(
   try {
     const { id } = await params;
     
-    if (!id || isNaN(Number(id))) {
+    if (!id) {
       return NextResponse.json({
         success: false,
         error: 'ID de mensaje inválido'
@@ -20,7 +21,7 @@ export async function GET(
 
     const response = await fetch(`${supabaseConfig.restUrl}/mensajes?id=eq.${id}`, {
       method: 'GET',
-      headers: getHeaders()
+      headers: getSupabaseHeaders(request, { preferRepresentation: true })
     });
 
     if (!response.ok) {
@@ -56,7 +57,7 @@ export async function PATCH(
   try {
     const { id } = await params;
     
-    if (!id || isNaN(Number(id))) {
+    if (!id) {
       return NextResponse.json({
         success: false,
         error: 'ID de mensaje inválido'
@@ -67,7 +68,7 @@ export async function PATCH(
 
     const response = await fetch(`${supabaseConfig.restUrl}/mensajes?id=eq.${id}`, {
       method: 'PATCH',
-      headers: getHeaders(),
+      headers: getSupabaseHeaders(request, { preferRepresentation: true }),
       body: JSON.stringify(mensajeData),
     });
 
@@ -103,7 +104,7 @@ export async function DELETE(
   try {
     const { id } = await params;
     
-    if (!id || isNaN(Number(id))) {
+    if (!id) {
       return NextResponse.json({
         success: false,
         error: 'ID de mensaje inválido'
@@ -112,7 +113,7 @@ export async function DELETE(
 
     const response = await fetch(`${supabaseConfig.restUrl}/mensajes?id=eq.${id}`, {
       method: 'DELETE',
-      headers: getHeaders()
+      headers: getSupabaseHeaders(request, { preferRepresentation: true })
     });
 
     if (!response.ok) {

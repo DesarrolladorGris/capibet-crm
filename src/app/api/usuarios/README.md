@@ -9,11 +9,7 @@ src/app/api/usuarios/
 ├── domain/
 │   └── usuario.ts          # Interfaces y tipos del dominio
 ├── [id]/
-│   ├── route.ts            # GET, PATCH, DELETE por ID
-│   └── toggle-status/
-│       └── route.ts        # PATCH para cambiar estado
-├── check-email/
-│   └── route.ts            # GET para verificar email
+│   └── route.ts            # GET, PATCH, DELETE por ID
 ├── login/
 │   └── route.ts            # POST para autenticación
 ├── route.ts                # GET todos, POST crear
@@ -33,33 +29,31 @@ Crea un nuevo usuario en el sistema.
 **Request Body:**
 ```json
 {
-  "nombre_agencia": "Agencia Ejemplo",
-  "tipo_empresa": "Corporativo",
-  "nombre_usuario": "Juan Pérez",
-  "correo_electronico": "juan@ejemplo.com",
-  "telefono": "1234567890",
-  "codigo_pais": "52",
-  "contrasena": "password123",
-  "rol": "Operador",
-  "activo": true
+  "nombre": "Mi Empresa S.A.",
+  "website": "https://miempresa.com",
+  "logo": "https://example.com/logo.png",
+  "propietario_id": "550e8400-e29b-41d4-a716-446655440000"
 }
 ```
 
-**Response (201):**
+**Campos:**
+- `nombre` (string, requerido): Nombre del usuario/empresa
+- `website` (string, opcional): URL del sitio web
+- `logo` (string, opcional): URL del logo
+- `propietario_id` (string UUID, opcional): ID del propietario
+
+**Response (200):**
 ```json
 {
   "success": true,
   "data": {
-    "id": 1,
-    "nombre_agencia": "Agencia Ejemplo",
-    "tipo_empresa": "Corporativo",
-    "nombre_usuario": "Juan Pérez",
-    "correo_electronico": "juan@ejemplo.com",
-    "telefono": "1234567890",
-    "codigo_pais": "52",
-    "rol": "Operador",
-    "activo": true,
-    "created_at": "2024-01-15T10:30:00Z"
+    "id": "123e4567-e89b-12d3-a456-426614174000",
+    "nombre": "Mi Empresa S.A.",
+    "website": "https://miempresa.com",
+    "logo": "https://example.com/logo.png",
+    "propietario_id": "550e8400-e29b-41d4-a716-446655440000",
+    "creado_en": "2024-01-15T10:30:00Z",
+    "actualizado_en": "2024-01-15T10:30:00Z"
   }
 }
 ```
@@ -68,8 +62,7 @@ Crea un nuevo usuario en el sistema.
 ```json
 {
   "success": false,
-  "error": "Error del servidor: 400 Bad Request",
-  "details": "Datos de usuario inválidos"
+  "error": "El campo nombre es requerido"
 }
 ```
 
@@ -85,16 +78,13 @@ Retorna una lista de todos los usuarios registrados.
   "success": true,
   "data": [
     {
-      "id": 1,
-      "nombre_agencia": "Agencia Ejemplo",
-      "tipo_empresa": "Corporativo",
-      "nombre_usuario": "Juan Pérez",
-      "correo_electronico": "juan@ejemplo.com",
-      "telefono": "1234567890",
-      "codigo_pais": "52",
-      "rol": "Operador",
-      "activo": true,
-      "created_at": "2024-01-15T10:30:00Z"
+      "id": "123e4567-e89b-12d3-a456-426614174000",
+      "nombre": "Mi Empresa S.A.",
+      "website": "https://miempresa.com",
+      "logo": "https://example.com/logo.png",
+      "propietario_id": "550e8400-e29b-41d4-a716-446655440000",
+      "creado_en": "2024-01-15T10:30:00Z",
+      "actualizado_en": "2024-01-15T10:30:00Z"
     }
   ]
 }
@@ -107,24 +97,29 @@ Retorna una lista de todos los usuarios registrados.
 Retorna los datos de un usuario específico.
 
 **Parámetros:**
-- `id` (number): ID del usuario
+- `id` (string UUID): ID del usuario
 
 **Response (200):**
 ```json
 {
   "success": true,
   "data": {
-    "id": 1,
-    "nombre_agencia": "Agencia Ejemplo",
-    "tipo_empresa": "Corporativo",
-    "nombre_usuario": "Juan Pérez",
-    "correo_electronico": "juan@ejemplo.com",
-    "telefono": "1234567890",
-    "codigo_pais": "52",
-    "rol": "Operador",
-    "activo": true,
-    "created_at": "2024-01-15T10:30:00Z"
+    "id": "123e4567-e89b-12d3-a456-426614174000",
+    "nombre": "Mi Empresa S.A.",
+    "website": "https://miempresa.com",
+    "logo": "https://example.com/logo.png",
+    "propietario_id": "550e8400-e29b-41d4-a716-446655440000",
+    "creado_en": "2024-01-15T10:30:00Z",
+    "actualizado_en": "2024-01-15T10:30:00Z"
   }
+}
+```
+
+**Response (400):**
+```json
+{
+  "success": false,
+  "error": "ID de usuario inválido (debe ser un UUID)"
 }
 ```
 
@@ -143,14 +138,14 @@ Retorna los datos de un usuario específico.
 Actualiza los datos de un usuario existente.
 
 **Parámetros:**
-- `id` (number): ID del usuario
+- `id` (string UUID): ID del usuario
 
 **Request Body:**
 ```json
 {
-  "nombre_usuario": "Juan Carlos Pérez",
-  "telefono": "0987654321",
-  "rol": "Administrador"
+  "nombre": "Mi Empresa S.A. Actualizada",
+  "website": "https://miempresanueva.com",
+  "logo": "https://example.com/new-logo.png"
 }
 ```
 
@@ -159,16 +154,13 @@ Actualiza los datos de un usuario existente.
 {
   "success": true,
   "data": {
-    "id": 1,
-    "nombre_agencia": "Agencia Ejemplo",
-    "tipo_empresa": "Corporativo",
-    "nombre_usuario": "Juan Carlos Pérez",
-    "correo_electronico": "juan@ejemplo.com",
-    "telefono": "0987654321",
-    "codigo_pais": "52",
-    "rol": "Administrador",
-    "activo": true,
-    "created_at": "2024-01-15T10:30:00Z"
+    "id": "123e4567-e89b-12d3-a456-426614174000",
+    "nombre": "Mi Empresa S.A. Actualizada",
+    "website": "https://miempresanueva.com",
+    "logo": "https://example.com/new-logo.png",
+    "propietario_id": "550e8400-e29b-41d4-a716-446655440000",
+    "creado_en": "2024-01-15T10:30:00Z",
+    "actualizado_en": "2024-01-15T11:45:00Z"
   }
 }
 ```
@@ -180,7 +172,7 @@ Actualiza los datos de un usuario existente.
 Elimina un usuario del sistema.
 
 **Parámetros:**
-- `id` (number): ID del usuario
+- `id` (string UUID): ID del usuario
 
 **Response (200):**
 ```json
@@ -190,125 +182,11 @@ Elimina un usuario del sistema.
 }
 ```
 
----
-
-### 6. **PATCH** `/api/usuarios/[id]/toggle-status` - Cambiar Estado del Usuario
-
-Activa o desactiva un usuario.
-
-**Parámetros:**
-- `id` (number): ID del usuario
-
-**Request Body:**
-```json
-{
-  "activo": false
-}
-```
-
-**Response (200):**
-```json
-{
-  "success": true,
-  "message": "Usuario desactivado exitosamente"
-}
-```
-
-**Response (200) - Activación:**
-```json
-{
-  "success": true,
-  "message": "Usuario activado exitosamente"
-}
-```
-
----
-
-### 7. **GET** `/api/usuarios/check-email` - Verificar Email
-
-Verifica si un email ya está registrado en el sistema.
-
-**Query Parameters:**
-- `email` (string): Email a verificar
-
-**Ejemplo de Request:**
-```
-GET /api/usuarios/check-email?email=juan@ejemplo.com
-```
-
-**Response (200) - Email disponible:**
-```json
-{
-  "success": true,
-  "data": false,
-  "message": "El email está disponible"
-}
-```
-
-**Response (200) - Email registrado:**
-```json
-{
-  "success": true,
-  "data": true,
-  "message": "El email ya está registrado"
-}
-```
-
 **Response (400):**
 ```json
 {
   "success": false,
-  "error": "Formato de email inválido"
-}
-```
-
----
-
-### 8. **POST** `/api/usuarios/login` - Autenticación
-
-Autentica un usuario con email y contraseña.
-
-**Request Body:**
-```json
-{
-  "correo_electronico": "juan@ejemplo.com",
-  "contrasena": "password123"
-}
-```
-
-**Response (200):**
-```json
-{
-  "success": true,
-  "data": {
-    "id": 1,
-    "nombre_agencia": "Agencia Ejemplo",
-    "tipo_empresa": "Corporativo",
-    "nombre_usuario": "Juan Pérez",
-    "correo_electronico": "juan@ejemplo.com",
-    "telefono": "1234567890",
-    "codigo_pais": "52",
-    "rol": "Operador",
-    "activo": true,
-    "created_at": "2024-01-15T10:30:00Z"
-  },
-  "message": "Login exitoso"
-}
-```
-
-**Response (401):**
-```json
-{
-  "success": false,
-  "error": "Credenciales incorrectas"
-}
-```
-
-**Response (403):**
-```json
-{
-  "success": false,
-  "error": "Usuario desactivado. Contacta al administrador."
+  "error": "ID de usuario inválido (debe ser un UUID)"
 }
 ```
 
@@ -321,8 +199,6 @@ Autentica un usuario con email y contraseña.
 | 200 | Operación exitosa |
 | 201 | Recurso creado exitosamente |
 | 400 | Error en la petición (datos inválidos) |
-| 401 | No autorizado (credenciales incorrectas) |
-| 403 | Prohibido (usuario desactivado) |
 | 404 | Recurso no encontrado |
 | 500 | Error interno del servidor |
 
@@ -333,26 +209,24 @@ Autentica un usuario con email y contraseña.
 1. **Autenticación**: Todos los endpoints requieren autenticación con Supabase usando service role key.
 
 2. **Validaciones**: 
-   - Los emails se validan con formato básico usando regex `/^[^\s@]+@[^\s@]+\.[^\s@]+$/`
-   - Los IDs deben ser números válidos (validación con `isNaN(Number(id))`)
-   - Los campos requeridos se validan en cada endpoint
-   - El campo `activo` en toggle-status debe ser un booleano
-   - Email y contraseña son requeridos para login
+   - Los IDs deben ser UUIDs válidos (formato: `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`)
+   - El campo `nombre` es requerido al crear un usuario
+   - Los campos `website` y `logo` son opcionales
+   - Las fechas `creado_en` y `actualizado_en` se manejan automáticamente
 
 3. **Manejo de Errores**: Todos los endpoints incluyen manejo consistente de errores con mensajes descriptivos:
    - Errores de validación (400)
-   - Errores de autenticación (401)
-   - Errores de autorización (403)
    - Errores de servidor (500)
 
 4. **Respuestas**: Todas las respuestas siguen el formato estándar con `success`, `data`, `error` y `details` opcional.
 
-5. **Seguridad**: Las contraseñas se almacenan en texto plano (considerar implementar hash en el futuro).
+5. **UUIDs**: El sistema ahora utiliza UUIDs en lugar de IDs numéricos para mayor seguridad y escalabilidad.
 
 6. **Campos Opcionales**:
-   - `rol` tiene valor por defecto 'Operador'
-   - `activo` tiene valor por defecto `true`
-   - `id` es opcional en creación (se genera automáticamente)
+   - `website` puede ser `null`
+   - `logo` puede ser `null`
+   - `propietario_id` es opcional
+   - `creado_en` y `actualizado_en` se generan automáticamente
 
 ---
 
@@ -361,48 +235,26 @@ Autentica un usuario con email y contraseña.
 ### UsuarioData (Para creación)
 ```typescript
 interface UsuarioData {
-  id?: number;                    // Opcional, se genera automáticamente
-  nombre_agencia: string;         // Requerido
-  tipo_empresa: string;           // Requerido
-  nombre_usuario: string;         // Requerido
-  correo_electronico: string;     // Requerido, formato email válido
-  telefono: string;               // Requerido
-  codigo_pais: string;            // Requerido
-  contrasena: string;             // Requerido
-  rol?: string;                   // Opcional, default: 'Operador'
-  activo?: boolean;               // Opcional, default: true
+  id?: string;                    // UUID, opcional (se genera automáticamente)
+  nombre: string;                 // Requerido
+  website?: string | null;        // Opcional
+  logo?: string | null;           // Opcional
+  propietario_id?: string;        // UUID, opcional
+  creado_en?: string;             // Timestamp, se genera automáticamente
+  actualizado_en?: string;        // Timestamp, se actualiza automáticamente
 }
 ```
 
 ### UsuarioResponse (Respuesta de la API)
 ```typescript
 interface UsuarioResponse {
-  id: number;                     // Siempre presente
-  nombre_agencia: string;
-  tipo_empresa: string;
-  nombre_usuario: string;
-  correo_electronico: string;
-  telefono: string;
-  codigo_pais: string;
-  rol: string;                    // Siempre presente
-  activo: boolean;                // Siempre presente
-  fecha_alta?: string;            // Opcional
-  created_at?: string;            // Opcional
-}
-```
-
-### LoginCredentials
-```typescript
-interface LoginCredentials {
-  correo_electronico: string;     // Requerido, formato email válido
-  contrasena: string;             // Requerido
-}
-```
-
-### ToggleStatusRequest
-```typescript
-interface ToggleStatusRequest {
-  activo: boolean;                // Requerido, debe ser booleano
+  id: string;                     // UUID
+  nombre: string;
+  website: string | null;
+  logo: string | null;
+  propietario_id: string;         // UUID
+  creado_en: string;              // Timestamp ISO 8601
+  actualizado_en: string;         // Timestamp ISO 8601
 }
 ```
 
@@ -412,7 +264,7 @@ interface ToggleStatusRequest {
 
 ```typescript
 // Tipos de datos (importar desde el dominio)
-import { UsuarioData, LoginCredentials, UsuarioResponse } from './domain/usuario';
+import { UsuarioData, UsuarioResponse } from './domain/usuario';
 
 // Crear usuario
 const createUser = async (userData: UsuarioData) => {
@@ -435,14 +287,14 @@ const getUsers = async (): Promise<UsuarioResponse[]> => {
 };
 
 // Obtener usuario por ID
-const getUserById = async (id: number): Promise<UsuarioResponse | null> => {
+const getUserById = async (id: string): Promise<UsuarioResponse | null> => {
   const response = await fetch(`/api/usuarios/${id}`);
   const result = await response.json();
   return result.data;
 };
 
 // Actualizar usuario
-const updateUser = async (id: number, userData: Partial<UsuarioData>) => {
+const updateUser = async (id: string, userData: Partial<UsuarioData>) => {
   const response = await fetch(`/api/usuarios/${id}`, {
     method: 'PATCH',
     headers: {
@@ -455,42 +307,9 @@ const updateUser = async (id: number, userData: Partial<UsuarioData>) => {
 };
 
 // Eliminar usuario
-const deleteUser = async (id: number) => {
+const deleteUser = async (id: string) => {
   const response = await fetch(`/api/usuarios/${id}`, {
     method: 'DELETE',
-  });
-  
-  return await response.json();
-};
-
-// Cambiar estado del usuario
-const toggleUserStatus = async (id: number, activo: boolean) => {
-  const response = await fetch(`/api/usuarios/${id}/toggle-status`, {
-    method: 'PATCH',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ activo }),
-  });
-  
-  return await response.json();
-};
-
-// Verificar email
-const checkEmail = async (email: string): Promise<boolean> => {
-  const response = await fetch(`/api/usuarios/check-email?email=${encodeURIComponent(email)}`);
-  const result = await response.json();
-  return result.data;
-};
-
-// Login de usuario
-const loginUser = async (credentials: LoginCredentials) => {
-  const response = await fetch('/api/usuarios/login', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(credentials),
   });
   
   return await response.json();
@@ -502,17 +321,8 @@ const loginUser = async (credentials: LoginCredentials) => {
 ## ⚠️ Errores Comunes
 
 ### 400 Bad Request
-- **ID inválido**: `"ID de usuario inválido"` - El ID debe ser un número válido
-- **Email inválido**: `"Formato de email inválido"` - El email no cumple con el formato requerido
-- **Datos faltantes**: `"Email y contraseña son requeridos"` - Faltan credenciales en login
-- **Parámetro faltante**: `"El parámetro email es requerido"` - Falta el parámetro email en check-email
-- **Tipo incorrecto**: `"El campo 'activo' debe ser un valor booleano"` - El campo activo debe ser true/false
-
-### 401 Unauthorized
-- **Credenciales incorrectas**: `"Credenciales incorrectas"` - Email o contraseña incorrectos
-
-### 403 Forbidden
-- **Usuario desactivado**: `"Usuario desactivado. Contacta al administrador."` - El usuario existe pero está inactivo
+- **ID inválido**: `"ID de usuario inválido (debe ser un UUID)"` - El ID debe ser un UUID válido
+- **Campo faltante**: `"El campo nombre es requerido"` - El nombre es obligatorio
 
 ### 500 Internal Server Error
 - **Error de conexión**: `"Error de conexión al [operación]"` - Problemas de conectividad con Supabase
@@ -520,4 +330,15 @@ const loginUser = async (credentials: LoginCredentials) => {
 
 ---
 
-*Documentación actualizada - Última actualización: Diciembre 2024*
+## 📌 Validación de UUID
+
+El formato válido de UUID es:
+```
+xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+```
+
+Ejemplo válido: `123e4567-e89b-12d3-a456-426614174000`
+
+---
+
+*Documentación actualizada - Última actualización: Septiembre 2024*

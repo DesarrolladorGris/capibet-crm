@@ -21,14 +21,6 @@ export default function EmbudosFilter({
   onEmbudoSelect 
 }: EmbudosFilterProps) {
   
-  // Función para contar sesiones por embudo
-  const getSesionesCountByEmbudo = (embudoId: number): number => {
-    return sesiones.filter(sesion => sesion.embudo_id === embudoId).length;
-  };
-
-  // Contar todas las sesiones del espacio actual
-  const totalSesiones = sesiones.length;
-
   return (
     <div className="border-b border-[var(--border-primary)] bg-[var(--bg-primary)]">
       <div className="px-4 py-3">
@@ -51,21 +43,11 @@ export default function EmbudosFilter({
           >
             <span className="flex items-center space-x-2">
               <span>Todos</span>
-              {totalSesiones > 0 && (
-                <span className={`text-xs px-2 py-0.5 rounded-full ${
-                  selectedEmbudo === null
-                    ? 'bg-white bg-opacity-20 text-black'
-                    : 'bg-[var(--accent-primary)]'
-                }`}>
-                  {totalSesiones}
-                </span>
-              )}
             </span>
           </button>
 
           {/* Lista de embudos */}
           {embudos.map((embudo) => {
-            const sesionesCount = getSesionesCountByEmbudo(embudo.id);
             const isSelected = selectedEmbudo?.id === embudo.id;
 
             return (
@@ -81,15 +63,6 @@ export default function EmbudosFilter({
               >
                 <span className="flex items-center space-x-2">
                   <span>{embudo.nombre}</span>
-                  {sesionesCount > 0 && (
-                    <span className={`text-xs px-2 py-0.5 rounded-full ${
-                      isSelected
-                        ? 'bg-white bg-opacity-20 text-black'
-                        : 'bg-[var(--accent-primary)] text-white'
-                    }`}>
-                      {sesionesCount}
-                    </span>
-                  )}
                 </span>
               </button>
             );

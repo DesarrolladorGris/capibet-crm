@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import NotificacionesModal from './NotificacionesModal';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useWebSocketContext } from '@/contexts/WebSocketContext';
 
 interface HeaderProps {
   userEmail: string;
@@ -18,7 +19,8 @@ export default function Header({ userEmail, userName, userRole, agencyName, onLo
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const { theme, toggleTheme, isDark } = useTheme();
+  const { toggleTheme, isDark } = useTheme();
+  const { unreadCount } = useWebSocketContext();
   const router = useRouter();
 
   const toggleFullscreen = () => {
@@ -94,8 +96,10 @@ export default function Header({ userEmail, userName, userRole, agencyName, onLo
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-5-5V9a6 6 0 10-12 0v3l-5 5h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
             </svg>
-            {/* Notification Badge */}
-            <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></span>
+            {/* Notification Badge - Solo mostrar si hay notificaciones sin leer */}
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></span>
+            )}
           </button>
 
           {/* Theme Toggle Button */}

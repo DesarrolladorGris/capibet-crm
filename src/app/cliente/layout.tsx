@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { isUserAuthenticated } from '@/utils/auth';
+import { isUserAuthenticated, getUserData, performLogout } from '@/utils/auth';
 
 interface ClientLayoutProps {
   children: React.ReactNode;
@@ -22,20 +22,23 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
       return;
     }
     
-    // Cargar datos de usuario
-    const email = localStorage.getItem('userEmail');
-    const name = localStorage.getItem('userName');
-    const role = localStorage.getItem('userRole');
+    // Cargar datos de usuario desde la nueva estructura
+    const userData = getUserData();
+    
+    if (!userData) {
+      router.push('/login');
+      return;
+    }
     
     // Si no es un usuario Cliente, redirigir al dashboard normal
-    if (role !== 'Cliente') {
+    if (userData.rol !== 'Cliente') {
       router.push('/dashboard');
       return;
     }
     
-    setUserEmail(email || '');
-    setUserName(name || '');
-    setUserRole(role || '');
+    setUserEmail(userData.correo_electronico || '');
+    setUserName(userData.nombre || '');
+    setUserRole(userData.rol || '');
     setIsLoading(false);
   }, [router]);
 
@@ -126,19 +129,7 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
 
               {/* Botón logout */}
               <button
-                onClick={() => {
-                  // Limpiar sesión y redirigir al login
-                  if (typeof window !== 'undefined') {
-                    localStorage.removeItem('isLoggedIn');
-                    localStorage.removeItem('userEmail');
-                    localStorage.removeItem('userName');
-                    localStorage.removeItem('userRole');
-                    localStorage.removeItem('userId');
-                    localStorage.removeItem('agencyName');
-                    localStorage.removeItem('userData');
-                    window.location.href = '/login';
-                  }
-                }}
+                onClick={performLogout}
                 className="flex items-center space-x-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors font-medium"
                 title="Cerrar Sesión"
               >
@@ -169,19 +160,7 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
               </div>
             </div>
             <button
-              onClick={() => {
-                // Limpiar sesión y redirigir al login
-                if (typeof window !== 'undefined') {
-                  localStorage.removeItem('isLoggedIn');
-                  localStorage.removeItem('userEmail');
-                  localStorage.removeItem('userName');
-                  localStorage.removeItem('userRole');
-                  localStorage.removeItem('userId');
-                  localStorage.removeItem('agencyName');
-                  localStorage.removeItem('userData');
-                  window.location.href = '/login';
-                }
-              }}
+              onClick={performLogout}
               className="bg-red-600 hover:bg-red-700 text-white p-2 rounded-lg transition-colors"
               title="Cerrar Sesión"
             >

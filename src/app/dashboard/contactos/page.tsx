@@ -14,7 +14,7 @@ import RoleProtection from '@/components/RoleProtection';
 
 export default function ContactosPage() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedContacts, setSelectedContacts] = useState<number[]>([]);
+  const [selectedContacts, setSelectedContacts] = useState<string[]>([]);
   const [contacts, setContacts] = useState<ContactResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -24,7 +24,7 @@ export default function ContactosPage() {
   const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
   const [editingContact, setEditingContact] = useState<ContactResponse | null>(null);
   const [deletingContact, setDeletingContact] = useState<ContactResponse | null>(null);
-  const [userId, setUserId] = useState<number>(0);
+  const [userId, setUserId] = useState<string>('');
   const router = useRouter();
 
   // Función para cargar contactos desde Supabase
@@ -120,8 +120,8 @@ export default function ContactosPage() {
     console.log('Iniciando eliminación masiva de contactos:', selectedContacts);
     
     try {
-      const failedDeletions: number[] = [];
-      const successfulDeletions: number[] = [];
+      const failedDeletions: string[] = [];
+      const successfulDeletions: string[] = [];
       
       // Eliminar cada contacto seleccionado usando el servicio seguro
       for (const contactId of selectedContacts) {
@@ -217,7 +217,7 @@ export default function ContactosPage() {
     }
   };
 
-  const handleSelectContact = (contactId: number) => {
+  const handleSelectContact = (contactId: string) => {
     if (selectedContacts.includes(contactId)) {
       setSelectedContacts(selectedContacts.filter(id => id !== contactId));
     } else {
@@ -230,8 +230,8 @@ export default function ContactosPage() {
     (contact.apellido && contact.apellido.toLowerCase().includes(searchQuery.toLowerCase())) ||
     (contact.nombre_completo && contact.nombre_completo.toLowerCase().includes(searchQuery.toLowerCase())) ||
     contact.telefono.includes(searchQuery) ||
-    (contact.empresa && contact.empresa.toLowerCase().includes(searchQuery.toLowerCase())) ||
-    (contact.etiqueta && contact.etiqueta.toLowerCase().includes(searchQuery.toLowerCase()))
+    (contact.direccion && contact.direccion.toLowerCase().includes(searchQuery.toLowerCase())) ||
+    (contact.etiquetas && contact.etiquetas.some(etiqueta => etiqueta.toLowerCase().includes(searchQuery.toLowerCase())))
   );
 
   // Cargar datos del usuario y contactos al montar el componente
@@ -244,7 +244,7 @@ export default function ContactosPage() {
     
     // Cargar datos del usuario usando la utilidad centralizada
     const currentUserId = getCurrentUserId();
-    setUserId(currentUserId || 0);
+    setUserId(currentUserId || '');
     
     // Cargar contactos
     fetchContacts();
@@ -277,7 +277,7 @@ export default function ContactosPage() {
   }
 
   return (
-    <RoleProtection requiredRoles={['Administrador', 'Admin']}>
+    <RoleProtection requiredRoles={['admin']}>
       <div className="flex-1 flex flex-col">
       {/* Header de Contactos */}
       <div className="bg-[var(--bg-primary)] border-b border-[var(--border-primary)] px-6 py-4">
@@ -352,7 +352,7 @@ export default function ContactosPage() {
         {/* Table */}
         <div className="bg-[var(--bg-secondary)] rounded-lg border border-[var(--border-primary)]">
           {/* Table Header */}
-          <div className="grid grid-cols-8 gap-4 p-4 border-b border-[var(--border-primary)] text-[var(--text-muted)] text-sm font-medium">
+          <div className="grid grid-cols-10 gap-4 p-4 border-b border-[var(--border-primary)] text-[var(--text-muted)] text-sm font-medium">
             <div className="flex items-center">
               <input
                 type="checkbox"
@@ -362,10 +362,12 @@ export default function ContactosPage() {
               />
             </div>
             <div>Nombre</div>
-            <div>Empresa</div>
+            <div>Dirección</div>
             <div>Teléfono</div>
             <div>Email</div>
-            <div>Etiqueta</div>
+            <div>Género</div>
+            <div>Origen</div>
+            <div>Etiquetas</div>
             <div>Fecha Creación</div>
             <div>Acciones</div>
           </div>
@@ -379,7 +381,7 @@ export default function ContactosPage() {
             filteredContacts.map((contact) => (
               <div
                 key={contact.id}
-                className="grid grid-cols-8 gap-4 p-4 border-b border-[var(--border-primary)] hover:bg-[var(--bg-tertiary)] transition-colors"
+                className="grid grid-cols-10 gap-4 p-4 border-b border-[var(--border-primary)] hover:bg-[var(--bg-tertiary)] transition-colors"
               >
                 <div className="flex items-center">
                   <input
@@ -390,14 +392,22 @@ export default function ContactosPage() {
                   />
                 </div>
                 <div className="text-[var(--text-primary)] font-medium">{getFullName(contact)}</div>
-                <div className="text-[var(--text-secondary)]">{contact.empresa || '-'}</div>
+                <div className="text-[var(--text-secondary)]">{contact.direccion || '-'}</div>
                 <div className="text-[var(--text-secondary)]">{contact.telefono}</div>
                 <div className="text-[var(--text-secondary)]">{contact.correo}</div>
+                <div className="text-[var(--text-secondary)]">{contact.genero || '-'}</div>
+                <div className="text-[var(--text-secondary)]">{contact.origen || '-'}</div>
                 <div>
-                  {contact.etiqueta && (
-                    <span className="px-2 py-1 bg-[var(--accent-primary)] text-white text-xs rounded-full">
-                      {contact.etiqueta}
-                    </span>
+                  {contact.etiquetas && contact.etiquetas.length > 0 ? (
+                    <div className="flex flex-wrap gap-1">
+                      {contact.etiquetas.map((etiqueta, index) => (
+                        <span key={index} className="px-2 py-1 bg-[var(--accent-primary)] text-white text-xs rounded-full">
+                          {etiqueta}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <span className="text-[var(--text-secondary)]">-</span>
                   )}
                 </div>
                 <div className="text-[var(--text-secondary)] text-sm">

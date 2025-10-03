@@ -1,14 +1,18 @@
 // Tipos para espacios de trabajo
 export interface EspacioTrabajoData {
-  id?: number;
+  id?: string;
   nombre: string;
-  creado_por: number;
+  creado_por: string;
+  organizacion_id: string;
+  orden?: number;
 }
 
 export interface EspacioTrabajoResponse {
-  id: number;
+  id: string;
   nombre: string;
-  creado_por: number;
+  creado_por: string;
+  organizacion_id: string;
+  orden: number;
   creado_en: string;
   actualizado_en: string;
 }

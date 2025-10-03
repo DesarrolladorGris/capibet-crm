@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseConfig } from '@/config/supabase';
 import { RespuestaRapidaFormData } from './domain/respuesta_rapida';
-import { getHeaders, handleResponse } from './utils';
+import { handleResponse } from './utils';
+import { getSupabaseHeaders } from '@/utils/supabaseHeaders';
 
 // POST /api/respuestas-rapidas - Crear respuesta rápida
 export async function POST(request: NextRequest) {
@@ -26,7 +27,7 @@ export async function POST(request: NextRequest) {
 
     const response = await fetch(`${supabaseConfig.restUrl}/respuestas_rapidas`, {
       method: 'POST',
-      headers: getHeaders(),
+      headers: getSupabaseHeaders(request, { preferRepresentation: true }),
       body: JSON.stringify(dataToSend)
     });
 
@@ -59,11 +60,11 @@ export async function POST(request: NextRequest) {
 }
 
 // GET /api/respuestas-rapidas - Obtener todas las respuestas rápidas
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const response = await fetch(`${supabaseConfig.restUrl}/respuestas_rapidas?order=created_at.desc`, {
       method: 'GET',
-      headers: getHeaders()
+      headers: getSupabaseHeaders(request, { preferRepresentation: true })
     });
 
     if (!response.ok) {

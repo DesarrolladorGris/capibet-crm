@@ -3,38 +3,16 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
-import { productosServices } from '@/services/productosServices';
 import { contactoServices } from '@/services/contactoServices';
-import { supabaseService } from '@/services/supabaseService';
-import { DollarSign, Users, MessageCircle, Package, User } from 'lucide-react';
+import { Users, User, MessageCircle } from 'lucide-react';
 import MetricsCard from './components/MetricsCard';
 
 export default function DashboardPage() {
   const { user, isLoading } = useAuth();
   const router = useRouter();
-  const [productsCount, setProductsCount] = useState(0);
-  const [loadingProducts, setLoadingProducts] = useState(false);
   const [contactsCount, setContactsCount] = useState(0);
   const [loadingContacts, setLoadingContacts] = useState(false);
-  const [internalMessagesCount, setInternalMessagesCount] = useState(0);
-  const [loadingInternalMessages, setLoadingInternalMessages] = useState(false);
-  const [totalVentas, setTotalVentas] = useState(0);
-  const [loadingVentas, setLoadingVentas] = useState(false);
 
-  // Función para cargar la cantidad de productos
-  const loadProductsCount = async () => {
-    setLoadingProducts(true);
-    try {
-      const response = await productosServices.getProductosCount();
-      if (response.success && response.data !== undefined) {
-        setProductsCount(response.data);
-      }
-    } catch (error) {
-      console.error('Error loading products count:', error);
-    } finally {
-      setLoadingProducts(false);
-    }
-  };
 
   // Función para cargar la cantidad de contactos
   const loadContactsCount = async () => {
@@ -51,46 +29,6 @@ export default function DashboardPage() {
     }
   };
 
-  // Función para cargar la cantidad de mensajes internos
-  const loadInternalMessagesCount = async () => {
-    setLoadingInternalMessages(true);
-    try {
-      const response = await fetch('https://dkrdphnnsgndrqmgdvxp.supabase.co/rest/v1/mensajes_internos?select=id', {
-        method: 'GET',
-        headers: {
-          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRrcmRwaG5uc2duZHJxbWdkdnhwIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NjIzMTQ0NSwiZXhwIjoyMDcxODA3NDQ1fQ.w9dE4zcpbfH3LUwx-XS-2GtqEo6mr7p2BJIcf77xMdg',
-          'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRrcmRwaG5uc2duZHJxbWdkdnhwIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NjIzMTQ0NSwiZXhwIjoyMDcxODA3NDQ1fQ.w9dE4zcpbfH3LUwx-XS-2GtqEo6mr7p2BJIcf77xMdg',
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setInternalMessagesCount(data.length);
-      }
-    } catch (error) {
-      console.error('Error loading internal messages count:', error);
-    } finally {
-      setLoadingInternalMessages(false);
-    }
-  };
-
-  // Función para cargar el total de ventas
-  const loadTotalVentas = async () => {
-    setLoadingVentas(true);
-    try {
-      const response = await supabaseService.getAllVentasFichasDigitales();
-      if (response.success && response.data) {
-        const total = response.data.reduce((sum, venta) => sum + venta.monto_compra, 0);
-        setTotalVentas(total);
-      }
-    } catch (error) {
-      console.error('Error loading total ventas:', error);
-    } finally {
-      setLoadingVentas(false);
-    }
-  };
-
   useEffect(() => {
     if (!isLoading && user) {
       // Si es un usuario Cliente, redirigir a su página específica
@@ -99,11 +37,8 @@ export default function DashboardPage() {
         return;
       }
       
-      // Cargar cantidad de productos, contactos, mensajes internos y total de ventas para usuarios no cliente
-      loadProductsCount();
+      // Cargar cantidad de contactos para usuarios no cliente
       loadContactsCount();
-      loadInternalMessagesCount();
-      loadTotalVentas();
     }
   }, [user, isLoading, router]);
 
@@ -150,34 +85,13 @@ export default function DashboardPage() {
       {/* Main Content */}
       <div className="flex-1 bg-[var(--bg-primary)] p-6">
         {/* Metrics Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <MetricsCard
-            title="Total Ventas"
-            value={loadingVentas ? "..." : `$${totalVentas.toLocaleString()}`}
-            change=""
-            changeType="positive"
-            icon={<DollarSign className="w-6 h-6" />}
-          />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           <MetricsCard
             title="Contactos"
             value={loadingContacts ? "..." : contactsCount.toString()}
             change=""
             changeType="positive"
             icon={<Users className="w-6 h-6" />}
-          />
-          <MetricsCard
-            title="Mensajes Internos"
-            value={loadingInternalMessages ? "..." : internalMessagesCount.toString()}
-            change=""
-            changeType="positive"
-            icon={<MessageCircle className="w-6 h-6" />}
-          />
-          <MetricsCard
-            title="Productos"
-            value={loadingProducts ? "..." : productsCount.toString()}
-            change=""
-            changeType="positive"
-            icon={<Package className="w-6 h-6" />}
           />
         </div>
 
@@ -199,17 +113,8 @@ export default function DashboardPage() {
                 <MessageCircle className="text-white w-5 h-5" />
               </div>
               <div className="flex-1">
-                <p className="text-[var(--text-primary)] text-sm">Nuevo chat iniciado con <span className="font-medium">María García</span></p>
+                <p className="text-[var(--text-primary)] text-sm">Nueva conversación iniciada con <span className="font-medium">María García</span></p>
                 <p className="text-[var(--text-muted)] text-xs">Hace 15 minutos</p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-4 p-3 bg-[var(--bg-tertiary)] rounded-lg">
-              <div className="w-10 h-10 bg-[var(--accent-primary)] rounded-full flex items-center justify-center">
-                <DollarSign className="text-white w-5 h-5" />
-              </div>
-              <div className="flex-1">
-                <p className="text-[var(--text-primary)] text-sm">Venta completada: <span className="font-medium">$2,500</span></p>
-                <p className="text-[var(--text-muted)] text-xs">Hace 1 hora</p>
               </div>
             </div>
           </div>

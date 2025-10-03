@@ -30,11 +30,16 @@ Obtiene todos los mensajes con filtros opcionales.
 - `type`: Filtrar por tipo de mensaje
 - `limit`: Límite de resultados
 - `offset`: Desplazamiento para paginación
+- `last_per_chat`: Si es `true`, devuelve solo el último mensaje de cada chat (optimizado para listas de chat)
 
-**Ejemplo:**
+**Ejemplos:**
 ```
 GET /api/mensajes?chat_id=1&limit=50&offset=0
+GET /api/mensajes?last_per_chat=true
 ```
+
+**Nota sobre `last_per_chat`:** 
+Este parámetro es útil para la carga inicial de la lista de chats, ya que devuelve solo el último mensaje de cada chat en lugar de todos los mensajes. Esto mejora significativamente el rendimiento cuando hay muchos mensajes en el sistema.
 
 ### GET /api/mensajes/[id]
 Obtiene un mensaje específico por ID.

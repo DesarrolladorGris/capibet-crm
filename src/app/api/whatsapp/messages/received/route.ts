@@ -1,17 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseConfig } from '@/config/supabase';
 import { WhatsAppMessagePayload } from '../../types';
+import { getSupabaseHeaders } from '@/utils/supabaseHeaders';
+import { emitNewChatMessage } from '@/lib/websocket/emitter';
+import { createNewMessageNotification } from '@/lib/notifications/creator';
 
 /**
- * Obtiene los headers para Supabase
+ * Obtiene los headers para Supabase usando serviceRoleKey (webhook del orquestador)
  */
 function getHeaders(): HeadersInit {
-  return {
-    'Content-Type': 'application/json',
-    'apikey': supabaseConfig.anonKey,
-    'Authorization': `Bearer ${supabaseConfig.anonKey}`,
-    'Prefer': 'return=representation'
-  };
+  return getSupabaseHeaders(null, { preferRepresentation: true });
 }
 
 /**
@@ -36,11 +34,26 @@ async function findOrCreateContact(phoneNumber: string, contactName: string, use
     // Limpiar el número de teléfono (remover espacios, guiones, etc.)
     const cleanPhoneNumber = phoneNumber.replace(/[\s-]/g, '');
     
-    // Buscar contacto existente por teléfono
-    const findContactResponse = await fetch(`${supabaseConfig.restUrl}/contactos?telefono=eq.${cleanPhoneNumber}`, {
-      method: 'GET',
-      headers: getHeaders()
-    });
+    // Verificar si el número contiene @lid (formato especial de WhatsApp)
+    const isWhatsAppJid = cleanPhoneNumber.includes('@lid');
+    
+    let findContactResponse: Response;
+    
+    if (isWhatsAppJid) {
+      // Si contiene @lid, buscar por whatsapp_jid
+      console.log(`Buscando contacto por whatsapp_jid: ${cleanPhoneNumber}`);
+      findContactResponse = await fetch(`${supabaseConfig.restUrl}/contactos?whatsapp_jid=eq.${cleanPhoneNumber}`, {
+        method: 'GET',
+        headers: getHeaders()
+      });
+    } else {
+      // Si no contiene @lid, buscar por teléfono normal
+      console.log(`Buscando contacto por teléfono: ${cleanPhoneNumber}`);
+      findContactResponse = await fetch(`${supabaseConfig.restUrl}/contactos?telefono=eq.${cleanPhoneNumber}`, {
+        method: 'GET',
+        headers: getHeaders()
+      });
+    }
 
     if (findContactResponse.ok) {
       const contacts = await handleResponse(findContactResponse);
@@ -86,13 +99,29 @@ async function findOrCreateContact(phoneNumber: string, contactName: string, use
     }
 
     // Si no existe, crear un nuevo contacto
-    const newContactData = {
+    const newContactData: {
+      nombre: string;
+      correo: null;
+      creado_por: number;
+      nombre_completo: string;
+      telefono?: string;
+      whatsapp_jid?: string;
+    } = {
       nombre: finalName,
-      telefono: cleanPhoneNumber,
       correo: null, // Campo requerido según el schema
       creado_por: userId,
       nombre_completo: finalName
     };
+
+    if (isWhatsAppJid) {
+      // Si es un JID de WhatsApp, guardarlo en whatsapp_jid y no en telefono
+      newContactData.whatsapp_jid = cleanPhoneNumber;
+      console.log(`Creando nuevo contacto con whatsapp_jid: ${cleanPhoneNumber}`);
+    } else {
+      // Si es un teléfono normal, guardarlo en telefono
+      newContactData.telefono = cleanPhoneNumber;
+      console.log(`Creando nuevo contacto con teléfono: ${cleanPhoneNumber}`);
+    }
 
     console.log('Creando nuevo contacto:', newContactData);
 
@@ -122,7 +151,7 @@ async function findOrCreateContact(phoneNumber: string, contactName: string, use
 /**
  * Busca o crea un chat entre la sesión y el contacto
  */
-async function findOrCreateChat(sessionId: number, contactId: number): Promise<number | null> {
+async function findOrCreateChat(sessionId: number, contactId: number): Promise<string | null> {
   try {
     // Buscar chat existente
     const findChatResponse = await fetch(`${supabaseConfig.restUrl}/chats?sesion_id=eq.${sessionId}&contact_id=eq.${contactId}`, {
@@ -137,11 +166,40 @@ async function findOrCreateChat(sessionId: number, contactId: number): Promise<n
       }
     }
 
-    // Si no existe, crear un nuevo chat
+    // Si no existe, necesitamos obtener el embudo_id de la sesión
+    const sessionResponse = await fetch(`${supabaseConfig.restUrl}/sesiones?id=eq.${sessionId}`, {
+      method: 'GET',
+      headers: getHeaders()
+    });
+
+    if (!sessionResponse.ok) {
+      console.error('Error al obtener la sesión para crear chat');
+      return null;
+    }
+
+    const sessions = await handleResponse(sessionResponse);
+    if (!Array.isArray(sessions) || sessions.length === 0) {
+      console.error('Sesión no encontrada para crear chat');
+      return null;
+    }
+
+    const session = sessions[0];
+    const embudoId = session.embudo_id;
+
+    if (!embudoId) {
+      console.error('La sesión no tiene un embudo_id asignado');
+      return null;
+    }
+
+    // Crear un nuevo chat con el embudo_id de la sesión
     const newChatData = {
       sesion_id: sessionId,
-      contact_id: contactId
+      contact_id: contactId,
+      embudo_id: embudoId,
+      nuevos_mensajes: true
     };
+
+    console.log('Creando nuevo chat con datos:', newChatData);
 
     const createChatResponse = await fetch(`${supabaseConfig.restUrl}/chats`, {
       method: 'POST',
@@ -152,7 +210,11 @@ async function findOrCreateChat(sessionId: number, contactId: number): Promise<n
     if (createChatResponse.ok) {
       const newChat = await handleResponse(createChatResponse);
       const chat = Array.isArray(newChat) ? newChat[0] : newChat;
+      console.log(`Nuevo chat creado: ${chat?.id} para sesión ${sessionId}, contacto ${contactId}, embudo ${embudoId}`);
       return chat?.id || null;
+    } else {
+      const errorText = await createChatResponse.text();
+      console.error('Error al crear chat:', createChatResponse.status, errorText);
     }
 
     return null;
@@ -171,7 +233,7 @@ export async function POST(request: NextRequest) {
     const body: WhatsAppMessagePayload = await request.json();
 
     console.log('Mensaje recibido:', body);
-
+    
     // Validaciones
     if (!body.session_id) {
       return NextResponse.json({
@@ -227,9 +289,6 @@ export async function POST(request: NextRequest) {
       contactName = body.sender_name;
     }
 
-    console.log(`Procesando mensaje fromMe: ${isFromMe}`);
-    console.log(`Contacto: ${contactName} (${contactPhone})`);
-    
     const contactId = await findOrCreateContact(contactPhone, contactName, sesionData.usuario_id);
     if (!contactId) {
       console.error('Error al procesar contacto');
@@ -248,8 +307,6 @@ export async function POST(request: NextRequest) {
         error: 'Error al procesar chat'
       }, { status: 500 });
     }
-
-    console.log('Hasta aquí todo bien');
 
     // Preparar el contenido del mensaje usando la nueva estructura
     const messageContent = {
@@ -278,8 +335,6 @@ export async function POST(request: NextRequest) {
       creado_en: new Date().toISOString()
     };
 
-    console.log('Datos a enviar:', newMessageData);
-
     const createMessageResponse = await fetch(`${supabaseConfig.restUrl}/mensajes`, {
       method: 'POST',
       headers: getHeaders(),
@@ -296,12 +351,59 @@ export async function POST(request: NextRequest) {
     }
 
     const savedMessage = await handleResponse(createMessageResponse);
+    const message = Array.isArray(savedMessage) ? savedMessage[0] : savedMessage;
+    
+    // Marcar el chat con nuevos_mensajes = true SOLO si el mensaje NO es del usuario
+    if (!isFromMe) {
+      try {
+        const updateChatResponse = await fetch(`${supabaseConfig.restUrl}/chats?id=eq.${chatId}`, {
+          method: 'PATCH',
+          headers: getHeaders(),
+          body: JSON.stringify({ nuevos_mensajes: true })
+        });
+
+        if (!updateChatResponse.ok) {
+          console.error('Error actualizando chat con nuevos_mensajes:', updateChatResponse.status);
+        }
+      } catch (error) {
+        console.error('Error al marcar chat con nuevos_mensajes:', error);
+        // No fallar el request si esto falla
+      }
+    }
+    
+    // Emitir evento SSE para nuevo mensaje
+    try {
+      await emitNewChatMessage(chatId, message, {
+        id: contactId,
+        nombre: contactName,
+        telefono: contactPhone
+      });
+    } catch (error) {
+      console.error('Error emitiendo evento SSE:', error);
+      // No fallar el request si el evento falla
+    }
+    
+    // Crear notificación para toda la organización (solo si el mensaje NO es del usuario)
+    if (!isFromMe && sesionData.organizacion_id) {
+      try {
+        await createNewMessageNotification(
+          sesionData.organizacion_id.toString(),
+          contactName,
+          body.message_content,
+          chatId,
+          contactId.toString(),
+          message.id
+        );
+      } catch (error) {
+        console.error('Error creando notificación:', error);
+      }
+    }
     
     return NextResponse.json({
       success: true,
       message: 'Mensaje procesado correctamente',
       data: {
-        message: Array.isArray(savedMessage) ? savedMessage[0] : savedMessage,
+        message,
         contact_id: contactId,
         chat_id: chatId
       }

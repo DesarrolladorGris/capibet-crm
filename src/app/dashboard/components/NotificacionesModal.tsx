@@ -1,6 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { useWebSocketContext } from '@/contexts/WebSocketContext';
+import { notificacionServices } from '@/services/notificacionServices';
 
 interface Notificacion {
   id: string;
@@ -17,62 +19,25 @@ interface NotificacionesModalProps {
 }
 
 export default function NotificacionesModal({ isOpen, onClose }: NotificacionesModalProps) {
-  const [notificaciones, setNotificaciones] = useState<Notificacion[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
   const [filtro, setFiltro] = useState<'todas' | 'no-leidas'>('todas');
+  
+  // Usar el contexto WebSocket para obtener notificaciones
+  const { 
+    notifications, 
+    unreadCount, 
+    markAsRead, 
+    markAllAsRead 
+  } = useWebSocketContext();
 
-  // Datos de ejemplo para las notificaciones
-  useEffect(() => {
-    if (isOpen) {
-      // Simular carga de notificaciones
-      setIsLoading(true);
-      setTimeout(() => {
-        setNotificaciones([
-          {
-            id: '1',
-            titulo: 'Nuevo contacto agregado',
-            mensaje: 'Juan Pérez se ha registrado como nuevo contacto en el sistema',
-            fecha: '2024-01-15T10:30:00Z',
-            leida: false,
-            tipo: 'success'
-          },
-          {
-            id: '2',
-            titulo: 'Chat iniciado',
-            mensaje: 'María García ha iniciado una conversación en WhatsApp',
-            fecha: '2024-01-15T09:15:00Z',
-            leida: true,
-            tipo: 'info'
-          },
-          {
-            id: '3',
-            titulo: 'Venta completada',
-            mensaje: 'Se ha completado una venta por $2,500 en el embudo "Conversión Premium"',
-            fecha: '2024-01-15T08:45:00Z',
-            leida: false,
-            tipo: 'success'
-          },
-          {
-            id: '4',
-            titulo: 'Sistema de respaldo',
-            mensaje: 'El respaldo automático se ha completado exitosamente',
-            fecha: '2024-01-14T23:00:00Z',
-            leida: true,
-            tipo: 'info'
-          },
-          {
-            id: '5',
-            titulo: 'Alerta de espacio',
-            mensaje: 'El espacio de almacenamiento está al 85% de su capacidad',
-            fecha: '2024-01-14T15:30:00Z',
-            leida: false,
-            tipo: 'warning'
-          }
-        ]);
-        setIsLoading(false);
-      }, 1000);
-    }
-  }, [isOpen]);
+  // Convertir Notification a Notificacion para el modal
+  const notificaciones: Notificacion[] = notifications.map(notif => ({
+    id: notif.id,
+    titulo: notif.titulo,
+    mensaje: notif.mensaje,
+    fecha: notif.fecha,
+    leida: notif.leida,
+    tipo: notif.tipo
+  }));
 
   const getTipoIcon = (tipo: string) => {
     switch (tipo) {
@@ -100,29 +65,30 @@ export default function NotificacionesModal({ isOpen, onClose }: NotificacionesM
     }
   };
 
-  const marcarComoLeida = (id: string) => {
-    setNotificaciones(prev => 
-      prev.map(notif => 
-        notif.id === id ? { ...notif, leida: true } : notif
-      )
-    );
+  const marcarComoLeida = async (id: string) => {
+    // Llamar al servicio para marcar como leída en el backend
+    await notificacionServices.marcarComoLeida(id);
+    // Actualizar el estado local
+    markAsRead(id);
   };
 
-  const marcarTodasComoLeidas = () => {
-    setNotificaciones(prev => 
-      prev.map(notif => ({ ...notif, leida: true }))
-    );
+  const marcarTodasComoLeidas = async () => {
+    // Llamar al servicio para marcar todas como leídas en el backend
+    await notificacionServices.marcarTodasComoLeidas();
+    // Actualizar el estado local
+    markAllAsRead();
   };
 
   const eliminarNotificacion = (id: string) => {
-    setNotificaciones(prev => prev.filter(notif => notif.id !== id));
+    // Por ahora no implementamos eliminación, solo marcado como leída
+    console.log('Eliminar notificación:', id);
   };
 
   const notificacionesFiltradas = notificaciones.filter(notif => 
     filtro === 'todas' || !notif.leida
   );
 
-  const notificacionesNoLeidas = notificaciones.filter(notif => !notif.leida).length;
+  const notificacionesNoLeidas = unreadCount;
 
   const formatFecha = (fecha: string) => {
     const date = new Date(fecha);
@@ -144,12 +110,35 @@ export default function NotificacionesModal({ isOpen, onClose }: NotificacionesM
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col">
+    <>
+      <style jsx>{`
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: rgba(42, 45, 53, 0.5);
+          border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: rgba(107, 114, 128, 0.8);
+          border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: rgba(156, 163, 175, 1);
+        }
+        .custom-scrollbar {
+          scrollbar-width: thin;
+          scrollbar-color: rgba(107, 114, 128, 0.8) rgba(42, 45, 53, 0.5);
+        }
+      `}</style>
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-[var(--border-primary)]">
           <div className="flex items-center space-x-3">
-            <h2 className="text-[var(--text-primary)] text-xl font-semibold">Notificaciones</h2>
+            <div className="flex items-center space-x-2">
+              <h2 className="text-[var(--text-primary)] text-xl font-semibold">Notificaciones</h2>
+            </div>
             {notificacionesNoLeidas > 0 && (
               <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full">
                 {notificacionesNoLeidas}
@@ -189,16 +178,9 @@ export default function NotificacionesModal({ isOpen, onClose }: NotificacionesM
           </div>
         </div>
 
-        {/* Content */}
-        <div className="flex-1 overflow-hidden">
-          {isLoading ? (
-            <div className="flex items-center justify-center h-64">
-              <div className="text-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#F29A1F] mx-auto mb-4"></div>
-                <p className="text-gray-400">Cargando notificaciones...</p>
-              </div>
-            </div>
-          ) : notificacionesFiltradas.length === 0 ? (
+        {/* Content - Con scroll mejorado */}
+        <div className="flex-1 overflow-y-auto min-h-0 custom-scrollbar">
+          {notificacionesFiltradas.length === 0 ? (
             <div className="flex items-center justify-center h-64">
               <div className="text-center">
                 <div className="text-gray-400 text-6xl mb-4">🔔</div>
@@ -214,9 +196,8 @@ export default function NotificacionesModal({ isOpen, onClose }: NotificacionesM
               </div>
             </div>
           ) : (
-            <div className="overflow-y-auto max-h-full">
-              <div className="divide-y divide-[#3a3d45]">
-                {notificacionesFiltradas.map((notificacion) => (
+            <div className="divide-y divide-[#3a3d45]">
+              {notificacionesFiltradas.map((notificacion) => (
                   <div
                     key={notificacion.id}
                     className={`p-4 hover:bg-[#2a2d35] transition-colors border-l-4 ${getTipoColor(notificacion.tipo)} ${
@@ -268,7 +249,6 @@ export default function NotificacionesModal({ isOpen, onClose }: NotificacionesM
                     </div>
                   </div>
                 ))}
-              </div>
             </div>
           )}
         </div>
@@ -291,6 +271,7 @@ export default function NotificacionesModal({ isOpen, onClose }: NotificacionesM
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 }

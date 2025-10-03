@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-
 import { useRouter } from 'next/navigation';
 import { userServices } from '@/services/userServices';
 import { LoginCredentials } from '@/app/api/usuarios/domain/usuario';
@@ -20,7 +19,7 @@ export default function LoginPage() {
     const registeredEmail = localStorage.getItem('registeredEmail');
     if (registeredEmail) {
       setEmail(registeredEmail);
-      localStorage.removeItem('registeredEmail'); // Limpiar después de usar
+      localStorage.removeItem('registeredEmail');
     }
   }, []);
 
@@ -56,21 +55,50 @@ export default function LoginPage() {
       const result = await userServices.loginUsuario(credentials);
       
       if (result.success && result.data) {
-        // Login exitoso - guardar datos de sesión
-        const userData = result.data;
+        const data = result.data;
         
-        // Guardar información de sesión en localStorage
-        localStorage.setItem('isLoggedIn', 'true');
-        localStorage.setItem('userEmail', userData.correo_electronico);
-        localStorage.setItem('userName', userData.nombre_usuario);
-        localStorage.setItem('userRole', userData.rol || '');
-        localStorage.setItem('userId', userData.id?.toString() || '');
-        localStorage.setItem('agencyName', userData.nombre_agencia || '');
+        // Guardar tokens de autenticación
+        if (data.access_token) {
+          localStorage.setItem('access_token', data.access_token);
+        }
         
-        // Opcional: guardar toda la información del usuario
+        if (data.refresh_token) {
+          localStorage.setItem('refresh_token', data.refresh_token);
+        }
+        
+        // Guardar información del usuario
+        const userData = {
+          id: data.id,
+          nombre: data.nombre,
+          correo_electronico: data.correo_electronico,
+          organizacion_id: data.organizacion_id,
+          telefono: data.telefono,
+          rol: data.rol,
+          codigo_pais: data.codigo_pais
+        };
         localStorage.setItem('userData', JSON.stringify(userData));
         
-        console.log('Login exitoso:', userData);
+        // Guardar información de la organización (si existe)
+        if (data.organizacion) {
+          const organizationData = {
+            id: data.organizacion.id,
+            nombre: data.organizacion.nombre,
+            logo: data.organizacion.logo,
+            web: data.organizacion.website
+          };
+          localStorage.setItem('organizationData', JSON.stringify(organizationData));
+        }
+        
+        console.log('Login exitoso:', {
+          usuario: userData.nombre,
+          rol: userData.rol,
+          organizacion: data.organizacion?.nombre || 'Sin organización'
+        });
+        
+        // Notificar que el login fue exitoso para activar WebSocket
+        window.dispatchEvent(new CustomEvent('userLoggedIn', {
+          detail: { user: userData, organization: data.organizacion }
+        }));
         
         // Redireccionar según el rol del usuario
         if (userData.rol === 'Cliente') {

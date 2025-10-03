@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { userServices } from '@/services/userServices';
 import { UsuarioData } from '@/app/api/usuarios/domain/usuario';
+import { Plus } from 'lucide-react';
 
 interface NuevoUsuarioModalProps {
   isOpen: boolean;
@@ -18,7 +19,7 @@ export default function NuevoUsuarioModal({ isOpen, onClose, onUserCreated }: Nu
     phone: '',
     password: '',
     confirmPassword: '',
-    rol: 'Admin'
+    rol: 'admin'
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -75,7 +76,7 @@ export default function NuevoUsuarioModal({ isOpen, onClose, onUserCreated }: Nu
         phone: '',
         password: '',
         confirmPassword: '',
-        rol: 'Admin'
+        rol: 'admin'
       });
       setError('');
       setSuccess('');
@@ -150,21 +151,18 @@ export default function NuevoUsuarioModal({ isOpen, onClose, onUserCreated }: Nu
         return;
       }
       
-      // Preparar datos para la API
-      const userData: UsuarioData = {
-        nombre_agencia: 'N/A',
-        tipo_empresa: 'N/A',
-        nombre_usuario: formData.name,
+      // Preparar datos para la API (usar endpoint de register)
+      const userData = {
         correo_electronico: formData.email,
+        contrasena: formData.password,
+        nombre: formData.name,
         telefono: formData.phone,
         codigo_pais: selectedCountry.code.replace('+', ''),
-        contrasena: formData.password,
-        rol: formData.rol,
-        activo: true
+        rol: formData.rol
       };
       
-      // Crear usuario en Supabase
-      const result = await userServices.createUsuario(userData);
+      // Crear usuario en Supabase mediante el endpoint de registro
+      const result = await userServices.registerExternalUser(userData);
       
       if (result.success) {
         setSuccess('¡Usuario creado exitosamente!');

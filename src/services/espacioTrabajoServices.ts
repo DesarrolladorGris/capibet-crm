@@ -1,13 +1,5 @@
+import { authGet, authPost, authPatch, authDelete, ApiResponse } from '@/utils/apiClient';
 import { EspacioTrabajoData, EspacioTrabajoResponse } from '../app/api/espacio_trabajos/domain/espacio_trabajo';
-
-// Tipos para las respuestas de la API
-interface ApiResponse<T = any> {
-  success: boolean;
-  data?: T;
-  error?: string;
-  details?: string;
-  message?: string;
-}
 
 // Configuración de la API
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '';
@@ -15,151 +7,50 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '';
 // Endpoints de la API
 const apiEndpoints = {
   espaciosTrabajo: `${API_BASE_URL}/api/espacio_trabajos`,
-  espaciosTrabajoById: (id: number) => `${API_BASE_URL}/api/espacio_trabajos/${id}`
+  espaciosTrabajoById: (id: string) => `${API_BASE_URL}/api/espacio_trabajos/${id}`
 };
 
 class EspacioTrabajoServices {
   /**
-   * Obtiene los headers para las peticiones
-   */
-  private getHeaders(): HeadersInit {
-    return {
-      'Content-Type': 'application/json',
-    };
-  }
-
-  /**
-   * Maneja la respuesta de la API
-   */
-  private async handleResponse<T>(response: Response): Promise<T> {
-    if (!response.ok) {
-      const errorData = await response.text();
-      throw new Error(`Error del servidor: ${response.status} ${response.statusText} - ${errorData}`);
-    }
-    
-    return await response.json();
-  }
-
-  /**
    * Crea un nuevo espacio de trabajo
    */
   async createEspacioTrabajo(espacioData: EspacioTrabajoData): Promise<ApiResponse<EspacioTrabajoResponse>> {
-    try {
-      const response = await fetch(apiEndpoints.espaciosTrabajo, {
-        method: 'POST',
-        headers: this.getHeaders(),
-        body: JSON.stringify(espacioData)
-      });
-
-      const data = await this.handleResponse<ApiResponse<EspacioTrabajoResponse>>(response);
-      return data;
-
-    } catch (error) {
-      console.error('Error creating espacio de trabajo:', error);
-      
-      return {
-        success: false,
-        error: 'Error de conexión al crear espacio de trabajo',
-        details: error instanceof Error ? error.message : 'Error desconocido'
-      };
-    }
+    return authPost<EspacioTrabajoResponse>(apiEndpoints.espaciosTrabajo, espacioData);
   }
 
   /**
    * Obtiene todos los espacios de trabajo
    */
   async getAllEspaciosTrabajo(): Promise<ApiResponse<EspacioTrabajoResponse[]>> {
-    try {
-      const response = await fetch(apiEndpoints.espaciosTrabajo, {
-        method: 'GET',
-        headers: this.getHeaders()
-      });
-
-      const data = await this.handleResponse<ApiResponse<EspacioTrabajoResponse[]>>(response);
-      return data;
-
-    } catch (error) {
-      console.error('Error fetching espacios de trabajo:', error);
-      
-      return {
-        success: false,
-        error: 'Error de conexión al obtener espacios de trabajo',
-        details: error instanceof Error ? error.message : 'Error desconocido'
-      };
-    }
+    return authGet<EspacioTrabajoResponse[]>(apiEndpoints.espaciosTrabajo);
   }
 
   /**
    * Obtiene un espacio de trabajo por ID
    */
-  async getEspacioTrabajoById(id: number): Promise<ApiResponse<EspacioTrabajoResponse>> {
-    try {
-      const response = await fetch(apiEndpoints.espaciosTrabajoById(id), {
-        method: 'GET',
-        headers: this.getHeaders()
-      });
-
-      const data = await this.handleResponse<ApiResponse<EspacioTrabajoResponse>>(response);
-      return data;
-
-    } catch (error) {
-      console.error('Error fetching espacio de trabajo:', error);
-      
-      return {
-        success: false,
-        error: 'Error de conexión al obtener espacio de trabajo',
-        details: error instanceof Error ? error.message : 'Error desconocido'
-      };
-    }
+  async getEspacioTrabajoById(id: string): Promise<ApiResponse<EspacioTrabajoResponse>> {
+    return authGet<EspacioTrabajoResponse>(apiEndpoints.espaciosTrabajoById(id));
   }
 
   /**
    * Actualiza un espacio de trabajo existente
    */
-  async updateEspacioTrabajo(id: number, espacioData: Partial<EspacioTrabajoData>): Promise<ApiResponse<EspacioTrabajoResponse>> {
-    try {
-      const response = await fetch(apiEndpoints.espaciosTrabajoById(id), {
-        method: 'PATCH',
-        headers: this.getHeaders(),
-        body: JSON.stringify(espacioData)
-      });
-
-      const data = await this.handleResponse<ApiResponse<EspacioTrabajoResponse>>(response);
-      return data;
-
-    } catch (error) {
-      console.error('Error updating espacio de trabajo:', error);
-      
-      return {
-        success: false,
-        error: 'Error de conexión al actualizar espacio de trabajo',
-        details: error instanceof Error ? error.message : 'Error desconocido'
-      };
-    }
+  async updateEspacioTrabajo(id: string, espacioData: Partial<EspacioTrabajoData>): Promise<ApiResponse<EspacioTrabajoResponse>> {
+    return authPatch<EspacioTrabajoResponse>(apiEndpoints.espaciosTrabajoById(id), espacioData);
   }
 
   /**
    * Elimina un espacio de trabajo
    */
-  async deleteEspacioTrabajo(id: number): Promise<ApiResponse> {
-    try {
-      const response = await fetch(apiEndpoints.espaciosTrabajoById(id), {
-        method: 'DELETE',
-        headers: this.getHeaders()
-      });
+  async deleteEspacioTrabajo(id: string): Promise<ApiResponse> {
+    return authDelete(apiEndpoints.espaciosTrabajoById(id));
+  }
 
-      const data = await this.handleResponse<ApiResponse>(response);
-      return data;
-
-    } catch (error) {
-      console.error('Error deleting espacio de trabajo:', error);
-      
-      return {
-        success: false,
-        error: 'Error de conexión al eliminar espacio de trabajo',
-        details: error instanceof Error ? error.message : 'Error desconocido'
-      };
-    }
+  /**
+   * Actualiza el orden de múltiples espacios de trabajo
+   */
+  async updateEspaciosTrabajoOrder(espaciosData: Array<{ id: string; orden: number }>): Promise<ApiResponse> {
+    return authPatch(`${API_BASE_URL}/api/espacio_trabajos/update-order`, espaciosData);
   }
 
   /**

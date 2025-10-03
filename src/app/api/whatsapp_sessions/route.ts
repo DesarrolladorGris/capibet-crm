@@ -5,17 +5,18 @@ import {
   WhatsAppSessionResponse, 
   CreateWhatsAppSessionData 
 } from './domain/whatsapp_session';
-import { getHeaders, handleResponse } from './utils';
+import { handleResponse } from './utils';
+import { getSupabaseHeaders } from '@/utils/supabaseHeaders';
 
 /**
  * GET /api/whatsapp_sessions
  * Obtiene todas las sesiones de WhatsApp
  */
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const response = await fetch(`${supabaseConfig.restUrl}/whatsapp_sessions?order=created_at.desc`, {
       method: 'GET',
-      headers: getHeaders()
+      headers: getSupabaseHeaders(request, { preferRepresentation: true })
     });
 
     if (!response.ok) {
@@ -70,7 +71,7 @@ export async function POST(request: NextRequest) {
     // Verificar que la sesión existe
     const sesionResponse = await fetch(`${supabaseConfig.restUrl}/sesiones?id=eq.${body.sesion_id}`, {
       method: 'GET',
-      headers: getHeaders()
+      headers: getSupabaseHeaders(request, { preferRepresentation: true })
     });
 
     if (!sesionResponse.ok) {
@@ -94,7 +95,7 @@ export async function POST(request: NextRequest) {
     // Verificar que no existe ya una whatsapp_session con este session_id
     const existingSessionResponse = await fetch(`${supabaseConfig.restUrl}/whatsapp_sessions?session_id=eq.${body.session_id}`, {
       method: 'GET',
-      headers: getHeaders()
+      headers: getSupabaseHeaders(request, { preferRepresentation: true })
     });
 
     if (existingSessionResponse.ok) {
@@ -124,7 +125,7 @@ export async function POST(request: NextRequest) {
 
     const response = await fetch(`${supabaseConfig.restUrl}/whatsapp_sessions`, {
       method: 'POST',
-      headers: getHeaders(),
+      headers: getSupabaseHeaders(request, { preferRepresentation: true }),
       body: JSON.stringify(newSession)
     });
 

@@ -52,8 +52,8 @@ interface SesionesListProps {
   contactos?: Contacto[];
   embudos?: Embudo[];
   onEditSesion?: (sesion: SesionResponse) => void;
-  onDeleteSesion?: (sesionId: number) => void;
-  onToggleStatus?: (sesionId: number, estado: 'activo' | 'desconectado' | 'expirado') => void;
+  onDeleteSesion?: (sesionId: string) => void;
+  onToggleStatus?: (sesionId: string, estado: 'activo' | 'desconectado' | 'expirado') => void;
 }
 
 export default function SesionesList({ 
@@ -90,16 +90,16 @@ export default function SesionesList({
     return typeMap[tipo] || tipo.charAt(0).toUpperCase() + tipo.slice(1);
   };
 
-  const getContactoName = (contactoId: number) => {
-    const contacto = contactos.find(c => c.id === contactoId);
+  const getContactoName = (contactoId: string) => {
+    const contacto = contactos.find(c => String(c.id) === contactoId);
     if (contacto) {
       return contacto.nombre_completo || `${contacto.nombre} ${contacto.apellido || ''}`.trim();
     }
     return `Contacto ${contactoId}`;
   };
 
-  const getEmbudoName = (embudoId: number) => {
-    const embudo = embudos.find(e => e.id === embudoId);
+  const getEmbudoName = (embudoId: string) => {
+    const embudo = embudos.find(e => String(e.id) === embudoId);
     return embudo ? embudo.nombre : `Embudo ${embudoId}`;
   };
 

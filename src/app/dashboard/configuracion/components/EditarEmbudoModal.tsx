@@ -20,8 +20,10 @@ export default function EditarEmbudoModal({
 }: EditarEmbudoModalProps) {
   const [nombre, setNombre] = useState('');
   const [descripcion, setDescripcion] = useState('');
+  const [color, setColor] = useState('#4a4d55');
   const [initialNombre, setInitialNombre] = useState('');
   const [initialDescripcion, setInitialDescripcion] = useState('');
+  const [initialColor, setInitialColor] = useState('#4a4d55');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -29,15 +31,18 @@ export default function EditarEmbudoModal({
     if (isOpen && embudo) {
       setNombre(embudo.nombre);
       setDescripcion(embudo.descripcion || '');
+      setColor(embudo.color || '#4a4d55');
       setInitialNombre(embudo.nombre);
       setInitialDescripcion(embudo.descripcion || '');
+      setInitialColor(embudo.color || '#4a4d55');
       setError('');
     }
   }, [isOpen, embudo]);
 
   const hasChanges = 
     nombre.trim() !== initialNombre.trim() || 
-    descripcion.trim() !== initialDescripcion.trim();
+    descripcion.trim() !== initialDescripcion.trim() ||
+    color !== initialColor;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -65,6 +70,7 @@ export default function EditarEmbudoModal({
       const updatedData: Partial<EmbudoData> = {
         nombre: nombre.trim(),
         descripcion: descripcion.trim() || undefined,
+        color: color,
       };
 
       console.log('Datos del embudo a actualizar:', updatedData);
@@ -101,21 +107,6 @@ export default function EditarEmbudoModal({
             ×
           </button>
         </div>
-
-        {/* Info del embudo */}
-        {embudo && (
-          <div className="mb-4 text-gray-400 text-sm border-b border-[#3a3d45] pb-3">
-            <div className="flex items-center space-x-2 mb-2">
-              <BarChart3 className="text-[#F29A1F] w-5 h-5" />
-              <span className="text-white font-medium">Editando: {embudo.nombre}</span>
-            </div>
-            <div className="space-y-1 text-xs">
-              <p>ID: #{embudo.id} | Espacio ID: {embudo.espacio_id}</p>
-              <p>Creado: {new Date(embudo.creado_en).toLocaleDateString('es-ES')} por Usuario #{embudo.creado_por}</p>
-              <p>Última actualización: {new Date(embudo.actualizado_en).toLocaleDateString('es-ES')}</p>
-            </div>
-          </div>
-        )}
 
         {error && (
           <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 mb-4 text-red-400 text-sm">
@@ -155,20 +146,27 @@ export default function EditarEmbudoModal({
             />
           </div>
 
-          {/* Indicador de cambios */}
-          <div className="bg-[#1a1d23] rounded-lg p-3 border border-[#3a3d45]">
-            <div className="text-sm text-gray-400">
-              <Lightbulb className="w-4 h-4 inline mr-1" /> <strong>Estado de cambios:</strong>
-            </div>
-            <div className="text-xs mt-2">
-              {hasChanges ? (
-                <span className="text-yellow-400"><Edit className="w-4 h-4 inline mr-1" /> Hay cambios sin guardar</span>
-              ) : (
-                <span className="text-gray-500"><Check className="w-4 h-4 inline mr-1" /> Sin cambios pendientes</span>
-              )}
-            </div>
-            <div className="text-xs text-gray-500 mt-2">
-              <strong>Nota:</strong> Solo se pueden editar el nombre y la descripción.
+          <div>
+            <label htmlFor="color" className="block text-sm font-medium text-gray-300 mb-2">
+              Color del Borde
+            </label>
+            <div className="flex items-center space-x-3">
+              <input
+                type="color"
+                id="color"
+                value={color}
+                onChange={(e) => setColor(e.target.value)}
+                className="w-16 h-10 bg-[#1a1d23] border border-[#3a3d45] rounded-lg cursor-pointer"
+                disabled={isLoading}
+              />
+              <input
+                type="text"
+                value={color}
+                onChange={(e) => setColor(e.target.value)}
+                className="flex-1 px-3 py-2 bg-[#1a1d23] border border-[#3a3d45] rounded-lg text-white focus:ring-2 focus:ring-[#F29A1F] focus:border-transparent"
+                placeholder="#4a4d55"
+                disabled={isLoading}
+              />
             </div>
           </div>
 

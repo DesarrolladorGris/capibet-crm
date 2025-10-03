@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
-import { performLogout, isUserAuthenticated } from '@/utils/auth';
+import { performLogout, isUserAuthenticated, getUserData, getOrganizationData } from '@/utils/auth';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -15,7 +15,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const [userEmail, setUserEmail] = useState('');
   const [userName, setUserName] = useState('');
   const [userRole, setUserRole] = useState('');
-  const [agencyName, setAgencyName] = useState('');
+  const [organizationName, setOrganizationName] = useState('');
   const router = useRouter();
 
   useEffect(() => {
@@ -25,20 +25,25 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       return;
     }
     
-    // Cargar datos de usuario
-    const email = localStorage.getItem('userEmail');
-    const role = localStorage.getItem('userRole') || '';
+    // Cargar datos de usuario desde la nueva estructura
+    const userData = getUserData();
+    const organizationData = getOrganizationData();
+    
+    if (!userData) {
+      router.push('/login');
+      return;
+    }
     
     // Si es un usuario Cliente, redirigir a su página específica
-    if (role === 'Cliente') {
+    if (userData.rol === 'Cliente') {
       router.push('/cliente');
       return;
     }
     
-    setUserEmail(email || '');
-    setUserName(localStorage.getItem('userName') || '');
-    setUserRole(role);
-    setAgencyName(localStorage.getItem('agencyName') || '');
+    setUserEmail(userData.correo_electronico || '');
+    setUserName(userData.nombre || '');
+    setUserRole(userData.rol || '');
+    setOrganizationName(organizationData?.nombre || '');
   }, [router]);
 
   const handleLogout = () => {
@@ -55,7 +60,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--bg-primary)] flex">
+    <div className="h-screen bg-[var(--bg-primary)] flex overflow-hidden">
       {/* Sidebar */}
       <Sidebar 
         isOpen={isSidebarOpen} 
@@ -63,19 +68,19 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       />
       
       {/* Main Content */}
-      <div className="flex-1 flex flex-col bg-[var(--bg-primary)]">
+      <div className="flex-1 flex flex-col bg-[var(--bg-primary)] min-w-0">
         {/* Header */}
         <Header 
           userEmail={userEmail}
           userName={userName}
           userRole={userRole}
-          agencyName={agencyName}
+          agencyName={organizationName}
           onLogout={handleLogout}
           onMenuToggle={() => setIsSidebarOpen(!isSidebarOpen)}
         />
         
         {/* Page Content */}
-        <main className="flex-1">
+        <main className="flex-1 min-h-0 overflow-hidden">
           {children}
         </main>
       </div>

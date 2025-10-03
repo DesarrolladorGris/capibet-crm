@@ -1,14 +1,18 @@
 export interface ChatData {
-  id?: number;
-  sesion_id: number;
-  contact_id: number;
+  id?: string;
+  sesion_id: string;
+  contact_id: string;
+  embudo_id: string;
+  nuevos_mensajes?: boolean;
 }
 
 export interface ChatResponse {
-  id: number;
-  sesion_id: number;
-  contact_id: number;
-  created_at?: string;
+  id: string;
+  sesion_id: string;
+  contact_id: string;
+  embudo_id: string;
+  created_at: string;
+  nuevos_mensajes: boolean;
 }
 
 export interface ApiResponse<T = unknown> {

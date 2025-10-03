@@ -72,7 +72,7 @@ export default function SesionesTab() {
     whatsapp_session: '',
     estado: 'activo' as 'activo' | 'desconectado' | 'expirado',
   });
-  const [usuarios, setUsuarios] = useState<{id: number, nombre_usuario: string, correo_electronico: string}[]>([]);
+  const [usuarios, setUsuarios] = useState<{id: string, nombre: string}[]>([]);
   const [embudos, setEmbudos] = useState<{id: number, nombre: string}[]>([]);
   const [contactos, setContactos] = useState<{id: number, nombre: string, apellido?: string, nombre_completo?: string}[]>([]);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -170,7 +170,7 @@ export default function SesionesTab() {
     alert('Funcionalidad de canales deshabilitada');
   };
 
-  const handleToggleSesionStatus = async (sesionId: number, estado: 'activo' | 'desconectado' | 'expirado') => {
+  const handleToggleSesionStatus = async (sesionId: string, estado: 'activo' | 'desconectado' | 'expirado') => {
     setLoading(true);
     try {
       const result = await sesionesServices.updateSesion(sesionId, { estado });
@@ -188,7 +188,7 @@ export default function SesionesTab() {
     }
   };
 
-  const handleDeleteSesion = async (sesionId: number) => {
+  const handleDeleteSesion = async (sesionId: string) => {
     if (!confirm('¿Estás seguro de que deseas eliminar esta sesión?')) return;
     
     setLoading(true);
@@ -276,10 +276,10 @@ export default function SesionesTab() {
     setLoading(true);
     try {
       const sesionData = {
-        usuario_id: parseInt(sesionFormData.usuario_id),
+        usuario_id: sesionFormData.usuario_id,
         nombre: sesionFormData.nombre,
         type: sesionFormData.type,
-        embudo_id: parseInt(sesionFormData.embudo_id),
+        embudo_id: sesionFormData.embudo_id,
         description: sesionFormData.description || undefined,
         email: sesionFormData.email || undefined,
         given_name: sesionFormData.given_name || undefined,
@@ -389,7 +389,6 @@ export default function SesionesTab() {
             <p className="text-gray-400 text-sm">Crear, editar y eliminar tus sesiones vinculadas.</p>
           </div>
         </div>
-
       </div>
 
       {/* Sección de Canales */}
@@ -584,7 +583,7 @@ export default function SesionesTab() {
                   <option value="">Seleccionar usuario</option>
                   {usuarios.map((usuario) => (
                     <option key={usuario.id} value={usuario.id}>
-                      {usuario.nombre_usuario} ({usuario.correo_electronico})
+                      {usuario.nombre}
                     </option>
                   ))}
                 </select>
@@ -672,7 +671,7 @@ export default function SesionesTab() {
                   <option value="">Seleccionar usuario</option>
                   {usuarios.map((usuario) => (
                     <option key={usuario.id} value={usuario.id}>
-                      {usuario.nombre_usuario}
+                      {usuario.nombre}
                     </option>
                   ))}
                 </select>

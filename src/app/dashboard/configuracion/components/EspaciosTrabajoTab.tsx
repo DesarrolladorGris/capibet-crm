@@ -1,10 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { AlertTriangle, RefreshCw, Hammer, Plus, Settings, Edit2, Trash2, Building2 } from 'lucide-react';
+import { AlertTriangle, RefreshCw, Hammer, Plus, Edit2, Trash2, Building2, Briefcase } from 'lucide-react';
 import { espacioTrabajoServices, EspacioTrabajoResponse } from '@/services/espacioTrabajoServices';
-import { supabaseService, EspacioConEmbudos } from '@/services/supabaseService';
-import { embudoServices, EmbudoResponse } from '@/services/embudoServices';
+import { embudoServices, EmbudoResponse, EspacioConEmbudos } from '@/services/embudoServices';
 import NuevoEspacioModal from './NuevoEspacioModal';
 import EditarEspacioModal from './EditarEspacioModal';
 import ConfirmarEliminarEspacioModal from './ConfirmarEliminarEspacioModal';
@@ -72,11 +71,13 @@ export default function EspaciosTrabajoTab() {
         const espacios = espaciosResult.data;
         const embudos = embudosResult.success ? embudosResult.data || [] : [];
         
-        // Asociar embudos a sus espacios correspondientes
-        const espaciosConEmbudos: EspacioConEmbudos[] = espacios.map(espacio => ({
-          ...espacio,
-          embudos: embudos.filter(embudo => embudo.espacio_id === espacio.id)
-        }));
+        // Asociar embudos a sus espacios correspondientes y ordenar por orden
+        const espaciosConEmbudos: EspacioConEmbudos[] = espacios
+          .sort((a, b) => (a.orden || 0) - (b.orden || 0)) // Ordenar espacios por orden
+          .map(espacio => ({
+            ...espacio,
+            embudos: embudos.filter(embudo => embudo.espacio_id === espacio.id)
+          }));
         
         setEspaciosConEmbudos(espaciosConEmbudos);
         console.log('Espacios con embudos cargados:', espaciosConEmbudos);
@@ -166,8 +167,57 @@ export default function EspaciosTrabajoTab() {
     setSelectedEmbudoForDelete(null);
   };
 
+  // Manejar el final del drag & drop para espacios de trabajo
+  const handleEspaciosDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (!over || active.id === over.id) {
+      return;
+    }
+
+    console.log('🚀 Drag end espacios:', active.id, 'over:', over.id);
+
+    const oldIndex = espaciosConEmbudos.findIndex(espacio => espacio.id === active.id);
+    const newIndex = espaciosConEmbudos.findIndex(espacio => espacio.id === over.id);
+
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    // Reordenar localmente para feedback inmediato
+    const newEspacios = arrayMove(espaciosConEmbudos, oldIndex, newIndex)
+      .map((espacio, index) => ({
+        ...espacio,
+        orden: index + 1 // Actualizar el campo orden de cada espacio
+      }));
+    setEspaciosConEmbudos(newEspacios);
+
+    // Preparar datos para el API (asignar nuevos órdenes)
+    const espaciosConOrden = newEspacios.map((espacio, index) => ({
+      id: espacio.id,
+      orden: index + 1
+    }));
+
+    console.log('📡 Actualizando orden de espacios en API:', espaciosConOrden);
+
+    try {
+      const result = await espacioTrabajoServices.updateEspaciosTrabajoOrder(espaciosConOrden);
+      
+      if (result.success) {
+        console.log('✅ Orden de espacios actualizado exitosamente');
+        // No recargar, el estado local ya está actualizado de manera optimista
+      } else {
+        console.error('❌ Error al actualizar orden de espacios:', result.error);
+        // Revertir cambios locales en caso de error
+        loadEspaciosTrabajo();
+      }
+    } catch (error) {
+      console.error('❌ Error inesperado al actualizar orden de espacios:', error);
+      // Revertir cambios locales en caso de error
+      loadEspaciosTrabajo();
+    }
+  };
+
   // Manejar el final del drag & drop para embudos
-  const handleDragEnd = async (event: DragEndEvent, espacioId: number) => {
+  const handleDragEnd = async (event: DragEndEvent, espacioId: string) => {
     const { active, over } = event;
 
     if (!over || active.id === over.id) {
@@ -187,7 +237,11 @@ export default function EspaciosTrabajoTab() {
     if (oldIndex === -1 || newIndex === -1) return;
 
     // Reordenar localmente para feedback inmediato
-    const newEmbudos = arrayMove(espacio.embudos, oldIndex, newIndex);
+    const newEmbudos = arrayMove(espacio.embudos, oldIndex, newIndex)
+      .map((embudo, index) => ({
+        ...embudo,
+        orden: index + 1 // Actualizar el campo orden de cada embudo
+      }));
     
     // Actualizar el estado local
     const newEspaciosConEmbudos = [...espaciosConEmbudos];
@@ -210,8 +264,7 @@ export default function EspaciosTrabajoTab() {
       
       if (result.success) {
         console.log('✅ Orden de embudos actualizado exitosamente');
-        // Recargar para asegurar consistencia
-        loadEspaciosTrabajo();
+        // No recargar, el estado local ya está actualizado de manera optimista
       } else {
         console.error('❌ Error al actualizar orden:', result.error);
         // Revertir cambios locales en caso de error
@@ -258,11 +311,12 @@ export default function EspaciosTrabajoTab() {
     <div className="p-6">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
-        <div>
-          <h3 className="text-[var(--text-primary)] text-lg font-medium">Espacios de trabajo</h3>
-          <p className="text-[var(--text-muted)] text-sm">
-            Crear, editar y eliminar tus espacios de trabajo
-          </p>
+        <div className="flex items-center space-x-3">
+          <Building2 className="w-8 h-8" />
+          <div>
+            <h2 className="text-white text-2xl font-semibold">Espacios de trabajo</h2>
+            <p className="text-gray-400 text-sm">Crear, editar y eliminar tus espacios de trabajo.</p>
+          </div>
         </div>
         <div className="flex space-x-3">
           <button 
@@ -288,91 +342,41 @@ export default function EspaciosTrabajoTab() {
 
       {/* Lista de Espacios de Trabajo con Embudos */}
       {espaciosConEmbudos.length > 0 ? (
-        <div className="space-y-6">
-          {espaciosConEmbudos.map((espacio) => (
-            <div key={espacio.id} className="space-y-4">
-              {/* Header del Espacio */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <span className="text-[var(--text-primary)] text-lg font-medium">
-                    <Settings className="w-5 h-5 mr-2" /> {espacio.nombre.toUpperCase()}
-                  </span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <button 
-                    onClick={() => handleEditEspacio(espacio)}
-                    className="flex items-center space-x-1 text-[var(--text-muted)] hover:text-[var(--text-primary)] text-sm transition-colors px-3 py-1 rounded border border-[var(--border-primary)] hover:border-[var(--border-secondary)] cursor-pointer"
-                  >
-                    <Edit2 className="w-4 h-4" />
-                    <span>Editar</span>
-                  </button>
-                  <button 
-                    onClick={() => handleDeleteEspacio(espacio)}
-                    className="flex items-center space-x-1 text-[var(--text-muted)] hover:text-red-400 text-sm transition-colors px-3 py-1 rounded border border-[var(--border-primary)] hover:border-red-500 cursor-pointer"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                    <span>Eliminar</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Grid de Embudos con Drag & Drop */}
-              <DndContext 
-                sensors={sensors} 
-                collisionDetection={closestCenter}
-                onDragEnd={(event) => handleDragEnd(event, espacio.id)}
-              >
-                <SortableContext 
-                  items={espacio.embudos.map(embudo => embudo.id)} 
-                  strategy={verticalListSortingStrategy}
-                >
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                    {/* Embudos existentes draggables */}
-                    {espacio.embudos
-                      .sort((a, b) => (a.orden || 0) - (b.orden || 0)) // Ordenar por campo orden
-                      .map((embudo) => (
-                      <DraggableEmbudo
-                        key={embudo.id}
-                        embudo={embudo}
-                        onEdit={handleEditEmbudo}
-                        onDelete={handleDeleteEmbudo}
-                        formatDate={formatDate}
-                      />
-                    ))}
-
-                    {/* Botón para agregar nuevo embudo */}
-                    <div 
-                      onClick={() => handleAgregarEmbudo(espacio)}
-                      className="bg-[var(--bg-secondary)] border-2 border-dashed border-[var(--border-primary)] rounded-lg p-4 flex items-center justify-center hover:border-[var(--accent-primary)] transition-colors cursor-pointer group"
-                    >
-                      <div className="text-center">
-                        <div className="text-[var(--accent-primary)] text-2xl mb-2 group-hover:scale-110 transition-transform">
-                          +
-                        </div>
-                        <div className="text-[var(--text-muted)] text-sm">
-                          Agregar Embudo
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </SortableContext>
-              </DndContext>
+        <DndContext 
+          sensors={sensors} 
+          collisionDetection={closestCenter}
+          onDragEnd={handleEspaciosDragEnd}
+        >
+          <SortableContext 
+            items={espaciosConEmbudos.map(espacio => espacio.id)} 
+            strategy={verticalListSortingStrategy}
+          >
+            <div className="space-y-6">
+              {espaciosConEmbudos.map((espacio) => (
+                <DraggableEspacio
+                  key={espacio.id}
+                  espacio={espacio}
+                  onEdit={handleEditEspacio}
+                  onDelete={handleDeleteEspacio}
+                  onAgregarEmbudo={handleAgregarEmbudo}
+                  formatDate={formatDate}
+                  sensors={sensors}
+                  handleDragEnd={handleDragEnd}
+                  handleEditEmbudo={handleEditEmbudo}
+                  handleDeleteEmbudo={handleDeleteEmbudo}
+                />
+              ))}
             </div>
-          ))}
-        </div>
+          </SortableContext>
+        </DndContext>
       ) : (
         <div className="text-center py-12">
           <Building2 className="text-[var(--text-muted)] w-24 h-24 mx-auto mb-4" />
           <h4 className="text-[var(--text-primary)] text-lg font-medium mb-2">No hay espacios de trabajo</h4>
-          <p className="text-[var(--text-muted)] text-sm mb-6">No se encontraron espacios de trabajo en el sistema.</p>
-          <button 
-            onClick={loadEspaciosTrabajo}
-            className="bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] text-white px-6 py-3 rounded-lg font-medium transition-colors cursor-pointer"
-          >
-            Recargar espacios de trabajo
-          </button>
+          <p className="text-[var(--text-muted)] text-sm mb-6">Añade uno nuevo para comenzar.</p>
         </div>
       )}
+
 
       {/* Modal de Nuevo Espacio */}
       <NuevoEspacioModal
@@ -438,6 +442,132 @@ export default function EspaciosTrabajoTab() {
         onEmbudoDeleted={handleEmbudoDeleted}
         embudo={selectedEmbudoForDelete}
       />
+    </div>
+  );
+}
+
+// Componente DraggableEspacio
+interface DraggableEspacioProps {
+  espacio: EspacioConEmbudos;
+  onEdit: (espacio: EspacioTrabajoResponse) => void;
+  onDelete: (espacio: EspacioTrabajoResponse) => void;
+  onAgregarEmbudo: (espacio: EspacioTrabajoResponse) => void;
+  formatDate: (dateString: string) => string;
+  sensors: ReturnType<typeof useSensors>;
+  handleDragEnd: (event: DragEndEvent, espacioId: string) => void;
+  handleEditEmbudo: (embudo: EmbudoResponse) => void;
+  handleDeleteEmbudo: (embudo: EmbudoResponse) => void;
+}
+
+function DraggableEspacio({
+  espacio,
+  onEdit,
+  onDelete,
+  onAgregarEmbudo,
+  formatDate,
+  sensors,
+  handleDragEnd,
+  handleEditEmbudo,
+  handleDeleteEmbudo
+}: DraggableEspacioProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: espacio.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      className="space-y-4 bg-[var(--bg-secondary)] rounded-lg p-4 border border-[var(--border-primary)] hover:border-[var(--border-secondary)] transition-colors cursor-move"
+    >
+      {/* Header del Espacio */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-3">
+            <span className="text-[var(--text-primary)] text-lg font-medium flex items-center">
+              <Briefcase className="w-5 h-5 mr-2" /> {espacio.nombre.toUpperCase()}
+            </span>
+        </div>
+        <div className="flex items-center space-x-2">
+          <button 
+            onClick={(e) => {
+              e.stopPropagation();
+              onEdit(espacio);
+            }}
+            className="flex items-center space-x-1 text-[var(--text-muted)] hover:text-[var(--text-primary)] text-sm transition-colors px-3 py-1 rounded border border-[var(--border-primary)] hover:border-[var(--border-secondary)] cursor-pointer"
+          >
+            <Edit2 className="w-4 h-4" />
+            <span>Editar</span>
+          </button>
+          <button 
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete(espacio);
+            }}
+            className="flex items-center space-x-1 text-[var(--text-muted)] hover:text-red-400 text-sm transition-colors px-3 py-1 rounded border border-[var(--border-primary)] hover:border-red-500 cursor-pointer"
+          >
+            <Trash2 className="w-4 h-4" />
+            <span>Eliminar</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Grid de Embudos con Drag & Drop */}
+      <DndContext 
+        sensors={sensors} 
+        collisionDetection={closestCenter}
+        onDragEnd={(event) => handleDragEnd(event, espacio.id)}
+      >
+        <SortableContext 
+          items={espacio.embudos.map(embudo => embudo.id)} 
+          strategy={verticalListSortingStrategy}
+        >
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {/* Embudos existentes draggables */}
+            {espacio.embudos
+              .sort((a, b) => (a.orden || 0) - (b.orden || 0)) // Ordenar por campo orden
+              .map((embudo) => (
+              <DraggableEmbudo
+                key={embudo.id}
+                embudo={embudo}
+                onEdit={handleEditEmbudo}
+                onDelete={handleDeleteEmbudo}
+                formatDate={formatDate}
+              />
+            ))}
+
+            {/* Botón para agregar nuevo embudo */}
+            <div 
+              onClick={(e) => {
+                e.stopPropagation();
+                onAgregarEmbudo(espacio);
+              }}
+              className="bg-[var(--bg-secondary)] border-2 border-dashed border-[var(--border-primary)] rounded-lg p-4 flex items-center justify-center hover:border-[var(--accent-primary)] transition-colors cursor-pointer group"
+            >
+              <div className="text-center">
+                <div className="text-[var(--accent-primary)] text-2xl mb-2 group-hover:scale-110 transition-transform">
+                  +
+                </div>
+                <div className="text-[var(--text-muted)] text-sm">
+                  Agregar Embudo
+                </div>
+              </div>
+            </div>
+          </div>
+        </SortableContext>
+      </DndContext>
     </div>
   );
 }

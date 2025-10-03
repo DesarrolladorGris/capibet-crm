@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { RefreshCw, Plus, Edit2, ArrowDown } from 'lucide-react';
+import { RefreshCw, Plus, Edit2, ArrowDown, Users } from 'lucide-react';
 import { userServices } from '@/services/userServices';
 import { UsuarioResponse } from '@/app/api/usuarios/domain/usuario';
 import NuevoUsuarioModal from './NuevoUsuarioModal';
@@ -151,7 +151,7 @@ export default function UsuariosTab() {
   };
 
   const getRoleBadge = (rol: string) => {
-    if (rol === 'Admin' || rol === 'Administrador') {
+    if (rol === 'admin') {
       return (
         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
           👑 {rol}
@@ -212,11 +212,12 @@ export default function UsuariosTab() {
     <div className="p-6">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
-        <div>
-          <h3 className="text-[var(--text-primary)] text-lg font-medium">Usuarios</h3>
-          <p className="text-[var(--text-muted)] text-sm">
-            Gestión de usuarios del sistema ({usuarios.length} usuarios)
-          </p>
+        <div className="flex items-center space-x-3">
+          <Users className="w-8 h-8" />
+          <div>
+            <h2 className="text-white text-2xl font-semibold">Usuarios</h2>
+            <p className="text-gray-400 text-sm">Crear, editar y eliminar usuarios del sistema.</p>
+          </div>
         </div>
         <div className="flex space-x-3">
           <button 
@@ -244,13 +245,10 @@ export default function UsuariosTab() {
               <thead className="bg-[var(--bg-primary)] border-b border-[var(--border-primary)]">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">
-                    Usuario
+                    Nombre
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">
-                    Agencia
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">
-                    Tipo Empresa
+                    Email
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">
                     Rol
@@ -262,7 +260,7 @@ export default function UsuariosTab() {
                     Estado
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">
-                    Fecha Alta
+                    Fecha Creación
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">
                     Acciones
@@ -273,16 +271,10 @@ export default function UsuariosTab() {
                 {usuarios.map((usuario) => (
                   <tr key={usuario.id} className="hover:bg-[var(--bg-primary)] transition-colors">
                     <td className="px-6 py-4">
-                      <div>
-                        <div className="text-[var(--text-primary)] font-medium">{usuario.nombre_usuario}</div>
-                        <div className="text-[var(--text-muted)] text-sm">{usuario.correo_electronico}</div>
-                      </div>
+                      <div className="text-[var(--text-primary)] font-medium">{usuario.nombre}</div>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="text-[var(--text-primary)] text-sm">{usuario.nombre_agencia}</div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="text-[var(--text-secondary)] text-sm">{usuario.tipo_empresa}</div>
+                      <div className="text-[var(--text-secondary)] text-sm">{usuario.email}</div>
                     </td>
                     <td className="px-6 py-4">
                       {getRoleBadge(usuario.rol)}
@@ -294,7 +286,7 @@ export default function UsuariosTab() {
                       {getStatusBadge(usuario.activo)}
                     </td>
                     <td className="px-6 py-4 text-[var(--text-secondary)] text-sm">
-                      {formatDate(usuario.fecha_alta)}
+                      {formatDate(usuario.creado_en)}
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center space-x-3">

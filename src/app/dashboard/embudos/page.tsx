@@ -4,25 +4,26 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { BarChart3 } from 'lucide-react';
 import { mensajesServices } from '@/services/mensajesServices';
 import { MensajeResponse } from '@/app/api/mensajes/domain/mensaje';
-import { EspacioConEmbudos } from '@/services/supabaseService';
-// Tipos locales para canales (sin dependencias externas)
-type CanalTipo = 'whatsapp' | 'whatsappApi' | 'email' | 'instagram' | 'messenger' | 'telegram' | 'telegramBot' | 'webChat';
-
-interface Canal {
-  id: number;
-  tipo: CanalTipo;
-  descripcion: string;
-  usuario_id: number;
-  espacio_id: number;
-  creado_en?: string;
+import { chatServices } from '@/services/chatServices';
+import { ChatResponse } from '@/app/api/chats/domain/chat';
+import { contactoServices, ContactResponse } from '@/services/contactoServices';
+import { sesionesServices } from '@/services/sesionesServices';
+import { SesionResponse } from '@/app/api/sesiones/domain/sesion';
+// Tipos para los chats basados en datos reales de la API
+interface Chat {
+  id: string;
+  contacto: ContactResponse;
+  ultimoMensaje?: MensajeResponse;
+  sesion: SesionResponse;
+  chat_data: ChatResponse;
+  estado: 'activo' | 'archivado' | 'pausado';
 }
-import { embudoServices, EmbudoResponse } from '@/services/embudoServices';
+import { embudoServices, EspacioConEmbudos } from '@/services/embudoServices';
+import { EmbudoResponse } from '@/app/api/embudos/domain/embudo';
 import { espacioTrabajoServices, EspacioTrabajoResponse } from '@/services/espacioTrabajoServices';
 import NuevoEmbudoModal from '@/app/dashboard/configuracion/components/NuevoEmbudoModal';
 import EditarEmbudoModal from '@/app/dashboard/configuracion/components/EditarEmbudoModal';
 import ConfirmarEliminarEmbudoModal from '@/app/dashboard/configuracion/components/ConfirmarEliminarEmbudoModal';
-import NuevoMensajeModal from './components/NuevoMensajeModal';
-import DetallesMensajeModal from './components/DetallesMensajeModal';
 import {
   DndContext,
   closestCenter,
@@ -31,33 +32,35 @@ import {
   useSensors,
   DragEndEvent,
   DragStartEvent,
+  DragOverlay,
 } from '@dnd-kit/core';
 // import {
 //   useSortable,
 // } from '@dnd-kit/sortable';
 // import { CSS } from '@dnd-kit/utilities';
 import DraggableEmbudo from './components/DraggableEmbudo';
+import DraggableChat from './components/DraggableChat';
+import ChatModal from '../chats/components/ChatModal';
 
 export default function EmbudosPage() {
   const [espaciosConEmbudos, setEspaciosConEmbudos] = useState<EspacioConEmbudos[]>([]);
   const [selectedEspacio, setSelectedEspacio] = useState<EspacioTrabajoResponse | null>(null);
-  const [mensajes, setMensajes] = useState<MensajeResponse[]>([]);
-  const [canales, setCanales] = useState<Canal[]>([]);
+  const [allChats, setAllChats] = useState<Chat[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+  const [selectedChatForModal, setSelectedChatForModal] = useState<Chat | null>(null);
+  const [isChatModalOpen, setIsChatModalOpen] = useState(false);
 
   // Estados para modales
   const [showNuevoEmbudoModal, setShowNuevoEmbudoModal] = useState(false);
   const [showEditarEmbudoModal, setShowEditarEmbudoModal] = useState(false);
   const [showEliminarEmbudoModal, setShowEliminarEmbudoModal] = useState(false);
-  const [showNuevoMensajeModal, setShowNuevoMensajeModal] = useState(false);
-  const [showDetallesMensajeModal, setShowDetallesMensajeModal] = useState(false);
   const [selectedEmbudo, setSelectedEmbudo] = useState<EmbudoResponse | null>(null);
   const [selectedEmbudoForDelete, setSelectedEmbudoForDelete] = useState<EmbudoResponse | null>(null);
-  const [selectedMensaje, setSelectedMensaje] = useState<MensajeResponse | null>(null);
-
-  // Estados para drag & drop
-  const [activeId, setActiveId] = useState<string | null>(null);
+  
+  // Estado para drag & drop
+  const [activeDragChat, setActiveDragChat] = useState<Chat | null>(null);
+  const [movingChatId, setMovingChatId] = useState<string | null>(null);
 
   // Configuración de sensores para drag & drop
   const sensors = useSensors(
@@ -73,20 +76,63 @@ export default function EmbudosPage() {
     setError('');
     
     try {
-      // Cargar espacios, embudos y mensajes en paralelo
-      const [espaciosResult, embudosResult, mensajesResult] = await Promise.all([
+      // Cargar espacios, embudos, chats, contactos, sesiones y mensajes en paralelo
+      const [espaciosResult, embudosResult, chatsResult, contactosResult, sesionesResult, mensajesResult] = await Promise.all([
         espacioTrabajoServices.getAllEspaciosTrabajo(),
         embudoServices.getAllEmbudos(),
+        chatServices.getAllChats(),
+        contactoServices.getAllContactos(),
+        sesionesServices.getAllSesiones(),
         mensajesServices.getAllMensajes()
       ]);
       
       if (espaciosResult.success && espaciosResult.data) {
         const espacios = espaciosResult.data;
         const embudos = embudosResult.success ? embudosResult.data || [] : [];
+        const chatsData = chatsResult.success ? chatsResult.data || [] : [];
+        const contactosData = contactosResult.success ? contactosResult.data || [] : [];
+        const sesionesData = sesionesResult.success ? sesionesResult.data || [] : [];
         const mensajesData = mensajesResult.success ? mensajesResult.data || [] : [];
-        // Guardar los mensajes en el estado
-        setMensajes(mensajesData);
-        setCanales([]); // Canales eliminados
+        
+        // Guardar datos en estado (solo los que necesitamos para construir chats)
+        
+        // Crear un mapa de mensajes por chat_id para optimizar búsqueda
+        const mensajesPorChat = new Map<string, MensajeResponse>();
+        mensajesData.forEach(mensaje => {
+          const mensajeExistente = mensajesPorChat.get(mensaje.chat_id);
+          if (!mensajeExistente || new Date(mensaje.creado_en) > new Date(mensajeExistente.creado_en)) {
+            mensajesPorChat.set(mensaje.chat_id, mensaje);
+          }
+        });
+
+        // Crear objetos Chat completos
+        const chatsCompletos: Chat[] = [];
+        for (const chatData of chatsData) {
+          const contacto = contactosData.find(c => c.id === chatData.contact_id);
+          const sesion = sesionesData.find(s => s.id === chatData.sesion_id);
+
+          if (contacto && sesion) {
+            const ultimoMensaje = mensajesPorChat.get(chatData.id);
+
+            chatsCompletos.push({
+              id: chatData.id,
+              contacto,
+              ultimoMensaje,
+              sesion,
+              chat_data: chatData,
+              estado: 'activo'
+            });
+          }
+        }
+
+        // Ordenar por último mensaje o fecha de creación
+        chatsCompletos.sort((a, b) => {
+          const dateA = a.ultimoMensaje ? new Date(a.ultimoMensaje.creado_en) : new Date(a.chat_data.created_at || 0);
+          const dateB = b.ultimoMensaje ? new Date(b.ultimoMensaje.creado_en) : new Date(b.chat_data.created_at || 0);
+          return dateB.getTime() - dateA.getTime();
+        });
+
+        setAllChats(chatsCompletos);
         
         // Asociar embudos a sus espacios correspondientes y ordenarlos
         const espaciosConEmbudos: EspacioConEmbudos[] = espacios.map(espacio => ({
@@ -110,7 +156,7 @@ export default function EmbudosPage() {
         }
         
         console.log('Espacios con embudos cargados:', espaciosConEmbudos);
-        console.log('Mensajes cargados:', mensajesData);
+        console.log('Chats cargados:', chatsCompletos);
       } else {
         setError(espaciosResult.error || 'Error al cargar espacios de trabajo');
       }
@@ -120,41 +166,48 @@ export default function EmbudosPage() {
     } finally {
       setIsLoading(false);
     }
-  }, []); // Remover selectedEspacio de las dependencias
+  }, []);
 
-  // Función para obtener el tipo de canal por ID
-  const getCanalTipo = useCallback((canalId: number): string | undefined => {
-    const canal = canales.find(c => c.id === canalId);
-    return canal?.tipo;
-  }, [canales]);
-
-  // Función para obtener mensajes de un embudo específico con tipo de canal
-  const getMensajesByEmbudo = useCallback((embudoId: number): MensajeResponse[] => {
-    return mensajes
-      .filter(mensaje => mensaje.embudo_id === embudoId)
-      .map(mensaje => ({
-        ...mensaje,
-        tipo: getCanalTipo(mensaje.canal_id) // Enriquecer con tipo de canal
-      }));
-  }, [mensajes, getCanalTipo]);
+  // Función para obtener chats de un embudo específico
+  const getChatsByEmbudo = useCallback((embudoId: string): Chat[] => {
+    return allChats.filter(chat => chat.chat_data.embudo_id === embudoId);
+  }, [allChats]);
 
   useEffect(() => {
     loadEspaciosYEmbudos();
-  }, []); // Solo ejecutar una vez al montar el componente
+  }, [loadEspaciosYEmbudos]); // Solo ejecutar una vez al montar el componente
+
+  // Forzar re-renderización cuando cambie el espacio seleccionado
+  useEffect(() => {
+    console.log('🔄 Espacio seleccionado cambió:', selectedEspacio?.id);
+  }, [selectedEspacio?.id]);
+
+  // Estado local para forzar actualización de embudos
+  const [embudosForzados, setEmbudosForzados] = useState<EmbudoResponse[]>([]);
+
+  // Actualizar embudos cuando cambie el espacio seleccionado
+  useEffect(() => {
+    if (selectedEspacio) {
+      const espacioEncontrado = espaciosConEmbudos.find(e => e.id === selectedEspacio.id);
+      const embudosDelEspacio = espacioEncontrado?.embudos || [];
+      console.log('🔄 Actualizando embudos forzados:', {
+        espacio: selectedEspacio.nombre,
+        embudos: embudosDelEspacio.length
+      });
+      setEmbudosForzados(embudosDelEspacio);
+    } else {
+      setEmbudosForzados([]);
+    }
+  }, [selectedEspacio, espaciosConEmbudos]);
 
   const handleEspacioSelect = (espacio: EspacioTrabajoResponse) => {
+    console.log('🎯 handleEspacioSelect llamado con:', espacio.nombre, 'ID:', espacio.id);
     setSelectedEspacio(espacio);
   };
 
   const handleAgregarEmbudo = () => {
     if (selectedEspacio) {
       setShowNuevoEmbudoModal(true);
-    }
-  };
-
-  const handleNuevoMensaje = () => {
-    if (selectedEspacio) {
-      setShowNuevoMensajeModal(true);
     }
   };
 
@@ -185,74 +238,99 @@ export default function EmbudosPage() {
     setSelectedEmbudoForDelete(null);
   };
 
-  const handleMensajeCreated = () => {
-    setShowNuevoMensajeModal(false);
-    console.log('Mensaje creado exitosamente');
-    // Recargar mensajes para mostrar el nuevo mensaje
-    loadEspaciosYEmbudos();
+  const handleChatClick = (chat: Chat) => {
+    console.log('handleChatClick llamado con chat:', chat);
+    setSelectedChatForModal(chat);
+    setIsChatModalOpen(true);
   };
 
-  const handleMensajeClick = (mensaje: MensajeResponse) => {
-    console.log('handleMensajeClick llamado con mensaje:', mensaje);
-    setSelectedMensaje(mensaje);
-    setShowDetallesMensajeModal(true);
-  };
-
-  const handleCloseDetallesMensaje = () => {
-    setShowDetallesMensajeModal(false);
-    setSelectedMensaje(null);
-  };
-
-  const handleMensajeDeleted = () => {
-    console.log('Mensaje eliminado, recargando datos');
-    // Recargar mensajes para actualizar la vista
-    loadEspaciosYEmbudos();
-    setShowDetallesMensajeModal(false);
-    setSelectedMensaje(null);
-  };
-
-  const handleMensajeMoved = async (mensajeId: number, nuevoEmbudoId: number) => {
-    console.log('🚀 Iniciando movimiento de mensaje:', mensajeId, 'al embudo:', nuevoEmbudoId);
+  const handleChatMoved = async (chatId: string, nuevoEmbudoId: string) => {
+    console.log('🚀 Iniciando movimiento de chat:', chatId, 'al embudo:', nuevoEmbudoId);
+    
+    // Guardar el estado original por si necesitamos revertir
+    const chatOriginal = allChats.find(chat => chat.id === chatId);
+    if (!chatOriginal) {
+      console.error('❌ Chat no encontrado para mover');
+      return;
+    }
+    
+    const embudoOriginal = chatOriginal.chat_data.embudo_id;
+    
+    // 1. Marcar el chat como en proceso de movimiento
+    setMovingChatId(chatId);
+    
+    // 2. Actualización optimista INMEDIATA del estado local
+    setAllChats(prevChats => 
+      prevChats.map(chat => 
+        chat.id === chatId 
+          ? { ...chat, chat_data: { ...chat.chat_data, embudo_id: nuevoEmbudoId } }
+          : chat
+      )
+    );
     
     try {
-      // 1. Llamar al servicio para persistir el cambio en la base de datos
-      const result = await mensajesServices.moveMensajeToEmbudo(mensajeId, nuevoEmbudoId);
+      // 2. Llamar al servicio para persistir el cambio en la base de datos
+      const result = await chatServices.updateChatById(chatId, { embudo_id: nuevoEmbudoId });
       
       if (result.success) {
-        console.log('✅ Mensaje movido exitosamente en la base de datos');
+        console.log('✅ Chat movido exitosamente en la base de datos');
+        // El estado ya está actualizado, no necesitamos hacer nada más
+      } else {
+        console.error('❌ Error al mover chat:', result.error);
         
-        // 2. Actualizar el estado local para feedback inmediato
-        setMensajes(prevMensajes => 
-          prevMensajes.map(mensaje => 
-            mensaje.id === mensajeId 
-              ? { ...mensaje, embudo_id: nuevoEmbudoId }
-              : mensaje
+        // 3. REVERTIR el cambio si la petición falló
+        setAllChats(prevChats => 
+          prevChats.map(chat => 
+            chat.id === chatId 
+              ? { ...chat, chat_data: { ...chat.chat_data, embudo_id: embudoOriginal } }
+              : chat
           )
         );
         
-        // 3. Recargar datos para asegurar consistencia (opcional, ya que el estado local está actualizado)
-        // loadEspaciosYEmbudos();
-      } else {
-        console.error('❌ Error al mover mensaje:', result.error);
-        // Aquí podrías mostrar una notificación de error al usuario
+        // TODO: Mostrar notificación de error al usuario
+        console.error('❌ Chat revertido al embudo original debido al error');
       }
     } catch (error) {
-      console.error('❌ Error inesperado al mover mensaje:', error);
-      // Aquí podrías mostrar una notificación de error al usuario
+      console.error('❌ Error inesperado al mover chat:', error);
+      
+      // 3. REVERTIR el cambio si hubo una excepción
+      setAllChats(prevChats => 
+        prevChats.map(chat => 
+          chat.id === chatId 
+            ? { ...chat, chat_data: { ...chat.chat_data, embudo_id: embudoOriginal } }
+            : chat
+        )
+      );
+      
+      // TODO: Mostrar notificación de error al usuario
+      console.error('❌ Chat revertido al embudo original debido a la excepción');
+    } finally {
+      // 4. Limpiar el estado de movimiento
+      setMovingChatId(null);
     }
   };
 
   // Manejar el inicio del drag
   const handleDragStart = (event: DragStartEvent) => {
     console.log('🚀 Drag started:', event.active.id);
-    setActiveId(String(event.active.id));
+    
+    const activeIdStr = String(event.active.id);
+    if (activeIdStr.startsWith('chat-')) {
+        const chatId = activeIdStr.replace('chat-', '');
+        const chat = allChats.find(c => c.id === chatId);
+      if (chat) {
+        setActiveDragChat(chat);
+      }
+    }
   };
 
   // Manejar el final del drag & drop
-  const handleDragEnd = (event: DragEndEvent) => {
+  const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
     console.log('🎯 Drag ended:', { active: active.id, over: over?.id });
-    setActiveId(null);
+    
+    // Limpiar el estado del drag
+    setActiveDragChat(null);
 
     if (!over || !over.id) {
       console.log('❌ No over target or no over.id');
@@ -264,59 +342,56 @@ export default function EmbudosPage() {
     
     console.log('📝 Processing:', { activeIdStr, overIdStr });
 
-    // Verificar si es un mensaje siendo arrastrado
-    if (activeIdStr.startsWith('mensaje-')) {
-      console.log('✅ Es un mensaje siendo arrastrado');
-      const mensajeId = parseInt(activeIdStr.replace('mensaje-', ''));
+    // Verificar si es un chat siendo arrastrado
+    if (activeIdStr.startsWith('chat-')) {
+      console.log('✅ Es un chat siendo arrastrado');
+      const chatId = activeIdStr.replace('chat-', '');
       
       // Verificar si se está soltando sobre un embudo
       if (overIdStr.startsWith('embudo-drop-')) {
         console.log('✅ Se está soltando sobre un embudo');
-        const nuevoEmbudoId = parseInt(overIdStr.replace('embudo-drop-', ''));
+        const nuevoEmbudoId = overIdStr.replace('embudo-drop-', '');
         
-        // Encontrar el mensaje actual
-        const mensajeActual = mensajes.find(m => m.id === mensajeId);
-        if (!mensajeActual) {
-          console.log('❌ Mensaje no encontrado');
+        // Encontrar el chat actual
+        const chatActual = allChats.find(c => c.id === chatId);
+        if (!chatActual) {
+          console.log('❌ Chat no encontrado');
           return;
         }
         
-        if (mensajeActual.embudo_id === nuevoEmbudoId) {
+        if (chatActual.chat_data.embudo_id === nuevoEmbudoId) {
           console.log('❌ Es el mismo embudo, no hacer nada');
           return;
         }
 
-        console.log('🚀 Moviendo mensaje:', mensajeId, 'al embudo:', nuevoEmbudoId);
-        // Mover el mensaje
-        handleMensajeMoved(mensajeId, nuevoEmbudoId);
+        console.log('🚀 Moviendo chat:', chatId, 'al embudo:', nuevoEmbudoId);
+        // Mover el chat inmediatamente
+        await handleChatMoved(chatId, nuevoEmbudoId);
         return;
       } else {
         console.log('❌ No se está soltando sobre un embudo válido');
       }
     } else {
-      console.log('❌ No es un mensaje siendo arrastrado');
+      console.log('❌ No es un chat siendo arrastrado');
     }
 
-    // Solo manejar mensajes, no hay reordenamiento de embudos
+    // Solo manejar chats, no hay reordenamiento de embudos
   };
 
-  // Obtener embudos del espacio seleccionado
-  const embudosDelEspacio = selectedEspacio 
-    ? espaciosConEmbudos.find(e => e.id === selectedEspacio.id)?.embudos || []
-    : [];
+  // Los embudos ahora se manejan con el estado embudosForzados
 
-  // Debug: Log de mensajes y embudos
+  // Debug: Log de chats y embudos
   React.useEffect(() => {
-    if (mensajes.length > 0 || embudosDelEspacio.length > 0) {
+    if (allChats.length > 0 || embudosForzados.length > 0) {
       console.log('🔍 Debug info:', {
-        mensajes: mensajes.length,
-        embudos: embudosDelEspacio.length,
-        mensajeIds: mensajes.map(m => `mensaje-${m.id}`),
-        embudoIds: embudosDelEspacio.map(e => `embudo-drop-${e.id}`),
+        chats: allChats.length,
+        embudos: embudosForzados.length,
+        chatIds: allChats.map(c => `chat-${c.id}`),
+        embudoIds: embudosForzados.map(e => `embudo-drop-${e.id}`),
         selectedEspacio: selectedEspacio?.id
       });
     }
-  }, [mensajes.length, embudosDelEspacio.length, selectedEspacio?.id]);
+  }, [allChats, embudosForzados, selectedEspacio?.id]);
 
   if (isLoading) {
     return (
@@ -340,9 +415,9 @@ export default function EmbudosPage() {
   }
 
   return (
-    <div className="flex-1 flex flex-col">
+    <div className="h-full flex flex-col min-w-0">
       {/* Header con selector de espacio */}
-      <div className="bg-[var(--bg-primary)] border-b border-[var(--border-primary)] px-6 py-4">
+      <div className="bg-[var(--bg-primary)] border-b border-[var(--border-primary)] px-6 py-4 flex-shrink-0">
         <div className="flex items-center justify-between">
           {/* Left Section - Selector de Espacio */}
           <div className="flex items-center space-x-4">
@@ -354,20 +429,21 @@ export default function EmbudosPage() {
               </button>
               <div className="relative">
                 <select
-                  value={selectedEspacio?.id || ''}
+                  value={selectedEspacio?.id.toString() || ''}
                   onChange={(e) => {
-                    const espacioId = parseInt(e.target.value);
-                    const espacio = espaciosConEmbudos.find(e => e.id === espacioId);
+                    const espacioId = e.target.value;
+                    const espacio = espaciosConEmbudos.find(esp => esp.id.toString() === espacioId);
                     if (espacio) {
+                      console.log('🔄 Cambiando a espacio:', espacio.nombre, 'ID:', espacio.id);
                       handleEspacioSelect(espacio);
                     }
                   }}
-                  className="bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded px-3 py-2 text-[var(--text-primary)] text-lg font-semibold focus:outline-none focus:ring-2 focus:ring-[var(--accent-primary)] focus:border-[var(--accent-primary)] appearance-none cursor-pointer pr-8"
+                  className="bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded px-3 py-2 text-[var(--text-primary)] text-md font-semibold focus:outline-none focus:ring-2 focus:ring-[var(--accent-primary)] focus:border-[var(--accent-primary)] appearance-none cursor-pointer pr-8"
                 >
-                  <option value="">Seleccionar Espacio</option>
+                  <option value="">Seleccionar espacio</option>
                   {espaciosConEmbudos.map((espacio) => (
-                    <option key={espacio.id} value={espacio.id}>
-                      {espacio.nombre.toUpperCase()}
+                    <option key={espacio.id} value={espacio.id.toString()}>
+                      {espacio.nombre}
                     </option>
                   ))}
                 </select>
@@ -376,72 +452,63 @@ export default function EmbudosPage() {
                 </svg>
               </div>
             </div>
-            
-            {/* Tabs de navegación */}
-            <div className="flex space-x-4 ml-8">
-              <button className="text-white font-medium px-3 py-1 bg-[var(--accent-primary)] rounded text-sm cursor-pointer">
-                Todos
-              </button>
-              <button className="text-[var(--text-muted)] hover:text-[var(--text-primary)] font-medium px-3 py-1 hover:bg-[var(--bg-secondary)] rounded text-sm cursor-pointer">
-                Mis Chats
-              </button>
-            </div>
-          </div>
-
-          {/* Right Section - Actions */}
-          <div className="flex items-center space-x-4">
-            <button 
-              onClick={handleNuevoMensaje}
-              disabled={!selectedEspacio}
-              className="bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-4 py-2 rounded text-sm font-medium transition-colors cursor-pointer"
-            >
-              + Nuevo Mensaje
-            </button>
           </div>
         </div>
       </div>
 
       {/* Main Content - Embudos */}
-      <div className="flex-1 bg-[var(--bg-primary)]">
+      <div className="flex-1 bg-[var(--bg-primary)] min-w-0 min-h-0 p-6">
         {selectedEspacio ? (
-          <div className="h-full">
-            {/* Información del espacio seleccionado */}
-            <div className="px-6 py-4 border-b border-[var(--border-primary)]">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-[var(--text-muted)] text-sm">
-                    {embudosDelEspacio.length} embudo{embudosDelEspacio.length !== 1 ? 's' : ''} • 
-                    Creado el {new Date(selectedEspacio.creado_en).toLocaleDateString('es-ES')}
-                  </p>
-                </div>
-              </div>
-            </div>
+          <div className="h-full min-w-0 flex flex-col">
 
             {/* Grid de embudos */}
-            <div className="p-6">
-              {embudosDelEspacio.length > 0 ? (
-                <DndContext
-                  sensors={sensors}
-                  collisionDetection={closestCenter}
-                  onDragStart={handleDragStart}
-                  onDragEnd={handleDragEnd}
-                >
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {embudosDelEspacio.map((embudo, index) => (
-                      <div key={embudo.id}>
+            <div className="flex-1 min-w-0 min-h-0">
+              {(() => {
+                console.log('🎨 Renderizando embudos:', {
+                  selectedEspacio: selectedEspacio?.nombre,
+                  embudosForzadosLength: embudosForzados.length,
+                  embudosIds: embudosForzados.map(e => e.id)
+                });
+                return null;
+              })()}
+              {embudosForzados.length > 0 ? (
+                <div className="h-full">
+                  <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    onDragStart={handleDragStart}
+                    onDragEnd={handleDragEnd}
+                  >
+                    <div className="flex flex-row gap-6 overflow-x-auto overflow-y-hidden h-full items-stretch pb-4 scrollbar-thin">
+                    {embudosForzados.map((embudo, index) => (
+                      <div key={embudo.id} className="flex-shrink-0 w-110 h-full min-h-0">
                         <DraggableEmbudo
                           embudo={embudo}
                           index={index}
-                          mensajes={getMensajesByEmbudo(embudo.id)}
+                          chats={getChatsByEmbudo(embudo.id)}
                           onEdit={handleEditEmbudo}
                           onDelete={handleDeleteEmbudo}
-                          onMensajeClick={handleMensajeClick}
-                          onMensajeMoved={handleMensajeMoved}
+                          onChatClick={handleChatClick}
+                          onChatMoved={handleChatMoved}
+                          movingChatId={movingChatId}
                         />
                       </div>
                     ))}
-                  </div>
-                </DndContext>
+                    </div>
+                    
+                    {/* Overlay para mostrar el chat mientras se arrastra */}
+                    <DragOverlay>
+                      {activeDragChat ? (
+                        <div className="transform rotate-3 opacity-90 shadow-2xl">
+                          <DraggableChat
+                            chat={activeDragChat}
+                            onChatClick={() => {}} // No hacer nada durante el drag
+                          />
+                        </div>
+                      ) : null}
+                    </DragOverlay>
+                  </DndContext>
+                </div>
               ) : (
                 <div className="text-center py-16">
                   <BarChart3 className="text-[var(--text-muted)] w-24 h-24 mx-auto mb-4" />
@@ -503,19 +570,43 @@ export default function EmbudosPage() {
         embudo={selectedEmbudoForDelete}
       />
 
-      <NuevoMensajeModal
-        isOpen={showNuevoMensajeModal}
-        onClose={() => setShowNuevoMensajeModal(false)}
-        onMensajeCreated={handleMensajeCreated}
-        espacioId={selectedEspacio?.id}
+      {/* Modal de Chat */}
+      <ChatModal
+        isOpen={isChatModalOpen}
+        onClose={() => {
+          setIsChatModalOpen(false);
+          setSelectedChatForModal(null);
+        }}
+        chat={selectedChatForModal}
+        onContactUpdate={(updatedContact, updatedChat) => {
+          // Actualizar el contacto en todos los chats
+          setAllChats(prevChats => 
+            prevChats.map(chat => {
+              if (chat.contacto.id === updatedContact.id) {
+                const chatUpdate = { ...chat, contacto: updatedContact };
+                if (updatedChat && chat.id === updatedChat.id) {
+                  chatUpdate.chat_data = updatedChat;
+                }
+                return chatUpdate;
+              }
+              return chat;
+            })
+          );
+
+          // Actualizar el chat seleccionado en el modal si es necesario
+          if (selectedChatForModal && selectedChatForModal.contacto.id === updatedContact.id) {
+            setSelectedChatForModal(prevChat => {
+              if (!prevChat) return null;
+              const updatedSelectedChat = { ...prevChat, contacto: updatedContact };
+              if (updatedChat && prevChat.id === updatedChat.id) {
+                updatedSelectedChat.chat_data = updatedChat;
+              }
+              return updatedSelectedChat;
+            });
+          }
+        }}
       />
 
-      <DetallesMensajeModal
-        isOpen={showDetallesMensajeModal}
-        onClose={handleCloseDetallesMensaje}
-        mensaje={selectedMensaje}
-        onMensajeDeleted={handleMensajeDeleted}
-      />
     </div>
   );
 }

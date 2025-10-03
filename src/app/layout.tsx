@@ -3,6 +3,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { HydrationHandler } from "./components/HydrationHandler";
 import { ThemeProvider } from "@/contexts/ThemeContext";
+import { WebSocketProvider } from "@/contexts/WebSocketContext";
+import ToastContainer from "@/components/ToastContainer";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,8 +33,11 @@ export default function RootLayout({
         suppressHydrationWarning={true}
       >
         <ThemeProvider>
-          <HydrationHandler />
-          {children}
+          <WebSocketProvider>
+            <HydrationHandler />
+            {children}
+            <ToastContainer />
+          </WebSocketProvider>
         </ThemeProvider>
       </body>
     </html>

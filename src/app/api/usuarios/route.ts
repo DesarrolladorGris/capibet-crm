@@ -1,29 +1,35 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseConfig } from '@/config/supabase';
 import { UsuarioData } from './domain/usuario';
-import { getHeaders, handleResponse } from './utils';
+import { handleResponse } from './utils';
+import { getSupabaseHeaders } from '@/utils/supabaseHeaders';
 
 // POST /api/usuarios - Crear usuario
 export async function POST(request: NextRequest) {
   try {
     const userData: UsuarioData = await request.json();
     
-    // Preparar los datos con valores por defecto
+    // Validar campos requeridos
+    if (!userData.nombre) {
+      return NextResponse.json({
+        success: false,
+        error: 'El campo nombre es requerido'
+      }, { status: 400 });
+    }
+
+    // Preparar los datos
     const dataToSend = {
-      nombre_agencia: userData.nombre_agencia,
-      tipo_empresa: userData.tipo_empresa,
-      nombre_usuario: userData.nombre_usuario,
-      correo_electronico: userData.correo_electronico,
-      telefono: userData.telefono,
-      codigo_pais: userData.codigo_pais,
-      contrasena: userData.contrasena,
-      rol: userData.rol || 'Operador',
-      activo: userData.activo !== undefined ? userData.activo : true
+      nombre: userData.nombre,
+      telefono: userData.telefono || null,
+      codigo_pais: userData.codigo_pais || null,
+      rol: userData.rol || 'usuario',
+      activo: userData.activo !== undefined ? userData.activo : true,
+      organizacion_id: userData.organizacion_id || null
     };
 
     const response = await fetch(`${supabaseConfig.restUrl}/usuarios`, {
       method: 'POST',
-      headers: getHeaders(),
+      headers: getSupabaseHeaders(request, { preferRepresentation: true }),
       body: JSON.stringify(dataToSend)
     });
 
@@ -56,11 +62,11 @@ export async function POST(request: NextRequest) {
 }
 
 // GET /api/usuarios - Obtener todos los usuarios
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const response = await fetch(`${supabaseConfig.restUrl}/usuarios`, {
       method: 'GET',
-      headers: getHeaders()
+      headers: getSupabaseHeaders(request, { preferRepresentation: true })
     });
 
     if (!response.ok) {

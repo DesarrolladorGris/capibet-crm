@@ -7,19 +7,21 @@ Este módulo maneja las operaciones CRUD para la entidad `chats` en el sistema C
 ### ChatData
 ```typescript
 interface ChatData {
-  id?: number;           // ID del chat (opcional para creación)
-  sesion_id: number;     // ID de la sesión asociada
-  contact_id: number;    // ID del contacto asociado
+  id?: string;           // UUID del chat (opcional para creación)
+  sesion_id: string;     // UUID de la sesión asociada
+  contact_id: string;    // UUID del contacto asociado
+  embudo_id: string;     // UUID del embudo asociado
 }
 ```
 
 ### ChatResponse
 ```typescript
 interface ChatResponse {
-  id: number;            // ID del chat
-  sesion_id: number;     // ID de la sesión asociada
-  contact_id: number;    // ID del contacto asociado
-  created_at?: string;   // Fecha de creación (timestamp)
+  id: string;            // UUID del chat
+  sesion_id: string;     // UUID de la sesión asociada
+  contact_id: string;    // UUID del contacto asociado
+  embudo_id: string;     // UUID del embudo asociado
+  created_at: string;    // Fecha de creación (timestamp)
 }
 ```
 
@@ -34,9 +36,10 @@ Obtiene todos los chats del sistema.
   "success": true,
   "data": [
     {
-      "id": 1,
-      "sesion_id": 123,
-      "contact_id": 456,
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "sesion_id": "550e8400-e29b-41d4-a716-446655440001",
+      "contact_id": "550e8400-e29b-41d4-a716-446655440002",
+      "embudo_id": "550e8400-e29b-41d4-a716-446655440003",
       "created_at": "2024-01-01T00:00:00Z"
     }
   ]
@@ -49,8 +52,9 @@ Crea un nuevo chat.
 **Body:**
 ```json
 {
-  "sesion_id": 123,
-  "contact_id": 456
+  "sesion_id": "550e8400-e29b-41d4-a716-446655440001",
+  "contact_id": "550e8400-e29b-41d4-a716-446655440002",
+  "embudo_id": "550e8400-e29b-41d4-a716-446655440003"
 }
 ```
 
@@ -59,9 +63,10 @@ Crea un nuevo chat.
 {
   "success": true,
   "data": {
-    "id": 1,
-    "sesion_id": 123,
-    "contact_id": 456,
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "sesion_id": "550e8400-e29b-41d4-a716-446655440001",
+    "contact_id": "550e8400-e29b-41d4-a716-446655440002",
+    "embudo_id": "550e8400-e29b-41d4-a716-446655440003",
     "created_at": "2024-01-01T00:00:00Z"
   }
 }
@@ -73,9 +78,8 @@ Actualiza un chat existente.
 **Body:**
 ```json
 {
-  "id": 1,
-  "sesion_id": 124,
-  "contact_id": 457
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "embudo_id": "550e8400-e29b-41d4-a716-446655440004"
 }
 ```
 
@@ -84,9 +88,10 @@ Actualiza un chat existente.
 {
   "success": true,
   "data": {
-    "id": 1,
-    "sesion_id": 124,
-    "contact_id": 457,
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "sesion_id": "550e8400-e29b-41d4-a716-446655440001",
+    "contact_id": "550e8400-e29b-41d4-a716-446655440002",
+    "embudo_id": "550e8400-e29b-41d4-a716-446655440004",
     "created_at": "2024-01-01T00:00:00Z"
   }
 }
@@ -111,9 +116,10 @@ Obtiene un chat específico por ID.
 {
   "success": true,
   "data": {
-    "id": 1,
-    "sesion_id": 123,
-    "contact_id": 456,
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "sesion_id": "550e8400-e29b-41d4-a716-446655440001",
+    "contact_id": "550e8400-e29b-41d4-a716-446655440002",
+    "embudo_id": "550e8400-e29b-41d4-a716-446655440003",
     "created_at": "2024-01-01T00:00:00Z"
   }
 }
@@ -125,8 +131,7 @@ Actualiza un chat específico por ID.
 **Body:**
 ```json
 {
-  "sesion_id": 124,
-  "contact_id": 457
+  "embudo_id": "550e8400-e29b-41d4-a716-446655440004"
 }
 ```
 
@@ -135,9 +140,10 @@ Actualiza un chat específico por ID.
 {
   "success": true,
   "data": {
-    "id": 1,
-    "sesion_id": 124,
-    "contact_id": 457,
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "sesion_id": "550e8400-e29b-41d4-a716-446655440001",
+    "contact_id": "550e8400-e29b-41d4-a716-446655440002",
+    "embudo_id": "550e8400-e29b-41d4-a716-446655440004",
     "created_at": "2024-01-01T00:00:00Z"
   }
 }
@@ -170,8 +176,9 @@ const response = await fetch('/api/chats', {
     'Content-Type': 'application/json'
   },
   body: JSON.stringify({
-    sesion_id: 123,
-    contact_id: 456
+    sesion_id: '550e8400-e29b-41d4-a716-446655440001',
+    contact_id: '550e8400-e29b-41d4-a716-446655440002',
+    embudo_id: '550e8400-e29b-41d4-a716-446655440003'
   })
 });
 
@@ -186,14 +193,13 @@ const result = await response.json();
 
 ### Actualizar un chat
 ```javascript
-const response = await fetch('/api/chats/1', {
+const response = await fetch('/api/chats/550e8400-e29b-41d4-a716-446655440000', {
   method: 'PATCH',
   headers: {
     'Content-Type': 'application/json'
   },
   body: JSON.stringify({
-    sesion_id: 124,
-    contact_id: 457
+    embudo_id: '550e8400-e29b-41d4-a716-446655440004'
   })
 });
 
@@ -202,7 +208,7 @@ const result = await response.json();
 
 ### Eliminar un chat
 ```javascript
-const response = await fetch('/api/chats/1', {
+const response = await fetch('/api/chats/550e8400-e29b-41d4-a716-446655440000', {
   method: 'DELETE'
 });
 

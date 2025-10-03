@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseConfig } from '@/config/supabase';
 import { SesionData } from './domain/sesion';
-import { getHeaders, handleResponse } from './utils';
+import { handleResponse } from './utils';
+import { getSupabaseHeaders } from '@/utils/supabaseHeaders';
 
 // POST /api/sesiones - Crear sesión
 export async function POST(request: NextRequest) {
@@ -14,18 +15,18 @@ export async function POST(request: NextRequest) {
       nombre: sesionData.nombre,
       type: sesionData.type,
       embudo_id: sesionData.embudo_id,
+      organizacion_id: sesionData.organizacion_id,
       description: sesionData.description,
       email: sesionData.email,
       given_name: sesionData.given_name,
       picture: sesionData.picture,
       whatsapp_session: sesionData.whatsapp_session,
-      estado: sesionData.estado || 'activo',
-      creado_por: sesionData.creado_por
+      estado: sesionData.estado || 'activo'
     };
 
     const response = await fetch(`${supabaseConfig.restUrl}/sesiones`, {
       method: 'POST',
-      headers: getHeaders(),
+      headers: getSupabaseHeaders(request, { preferRepresentation: true }),
       body: JSON.stringify(dataToSend)
     });
 
@@ -82,7 +83,7 @@ export async function GET(request: NextRequest) {
     
     const response = await fetch(url, {
       method: 'GET',
-      headers: getHeaders()
+      headers: getSupabaseHeaders(request, { preferRepresentation: true })
     });
 
     if (!response.ok) {

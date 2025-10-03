@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseConfig } from '@/config/supabase';
 import { UsuarioData, UsuarioResponse } from '../domain/usuario';
-import { getHeaders, handleResponse } from '../utils';
+import { handleResponse } from '../utils';
+import { getSupabaseHeaders } from '@/utils/supabaseHeaders';
 
 // GET /api/usuarios/[id] - Obtener usuario por ID
 export async function GET(
@@ -11,16 +12,18 @@ export async function GET(
   try {
     const { id } = await params;
     
-    if (!id || isNaN(Number(id))) {
+    // Validar formato UUID
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!id || !uuidRegex.test(id)) {
       return NextResponse.json({
         success: false,
-        error: 'ID de usuario inválido'
+        error: 'ID de usuario inválido (debe ser un UUID)'
       }, { status: 400 });
     }
 
     const response = await fetch(`${supabaseConfig.restUrl}/usuarios?id=eq.${id}`, {
       method: 'GET',
-      headers: getHeaders()
+      headers: getSupabaseHeaders(request, { preferRepresentation: true })
     });
 
     if (!response.ok) {
@@ -56,19 +59,29 @@ export async function PATCH(
   try {
     const { id } = await params;
     
-    if (!id || isNaN(Number(id))) {
+    // Validar formato UUID
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!id || !uuidRegex.test(id)) {
       return NextResponse.json({
         success: false,
-        error: 'ID de usuario inválido'
+        error: 'ID de usuario inválido (debe ser un UUID)'
       }, { status: 400 });
     }
 
     const userData: Partial<UsuarioData> = await request.json();
 
+    // Preparar solo los campos permitidos para actualizar
+    const allowedFields: Partial<UsuarioData> = {};
+    if (userData.nombre !== undefined) allowedFields.nombre = userData.nombre;
+    if (userData.telefono !== undefined) allowedFields.telefono = userData.telefono;
+    if (userData.codigo_pais !== undefined) allowedFields.codigo_pais = userData.codigo_pais;
+    if (userData.rol !== undefined) allowedFields.rol = userData.rol;
+    if (userData.activo !== undefined) allowedFields.activo = userData.activo;
+
     const response = await fetch(`${supabaseConfig.restUrl}/usuarios?id=eq.${id}`, {
       method: 'PATCH',
-      headers: getHeaders(),
-      body: JSON.stringify(userData),
+      headers: getSupabaseHeaders(request, { preferRepresentation: true }),
+      body: JSON.stringify(allowedFields),
     });
 
     if (!response.ok) {
@@ -103,16 +116,18 @@ export async function DELETE(
   try {
     const { id } = await params;
     
-    if (!id || isNaN(Number(id))) {
+    // Validar formato UUID
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!id || !uuidRegex.test(id)) {
       return NextResponse.json({
         success: false,
-        error: 'ID de usuario inválido'
+        error: 'ID de usuario inválido (debe ser un UUID)'
       }, { status: 400 });
     }
 
     const response = await fetch(`${supabaseConfig.restUrl}/usuarios?id=eq.${id}`, {
       method: 'DELETE',
-      headers: getHeaders()
+      headers: getSupabaseHeaders(request, { preferRepresentation: true })
     });
 
     if (!response.ok) {

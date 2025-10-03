@@ -3,12 +3,12 @@
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Edit2, Trash2 } from 'lucide-react';
-import { EmbUpdoResponse } from '@/services/supabaseService';
+import { EmbudoResponse } from '@/app/api/embudos/domain/embudo';
 
 interface DraggableEmbudoProps {
-  embudo: EmbUpdoResponse;
-  onEdit: (embudo: EmbUpdoResponse) => void;
-  onDelete: (embudo: EmbUpdoResponse) => void;
+  embudo: EmbudoResponse;
+  onEdit: (embudo: EmbudoResponse) => void;
+  onDelete: (embudo: EmbudoResponse) => void;
   formatDate: (dateString: string) => string;
 }
 
@@ -22,18 +22,21 @@ export default function DraggableEmbudo({ embudo, onEdit, onDelete, formatDate }
     isDragging,
   } = useSortable({ id: embudo.id });
 
+  const borderColor = embudo.color || '#4a4d55';
+
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
     zIndex: isDragging ? 1000 : 'auto',
+    borderColor: isDragging ? 'var(--accent-primary)' : borderColor,
   };
 
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className={`bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-lg p-4 hover:border-[var(--accent-primary)] transition-colors group cursor-grab active:cursor-grabbing ${
-        isDragging ? 'opacity-50 shadow-2xl rotate-2 scale-105 border-[var(--accent-primary)]' : ''
+      className={`bg-[var(--bg-secondary)] border-2 rounded-lg p-4 transition-colors group cursor-grab active:cursor-grabbing ${
+        isDragging ? 'opacity-50 shadow-2xl rotate-2 scale-105' : ''
       }`}
       {...attributes}
       {...listeners}
@@ -82,9 +85,6 @@ export default function DraggableEmbudo({ embudo, onEdit, onDelete, formatDate }
       {embudo.descripcion && (
         <p className="text-[var(--text-muted)] text-xs mb-2">{embudo.descripcion}</p>
       )}
-      <div className="text-xs text-[var(--text-muted)]">
-        ID: {embudo.id} • {formatDate(embudo.creado_en)}
-      </div>
     </div>
   );
 }

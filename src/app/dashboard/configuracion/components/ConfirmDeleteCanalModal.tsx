@@ -1,6 +1,6 @@
 'use client';
 
-import { Canal } from '@/services/supabaseService';
+import { Canal } from '@/types/common';
 
 interface ConfirmDeleteCanalModalProps {
   isOpen: boolean;

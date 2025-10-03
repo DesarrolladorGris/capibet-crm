@@ -78,17 +78,11 @@ export default function ConfirmarEliminarEmbudoModal({
           
           {embudo && (
             <div className="bg-[#2a2d35] rounded-lg p-3 mb-4">
-              <p className="text-white text-sm font-medium">
-                <BarChart3 className="w-4 h-4 inline mr-1" /> &quot;{embudo.nombre}&quot;
-              </p>
-              <p className="text-gray-400 text-xs mt-1">
-                ID: #{embudo.id} • Espacio: #{embudo.espacio_id}
-              </p>
-              <p className="text-gray-400 text-xs">
-                Creado: {new Date(embudo.creado_en).toLocaleDateString('es-ES')}
+              <p className="text-white text-md font-medium">
+                {embudo.nombre}
               </p>
               {embudo.descripcion && (
-                <p className="text-gray-500 text-xs mt-1 italic">
+                <p className="text-gray-500 text-sm mt-1 italic">
                   &quot;{embudo.descripcion}&quot;
                 </p>
               )}
@@ -96,7 +90,7 @@ export default function ConfirmarEliminarEmbudoModal({
           )}
           
           <p className="text-gray-400 text-sm">
-            Esta acción no se puede deshacer. El embudo se eliminará permanentemente.
+            Esta acción no se puede deshacer. El embudo y toda su información se eliminará permanentemente.
           </p>
         </div>
 

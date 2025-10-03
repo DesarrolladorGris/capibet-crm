@@ -1,14 +1,11 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { supabaseConfig } from '@/config/supabase';
 import generateCSV from '../utils/generateCSV';
+import { getSupabaseHeaders } from '@/utils/supabaseHeaders';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const headers = {
-      'Content-Type': 'application/json',
-      'apikey': supabaseConfig.anonKey,
-      'Authorization': `Bearer ${supabaseConfig.serviceRoleKey}`,
-    };
+    const headers = getSupabaseHeaders(request);
 
     const response = await fetch(`${supabaseConfig.restUrl}/contactos?order=nombre.asc`, {
       method: 'GET',

@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseConfig } from '@/config/supabase';
 import { EmbudoData } from './domain/embudo';
-import { getHeaders, handleResponse } from './utils';
+import { handleResponse } from './utils';
+import { getSupabaseHeaders } from '@/utils/supabaseHeaders';
 
 // POST /api/embudos - Crear embudo
 export async function POST(request: NextRequest) {
@@ -27,7 +28,7 @@ export async function POST(request: NextRequest) {
 
     const response = await fetch(`${supabaseConfig.restUrl}/embudos`, {
       method: 'POST',
-      headers: getHeaders(),
+      headers: getSupabaseHeaders(request, { preferRepresentation: true }),
       body: JSON.stringify(dataToSend)
     });
 
@@ -69,12 +70,14 @@ export async function GET(request: NextRequest) {
     
     // Si se especifica espacio_id, filtrar por ese espacio
     if (espacioId) {
-      url += `?espacio_id=eq.${espacioId}`;
+      url += `?espacio_id=eq.${espacioId}&order=orden.asc`;
+    } else {
+      url += `?order=orden.asc`;
     }
 
     const response = await fetch(url, {
       method: 'GET',
-      headers: getHeaders()
+      headers: getSupabaseHeaders(request, { preferRepresentation: true })
     });
 
     if (!response.ok) {

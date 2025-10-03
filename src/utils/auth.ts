@@ -3,18 +3,34 @@
  */
 
 /**
+ * Interfaces para los datos de localStorage
+ */
+export interface UserData {
+  id: string;
+  nombre: string;
+  correo_electronico: string;
+  organizacion_id?: string;
+  telefono?: string;
+  rol: string;
+  codigo_pais?: string;
+}
+
+export interface OrganizationData {
+  id: string;
+  nombre: string;
+  logo?: string | null;
+  web?: string | null;
+}
+
+/**
  * Lista completa de todas las claves de localStorage que se usan para la sesión
  */
 export const SESSION_STORAGE_KEYS = [
-  'isLoggedIn',
-  'userEmail',
-  'userName', 
-  'userRole',
-  'userId',
-  'agencyName',
+  'access_token',
+  'refresh_token',
   'userData',
+  'organizationData',
   'registeredEmail', // Temporal del registro
-  // Agregar aquí cualquier nueva variable de sesión en el futuro
 ] as const;
 
 /**
@@ -69,26 +85,31 @@ export function performLogout(): void {
 export function isUserAuthenticated(): boolean {
   if (typeof window === 'undefined') return false;
   
-  const isLoggedIn = localStorage.getItem('isLoggedIn');
+  const accessToken = localStorage.getItem('access_token');
   const userData = localStorage.getItem('userData');
   
-  return isLoggedIn === 'true' && userData !== null;
+  return !!accessToken && !!userData;
 }
 
 /**
  * Obtiene el ID del usuario logueado de manera segura
  */
-export function getCurrentUserId(): number | null {
+export function getCurrentUserId(): string | null {
   if (typeof window === 'undefined') return null;
   
-  const userId = localStorage.getItem('userId');
-  return userId ? parseInt(userId, 10) : null;
+  try {
+    const userData = getUserData();
+    return userData?.id || null;
+  } catch (error) {
+    console.error('Error getting user ID:', error);
+    return null;
+  }
 }
 
 /**
  * Obtiene los datos del usuario logueado
  */
-export function getCurrentUserData(): {id: number, nombre_usuario: string, correo_electronico: string, rol: string} | null {
+export function getUserData(): UserData | null {
   if (typeof window === 'undefined') return null;
   
   try {
@@ -100,3 +121,87 @@ export function getCurrentUserData(): {id: number, nombre_usuario: string, corre
   }
 }
 
+/**
+ * Obtiene los datos de la organización
+ */
+export function getOrganizationData(): OrganizationData | null {
+  if (typeof window === 'undefined') return null;
+  
+  try {
+    const orgData = localStorage.getItem('organizationData');
+    return orgData ? JSON.parse(orgData) : null;
+  } catch (error) {
+    console.error('Error parsing organization data:', error);
+    return null;
+  }
+}
+
+/**
+ * Obtiene el access token
+ */
+export function getAccessToken(): string | null {
+  if (typeof window === 'undefined') return null;
+  return localStorage.getItem('access_token');
+}
+
+/**
+ * Obtiene el refresh token
+ */
+export function getRefreshToken(): string | null {
+  if (typeof window === 'undefined') return null;
+  return localStorage.getItem('refresh_token');
+}
+
+/**
+ * Obtiene el rol del usuario
+ */
+export function getUserRole(): string | null {
+  const userData = getUserData();
+  return userData?.rol || null;
+}
+
+/**
+ * Obtiene el email del usuario
+ */
+export function getUserEmail(): string | null {
+  const userData = getUserData();
+  return userData?.correo_electronico || null;
+}
+
+/**
+ * Obtiene el nombre del usuario
+ */
+export function getUserName(): string | null {
+  const userData = getUserData();
+  return userData?.nombre || null;
+}
+
+/**
+ * Obtiene el nombre de la organización
+ */
+export function getOrganizationName(): string | null {
+  const orgData = getOrganizationData();
+  return orgData?.nombre || null;
+}
+
+/**
+ * Verifica si el usuario tiene un rol específico
+ */
+export function hasRole(role: string): boolean {
+  const userRole = getUserRole();
+  return userRole === role;
+}
+
+/**
+ * Verifica si el usuario es admin
+ */
+export function isAdmin(): boolean {
+  return hasRole('admin');
+}
+
+/**
+ * Verifica si el usuario es cliente
+ */
+export function isCliente(): boolean {
+  return hasRole('cliente');
+}

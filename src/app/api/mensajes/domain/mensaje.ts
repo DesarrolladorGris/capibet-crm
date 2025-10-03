@@ -1,20 +1,20 @@
 // Tipos para mensajes
 export interface MensajeData {
-  id?: number;
-  remitente_id: number;
-  contacto_id: number;
+  id?: string;
+  remitente_id: string;
+  contacto_id: string;
   creado_en?: string;
-  chat_id: number;
+  chat_id: string;
   type: 'whatsapp_qr' | 'whatsapp_api' | 'messenger' | 'instagram' | 'telegram' | 'telegram_bot' | 'gmail' | 'outlook' | 'web_chat';
   content: Record<string, unknown>;
 }
 
 export interface MensajeResponse {
-  id: number;
-  remitente_id: number;
-  contacto_id: number;
+  id: string;
+  remitente_id: string | null;
+  contacto_id: string;
   creado_en: string;
-  chat_id: number;
+  chat_id: string;
   type: 'whatsapp_qr' | 'whatsapp_api' | 'messenger' | 'instagram' | 'telegram' | 'telegram_bot' | 'gmail' | 'outlook' | 'web_chat';
   content: Record<string, unknown>;
 }

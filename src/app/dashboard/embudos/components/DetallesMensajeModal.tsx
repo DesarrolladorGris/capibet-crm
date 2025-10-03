@@ -32,7 +32,7 @@ export default function DetallesMensajeModal({
   // Inicializar contenido editado cuando se abre el modal
   useEffect(() => {
     if (mensaje && isOpen) {
-      setContenidoEditado(mensaje.contenido);
+      setContenidoEditado(mensaje.content?.text || JSON.stringify(mensaje.content));
       setUpdateError(null);
       setUpdateSuccess(false);
     }
@@ -79,7 +79,7 @@ export default function DetallesMensajeModal({
       return;
     }
 
-    if (contenidoEditado === mensaje.contenido) {
+    if (contenidoEditado === (mensaje.content?.text || JSON.stringify(mensaje.content))) {
       setUpdateError('No hay cambios para guardar');
       return;
     }
@@ -91,14 +91,20 @@ export default function DetallesMensajeModal({
     try {
       console.log('🔄 Actualizando contenido del mensaje:', mensaje.id);
       const result = await mensajesServices.updateMensaje(mensaje.id, {
-        contenido: contenidoEditado.trim()
+        content: {
+          text: contenidoEditado.trim(),
+          message_type: 'text'
+        }
       });
 
       if (result.success) {
         console.log('✅ Mensaje actualizado exitosamente');
         setUpdateSuccess(true);
         // Actualizar el mensaje local para reflejar el cambio
-        mensaje.contenido = contenidoEditado.trim();
+        mensaje.content = {
+          text: contenidoEditado.trim(),
+          message_type: 'text'
+        };
         
         // Auto-ocultar el mensaje de éxito después de 3 segundos
         setTimeout(() => {
@@ -116,7 +122,7 @@ export default function DetallesMensajeModal({
     }
   };
 
-  const hasChanges = mensaje && contenidoEditado !== mensaje.contenido;
+  const hasChanges = mensaje && contenidoEditado !== (mensaje.content?.text || JSON.stringify(mensaje.content));
 
   const handleViewChats = () => {
     router.push('/dashboard/chats');

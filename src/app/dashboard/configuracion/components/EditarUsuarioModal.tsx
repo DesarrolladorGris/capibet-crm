@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useMemo } from 'react';
 import Image from 'next/image';
+import { Edit2 } from 'lucide-react';
 import { userServices } from '@/services/userServices';
 import { UsuarioResponse, UsuarioData } from '@/app/api/usuarios/domain/usuario';
 
@@ -13,19 +14,12 @@ interface EditarUsuarioModalProps {
 }
 
 export default function EditarUsuarioModal({ isOpen, onClose, onUserUpdated, usuario }: EditarUsuarioModalProps) {
-  const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
-    agencyName: '',
-    companyType: '',
     name: '',
     email: '',
     phone: '',
-    password: '',
-    confirmPassword: '',
     rol: ''
   });
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [selectedCountry, setSelectedCountry] = useState({
     code: '+54',
     country: 'Argentina',
@@ -73,15 +67,10 @@ export default function EditarUsuarioModal({ isOpen, onClose, onUserUpdated, usu
   // Cargar datos del usuario cuando se abre el modal
   useEffect(() => {
     if (isOpen && usuario) {
-      setCurrentStep(1);
       setFormData({
-        agencyName: usuario.nombre_agencia,
-        companyType: usuario.tipo_empresa,
-        name: usuario.nombre_usuario,
-        email: usuario.correo_electronico,
-        phone: usuario.telefono,
-        password: '',
-        confirmPassword: '',
+        name: usuario.nombre,
+        email: usuario.email || '',
+        phone: usuario.telefono || '',
         rol: usuario.rol
       });
 
@@ -119,16 +108,6 @@ export default function EditarUsuarioModal({ isOpen, onClose, onUserUpdated, usu
     }));
   };
 
-  const handleNextStep = () => {
-    if (formData.agencyName && formData.companyType) {
-      setCurrentStep(2);
-    }
-  };
-
-  const handlePrevStep = () => {
-    setCurrentStep(1);
-  };
-
   const handleCountrySelect = (country: typeof selectedCountry) => {
     setSelectedCountry(country);
     setShowCountryDropdown(false);
@@ -147,17 +126,6 @@ export default function EditarUsuarioModal({ isOpen, onClose, onUserUpdated, usu
       return;
     }
     
-    // Solo validar contraseñas si se ingresó una nueva
-    if (formData.password && formData.password !== formData.confirmPassword) {
-      setError('Las contraseñas no coinciden');
-      return;
-    }
-    
-    if (formData.password && formData.password.length < 6) {
-      setError('La contraseña debe tener al menos 6 caracteres');
-      return;
-    }
-    
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) {
       setError('Por favor ingresa un email válido');
@@ -167,32 +135,13 @@ export default function EditarUsuarioModal({ isOpen, onClose, onUserUpdated, usu
     setIsLoading(true);
     
     try {
-      // Verificar si el email ya existe (solo si cambió)
-      if (formData.email !== usuario.correo_electronico) {
-        const emailCheck = await userServices.checkEmailExists(formData.email);
-        if (emailCheck.success && emailCheck.data) {
-          setError('Este email ya está registrado');
-          setIsLoading(false);
-          return;
-        }
-      }
-      
       // Preparar los datos para actualizar
       const dataToUpdate: Partial<UsuarioData> = {
-        nombre_agencia: formData.agencyName,
-        tipo_empresa: formData.companyType,
-        nombre_usuario: formData.name,
-        correo_electronico: formData.email,
+        nombre: formData.name,
         telefono: formData.phone,
         codigo_pais: selectedCountry.code.replace('+', ''),
-        rol: formData.rol,
-        activo: true
+        rol: formData.rol
       };
-
-      // Solo incluir contraseña si se proporcionó una nueva
-      if (formData.password && formData.password.trim() !== '') {
-        dataToUpdate.contrasena = formData.password;
-      }
 
       // Llamar al API para actualizar el usuario
       const result = await userServices.updateUsuario(usuario.id!, dataToUpdate);
@@ -236,9 +185,7 @@ export default function EditarUsuarioModal({ isOpen, onClose, onUserUpdated, usu
             </div>
             <div>
               <h2 className="text-white text-lg font-semibold">Editar Usuario</h2>
-              <p className="text-gray-400 text-sm">
-                {currentStep === 1 ? 'Datos de la agencia' : 'Datos del usuario'}
-              </p>
+              <p className="text-gray-400 text-sm">Actualizar información del usuario</p>
             </div>
           </div>
           <button
@@ -252,76 +199,7 @@ export default function EditarUsuarioModal({ isOpen, onClose, onUserUpdated, usu
 
         {/* Content */}
         <div className="p-6">
-          {currentStep === 1 ? (
-            <div className="space-y-6">
-              {/* Step 1: Agency and Company Type */}
-              <div className="space-y-4">
-                {/* Agency Name */}
-                <div>
-                  <label className="block text-gray-300 text-sm mb-2">Nombre de la agencia</label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                      </svg>
-                    </div>
-                    <input
-                      type="text"
-                      name="agencyName"
-                      value={formData.agencyName}
-                      onChange={handleInputChange}
-                      placeholder="Nombre de la agencia"
-                      className="w-full pl-10 pr-4 py-3 bg-[#2a2d35] border border-[#3a3d45] rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#F29A1F] focus:border-[#F29A1F] text-sm"
-                      required
-                    />
-                  </div>
-                </div>
-
-                {/* Company Type */}
-                <div>
-                  <label className="block text-gray-300 text-sm mb-2">Tipo de empresa</label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2-2v2m8 0H8m8 0v2a2 2 0 01-2 2H10a2 2 0 01-2-2V6m8 0l4 6-4 6H8l-4-6 4-6h8z" />
-                      </svg>
-                    </div>
-                    <input
-                      type="text"
-                      name="companyType"
-                      value={formData.companyType}
-                      onChange={handleInputChange}
-                      placeholder="Tipo de empresa"
-                      className="w-full pl-10 pr-4 py-3 bg-[#2a2d35] border border-[#3a3d45] rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#F29A1F] focus:border-[#F29A1F] text-sm"
-                      required
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Navigation Buttons */}
-              <div className="flex justify-between pt-4">
-                <button
-                  type="button"
-                  onClick={handleClose}
-                  disabled={isLoading}
-                  className="px-4 py-2 text-gray-400 hover:text-white transition-colors disabled:opacity-50"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="button"
-                  onClick={handleNextStep}
-                  disabled={!formData.agencyName || !formData.companyType || isLoading}
-                  className="bg-[#F29A1F] hover:bg-[#F29A1F] disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg font-medium transition-colors"
-                >
-                  Siguiente
-                </button>
-              </div>
-            </div>
-          ) : (
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {/* Step 2: User Details */}
+          <form onSubmit={handleSubmit} className="space-y-4">
               {/* Name Input */}
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -438,73 +316,6 @@ export default function EditarUsuarioModal({ isOpen, onClose, onUserUpdated, usu
                 </select>
               </div>
 
-              {/* Password Input (opcional) */}
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 0h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                  </svg>
-                </div>
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  name="password"
-                  value={formData.password}
-                  onChange={handleInputChange}
-                  placeholder="Nueva contraseña (opcional)"
-                  className="w-full pl-10 pr-12 py-3 bg-[#2a2d35] border border-[#3a3d45] rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#F29A1F] focus:border-[#F29A1F] text-sm"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                >
-                  <div className="p-1 rounded-full hover:bg-slate-600/50 transition-colors duration-200">
-                    <svg className="h-4 w-4 text-gray-400 hover:text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      {showPassword ? (
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
-                      ) : (
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                      )}
-                    </svg>
-                  </div>
-                </button>
-              </div>
-
-              {/* Confirm Password Input (solo si se ingresó contraseña) */}
-              {formData.password && (
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 0h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                    </svg>
-                  </div>
-                  <input
-                    type={showConfirmPassword ? 'text' : 'password'}
-                    name="confirmPassword"
-                    value={formData.confirmPassword}
-                    onChange={handleInputChange}
-                    placeholder="Repetir nueva contraseña"
-                    className="w-full pl-10 pr-12 py-3 bg-[#2a2d35] border border-[#3a3d45] rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#F29A1F] focus:border-[#F29A1F] text-sm"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                  >
-                    <div className="p-1 rounded-full hover:bg-slate-600/50 transition-colors duration-200">
-                      <svg className="h-4 w-4 text-gray-400 hover:text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        {showConfirmPassword ? (
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
-                        ) : (
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                        )}
-                      </svg>
-                    </div>
-                  </button>
-                </div>
-              )}
-
               {/* Error Message */}
               {error && (
                 <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 text-red-400 text-sm">
@@ -523,11 +334,11 @@ export default function EditarUsuarioModal({ isOpen, onClose, onUserUpdated, usu
               <div className="flex justify-between pt-4">
                 <button
                   type="button"
-                  onClick={handlePrevStep}
+                  onClick={handleClose}
                   disabled={isLoading}
                   className="px-4 py-2 text-gray-400 hover:text-white transition-colors disabled:opacity-50"
                 >
-                  ← Anterior
+                  Cancelar
                 </button>
                 <button
                   type="submit"
@@ -537,8 +348,7 @@ export default function EditarUsuarioModal({ isOpen, onClose, onUserUpdated, usu
                   {isLoading ? 'Guardando...' : 'Guardar Cambios'}
                 </button>
               </div>
-            </form>
-          )}
+          </form>
         </div>
       </div>
     </div>

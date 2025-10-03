@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseConfig } from '@/config/supabase';
 import { UpdateOrderRequest } from '../domain/embudo';
-import { getHeaders, handleResponse } from '../utils';
+import { handleResponse } from '../utils';
+import { getSupabaseHeaders } from '@/utils/supabaseHeaders';
 
 // PATCH /api/embudos/update-order - Actualizar orden de múltiples embudos
 export async function PATCH(request: NextRequest) {
@@ -30,7 +31,7 @@ export async function PATCH(request: NextRequest) {
     const updatePromises = embudos.map(async ({ id, orden }) => {
       const response = await fetch(`${supabaseConfig.restUrl}/embudos?id=eq.${id}`, {
         method: 'PATCH',
-        headers: getHeaders(),
+        headers: getSupabaseHeaders(request, { preferRepresentation: true }),
         body: JSON.stringify({ orden })
       });
 

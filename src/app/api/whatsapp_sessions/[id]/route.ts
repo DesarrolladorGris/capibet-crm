@@ -4,7 +4,8 @@ import {
   WhatsAppSessionResponse,
   WhatsAppSessionData
 } from '../domain/whatsapp_session';
-import { getHeaders, handleResponse } from '../utils';
+import { handleResponse } from '../utils';
+import { getSupabaseHeaders } from '@/utils/supabaseHeaders';
 
 /**
  * GET /api/whatsapp_sessions/[id]
@@ -12,21 +13,14 @@ import { getHeaders, handleResponse } from '../utils';
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = parseInt(params.id);
-    
-    if (isNaN(id)) {
-      return NextResponse.json({
-        success: false,
-        error: 'ID inválido'
-      }, { status: 400 });
-    }
-
+    const { id } = await params;
+    console.log('id', id);
     const response = await fetch(`${supabaseConfig.restUrl}/whatsapp_sessions?id=eq.${id}`, {
       method: 'GET',
-      headers: getHeaders()
+      headers: getSupabaseHeaders(request, { preferRepresentation: true })
     });
 
     if (!response.ok) {
@@ -69,10 +63,11 @@ export async function GET(
  */
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = parseInt(params.id);
+    const { id: idParam } = await params;
+    const id = parseInt(idParam);
     
     if (isNaN(id)) {
       return NextResponse.json({
@@ -86,7 +81,7 @@ export async function PATCH(
     // Validar que la sesión existe
     const fetchResponse = await fetch(`${supabaseConfig.restUrl}/whatsapp_sessions?id=eq.${id}`, {
       method: 'GET',
-      headers: getHeaders()
+      headers: getSupabaseHeaders(request, { preferRepresentation: true })
     });
 
     if (!fetchResponse.ok) {
@@ -119,7 +114,7 @@ export async function PATCH(
 
     const response = await fetch(`${supabaseConfig.restUrl}/whatsapp_sessions?id=eq.${id}`, {
       method: 'PATCH',
-      headers: getHeaders(),
+      headers: getSupabaseHeaders(request, { preferRepresentation: true }),
       body: JSON.stringify(updateData)
     });
 
@@ -156,10 +151,11 @@ export async function PATCH(
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = parseInt(params.id);
+    const { id: idParam } = await params;
+    const id = parseInt(idParam);
     
     if (isNaN(id)) {
       return NextResponse.json({
@@ -171,7 +167,7 @@ export async function DELETE(
     // Verificar que la sesión existe
     const fetchResponse = await fetch(`${supabaseConfig.restUrl}/whatsapp_sessions?id=eq.${id}`, {
       method: 'GET',
-      headers: getHeaders()
+      headers: getSupabaseHeaders(request, { preferRepresentation: true })
     });
 
     if (!fetchResponse.ok) {
@@ -194,7 +190,7 @@ export async function DELETE(
 
     const response = await fetch(`${supabaseConfig.restUrl}/whatsapp_sessions?id=eq.${id}`, {
       method: 'DELETE',
-      headers: getHeaders()
+      headers: getSupabaseHeaders(request, { preferRepresentation: true })
     });
 
     if (!response.ok) {

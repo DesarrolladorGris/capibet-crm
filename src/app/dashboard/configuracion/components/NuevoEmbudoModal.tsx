@@ -4,12 +4,13 @@ import { useState, useEffect } from 'react';
 import { Settings, Lightbulb } from 'lucide-react';
 import { embudoServices } from '@/services/embudoServices';
 import { EmbudoData } from '@/app/api/embudos/domain/embudo';
+import { getCurrentUserId } from '@/utils/auth';
 
 interface NuevoEmbudoModalProps {
   isOpen: boolean;
   onClose: () => void;
   onEmbudoCreated: () => void;
-  espacioId: number;
+  espacioId: string;
   espacioNombre: string;
 }
 
@@ -22,14 +23,15 @@ export default function NuevoEmbudoModal({
 }: NuevoEmbudoModalProps) {
   const [nombre, setNombre] = useState('');
   const [descripcion, setDescripcion] = useState('');
+  const [color, setColor] = useState('#4a4d55');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const [userId, setUserId] = useState<number | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
-    const storedUserId = localStorage.getItem('userId');
-    if (storedUserId) {
-      setUserId(parseInt(storedUserId, 10));
+    const currentUserId = getCurrentUserId();
+    if (currentUserId) {
+      setUserId(currentUserId);
     } else {
       setError('No se encontró el ID del usuario logueado. Por favor, inicia sesión nuevamente.');
     }
@@ -38,6 +40,7 @@ export default function NuevoEmbudoModal({
   const resetForm = () => {
     setNombre('');
     setDescripcion('');
+    setColor('#4a4d55');
     setError('');
   };
 
@@ -71,6 +74,7 @@ export default function NuevoEmbudoModal({
         descripcion: descripcion.trim() || undefined,
         creado_por: userId,
         espacio_id: espacioId,
+        color: color,
       };
 
       console.log('Datos del embudo a crear:', newEmbudo);
@@ -117,9 +121,6 @@ export default function NuevoEmbudoModal({
               Se creará en: <span className="text-white">{espacioNombre}</span>
             </span>
           </div>
-          <div className="text-xs text-gray-400 mt-1">
-            Espacio ID: {espacioId}
-          </div>
         </div>
 
         {error && (
@@ -160,15 +161,28 @@ export default function NuevoEmbudoModal({
             />
           </div>
 
-          <div className="bg-[#1a1d23] rounded-lg p-3 border border-[#3a3d45]">
-            <div className="text-sm text-gray-400">
-              <Lightbulb className="w-4 h-4 inline mr-1" /> <strong>Información automática:</strong>
+          <div>
+            <label htmlFor="color" className="block text-sm font-medium text-gray-300 mb-2">
+              Color del Borde
+            </label>
+            <div className="flex items-center space-x-3">
+              <input
+                type="color"
+                id="color"
+                value={color}
+                onChange={(e) => setColor(e.target.value)}
+                className="w-16 h-10 bg-[#1a1d23] border border-[#3a3d45] rounded-lg cursor-pointer"
+                disabled={isLoading}
+              />
+              <input
+                type="text"
+                value={color}
+                onChange={(e) => setColor(e.target.value)}
+                className="flex-1 px-3 py-2 bg-[#1a1d23] border border-[#3a3d45] rounded-lg text-white focus:ring-2 focus:ring-[#F29A1F] focus:border-transparent"
+                placeholder="#4a4d55"
+                disabled={isLoading}
+              />
             </div>
-            <ul className="text-xs text-gray-500 mt-2 space-y-1">
-              <li>• <strong>Creado por:</strong> Tu usuario (ID: {userId || 'Cargando...'})</li>
-              <li>• <strong>Espacio:</strong> {espacioNombre} (ID: {espacioId})</li>
-              <li>• <strong>Fecha:</strong> {new Date().toLocaleDateString('es-ES')}</li>
-            </ul>
           </div>
 
           <div className="flex justify-end space-x-3">

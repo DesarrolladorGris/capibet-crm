@@ -2,20 +2,22 @@
 export interface EmbudoData {
   nombre: string;
   descripcion?: string;
-  creado_por: number;
-  espacio_id: number;
+  creado_por: string; // UUID
+  espacio_id: string; // UUID
   orden?: number;
+  color?: string;
 }
 
 export interface EmbudoResponse {
-  id: number;
+  id: string; // UUID
   nombre: string;
   descripcion: string | null;
-  creado_por: number;
-  creado_en: string;
-  actualizado_en: string;
-  espacio_id: number;
-  orden: number;
+  creado_por: string; // UUID
+  creado_en: string; // timestamp with time zone
+  actualizado_en: string; // timestamp with time zone
+  espacio_id: string; // UUID
+  orden: number; // bigint
+  color: string;
 }
 
 export interface ApiResponse<T = unknown> {
@@ -27,7 +29,7 @@ export interface ApiResponse<T = unknown> {
 
 export interface UpdateOrderRequest {
   embudos: Array<{
-    id: number;
+    id: string; // UUID
     orden: number;
   }>;
 }

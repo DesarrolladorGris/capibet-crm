@@ -1,7 +1,7 @@
 'use client';
 
 import { useDraggable } from '@dnd-kit/core';
-import { MensajeResponse } from '@/services/supabaseService';
+import { MensajeResponse } from '@/app/api/mensajes/domain/mensaje';
 
 // Mapeo de tipos de canal a iconos y nombres
 const getChannelInfoByType = (tipo: string): { name: string; icon: string } => {
@@ -65,7 +65,7 @@ export default function DraggableMensaje({ mensaje, onMensajeClick }: DraggableM
         ...style,
         zIndex: isDragging ? 9999 : 'auto',
       }}
-      className={`bg-[#1a1d23] rounded p-2 border border-[#3a3d45] hover:border-[#F29A1F] transition-colors cursor-grab active:cursor-grabbing group relative ${
+      className={`bg-[#1a1d23] rounded p-2 border border-[#3a3d45] transition-colors cursor-grab active:cursor-grabbing group relative ${
         isDragging ? 'opacity-75 shadow-2xl rotate-2 scale-110 border-[#F29A1F]' : ''
       }`}
       {...attributes}
@@ -75,7 +75,7 @@ export default function DraggableMensaje({ mensaje, onMensajeClick }: DraggableM
     >
       {/* Contenido del mensaje */}
       <div className="text-white text-xs font-medium mb-1 line-clamp-2">
-        {mensaje.contenido}
+        {mensaje.content?.text || JSON.stringify(mensaje.content)}
       </div>
       <div className="text-gray-400 text-xs flex items-center space-x-1">
         {mensaje.tipo ? (

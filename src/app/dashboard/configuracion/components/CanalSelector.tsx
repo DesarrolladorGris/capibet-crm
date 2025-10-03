@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import { Canal } from '@/services/supabaseService';
+import { Canal } from '@/types/common';
 
 interface CanalOption {
   id: string;

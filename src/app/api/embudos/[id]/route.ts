@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseConfig } from '@/config/supabase';
 import { EmbudoData } from '../domain/embudo';
-import { getHeaders, handleResponse } from '../utils';
+import { handleResponse } from '../utils';
+import { getSupabaseHeaders } from '@/utils/supabaseHeaders';
 
 // GET /api/embudos/[id] - Obtener embudo por ID
 export async function GET(
@@ -11,7 +12,7 @@ export async function GET(
   try {
     const id = params.id;
 
-    if (!id || isNaN(Number(id))) {
+    if (!id) {
       return NextResponse.json({
         success: false,
         error: 'ID de embudo inválido'
@@ -20,7 +21,7 @@ export async function GET(
 
     const response = await fetch(`${supabaseConfig.restUrl}/embudos?id=eq.${id}`, {
       method: 'GET',
-      headers: getHeaders()
+      headers: getSupabaseHeaders(request, { preferRepresentation: true })
     });
 
     if (!response.ok) {
@@ -65,7 +66,7 @@ export async function PATCH(
     const id = params.id;
     const embudoData: Partial<EmbudoData> = await request.json();
 
-    if (!id || isNaN(Number(id))) {
+    if (!id) {
       return NextResponse.json({
         success: false,
         error: 'ID de embudo inválido'
@@ -86,7 +87,7 @@ export async function PATCH(
 
     const response = await fetch(`${supabaseConfig.restUrl}/embudos?id=eq.${id}`, {
       method: 'PATCH',
-      headers: getHeaders(),
+      headers: getSupabaseHeaders(request, { preferRepresentation: true }),
       body: JSON.stringify(dataToSend)
     });
 
@@ -127,7 +128,7 @@ export async function DELETE(
   try {
     const id = params.id;
 
-    if (!id || isNaN(Number(id))) {
+    if (!id) {
       return NextResponse.json({
         success: false,
         error: 'ID de embudo inválido'
@@ -136,7 +137,7 @@ export async function DELETE(
 
     const response = await fetch(`${supabaseConfig.restUrl}/embudos?id=eq.${id}`, {
       method: 'DELETE',
-      headers: getHeaders()
+      headers: getSupabaseHeaders(request, { preferRepresentation: true })
     });
 
     if (!response.ok) {

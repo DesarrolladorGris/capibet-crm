@@ -32,9 +32,9 @@ interface VincularSesionModalProps {
   onVincular: (data: {
     nombre: string;
     descripcion: string;
-    embudo_id: number;
+    embudo_id: string;
     type: string;
-    sesionId?: number;
+    sesionId?: string;
   }) => void;
   tipoSesion: string;
 }
@@ -63,10 +63,10 @@ export default function VincularSesionModal({
   const [tempSesionData, setTempSesionData] = useState<{
     nombre: string;
     descripcion: string;
-    embudo_id: number;
+    embudo_id: string;
     type: string;
     sessionId: string;
-    sesionId?: number; // ID de la sesión creada en la DB
+    sesionId?: string; // UUID de la sesión creada en la DB
   } | null>(null);
   const [pollingInterval, setPollingInterval] = useState<NodeJS.Timeout | null>(null);
 
@@ -189,12 +189,14 @@ export default function VincularSesionModal({
       
       // Obtener datos del usuario actual desde localStorage
       const userDataStr = localStorage.getItem('userData');
-      let userId
+      let userId;
+      let organizacionId;
 
       if (userDataStr) {
         try {
           const userData = JSON.parse(userDataStr);
           userId = userData.id;
+          organizacionId = userData.organizacion_id;
         } catch (error) {
           console.error('Error parsing userData from localStorage:', error);
         }
@@ -204,11 +206,11 @@ export default function VincularSesionModal({
       const tempData = {
         nombre: formData.nombre,
         descripcion: formData.descripcion,
-        embudo_id: parseInt(formData.embudo_id),
+        embudo_id: formData.embudo_id,
         type: tipoSesion,
         sessionId: qrResponse.sessionId,
         usuario_id: userId,
-        creado_por: userId
+        organizacion_id: organizacionId
       };
       
       // Guardar en el servidor temporalmente
@@ -345,10 +347,10 @@ export default function VincularSesionModal({
                 sesionEstado: sesion.estado,
                 sesionWhatsAppSession: sesion.whatsapp_session,
                 whatsappSessionId,
-                coinciden: Number(sesion.whatsapp_session) === whatsappSessionId
+                coinciden: sesion.whatsapp_session === whatsappSessionId
               });
               
-              if (sesion.estado === 'activo' && Number(sesion.whatsapp_session) === whatsappSessionId) {
+              if (sesion.estado === 'activo' && sesion.whatsapp_session === whatsappSessionId) {
                 console.log('✅ Sesión conectada exitosamente detectada via polling');
                 
                 // Actualizar tempSesionData con el sesionId real
@@ -450,10 +452,6 @@ export default function VincularSesionModal({
         });
       }
       
-      // NO limpiar tempSesionData aquí, se limpiará cuando se cierre el modal
-      // resetQRState();
-    } else {
-      console.error('❌ No se puede completar conexión: falta tempSesionData o sesionId');
     }
   };
 
@@ -481,7 +479,7 @@ export default function VincularSesionModal({
     onVincular({
       nombre: formData.nombre,
       descripcion: formData.descripcion,
-      embudo_id: parseInt(formData.embudo_id),
+      embudo_id: formData.embudo_id,
       type: tipoSesion,
     });
   };

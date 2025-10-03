@@ -1,26 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseConfig } from '@/config/supabase';
 import { ProductResponse } from '../domain/producto';
-import { getHeaders, handleResponse } from '../utils';
+import { handleResponse } from '../utils';
+import { getSupabaseHeaders } from '@/utils/supabaseHeaders';
 
-// GET /api/productos/[id] - Obtener un producto específico por ID
+// GET /api/productos/[id] - Obtener producto por ID
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   try {
-    const { id } = await params;
-    
-    if (!id || isNaN(Number(id))) {
+    const { id } = params;
+
+    if (!id) {
       return NextResponse.json({
         success: false,
-        error: 'ID del producto inválido'
+        error: 'ID de producto inválido'
       }, { status: 400 });
     }
 
     const response = await fetch(`${supabaseConfig.restUrl}/productos?id=eq.${id}`, {
       method: 'GET',
-      headers: getHeaders()
+      headers: getSupabaseHeaders(request, { preferRepresentation: true })
     });
 
     if (!response.ok) {
@@ -32,17 +33,9 @@ export async function GET(
 
     const data = await handleResponse(response);
     
-    // Verificar si se encontró el producto
-    if (!Array.isArray(data) || data.length === 0) {
-      return NextResponse.json({
-        success: false,
-        error: 'Producto no encontrado'
-      }, { status: 404 });
-    }
-
     return NextResponse.json({
       success: true,
-      data: data[0] as ProductResponse
+      data: data as unknown as ProductResponse
     });
 
   } catch (error) {
@@ -56,34 +49,30 @@ export async function GET(
   }
 }
 
-// PATCH /api/productos/[id] - Actualizar un producto específico por ID
-export async function PATCH(
+// DELETE /api/productos/[id] - Eliminar producto
+export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   try {
-    const { id } = await params;
-    const productData = await request.json();
-    
-    if (!id || isNaN(Number(id))) {
+    const { id } = params;
+
+    if (!id) {
       return NextResponse.json({
         success: false,
-        error: 'ID del producto inválido'
+        error: 'ID de producto inválido'
       }, { status: 400 });
     }
 
     const response = await fetch(`${supabaseConfig.restUrl}/productos?id=eq.${id}`, {
-      method: 'PATCH',
-      headers: getHeaders(),
-      body: JSON.stringify(productData),
+      method: 'DELETE',
+      headers: getSupabaseHeaders(request, { preferRepresentation: true })
     });
 
     if (!response.ok) {
-      const errorData = await response.text();
       return NextResponse.json({
         success: false,
-        error: `Error del servidor: ${response.status} ${response.statusText}`,
-        details: errorData
+        error: 'Error al eliminar el producto'
       }, { status: response.status });
     }
 
@@ -91,55 +80,17 @@ export async function PATCH(
     
     return NextResponse.json({
       success: true,
-      data: data as unknown as ProductResponse
+      data: data,
+      message: 'Producto eliminado exitosamente'
     });
+
   } catch (error) {
-    return NextResponse.json({
-      success: false,
-      error: error instanceof Error ? error.message : 'Error al actualizar producto'
-    }, { status: 500 });
-  }
-}
-
-// DELETE /api/productos/[id] - Eliminar un producto específico por ID
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const { id } = await params;
-    
-    if (!id || isNaN(Number(id))) {
-      return NextResponse.json({
-        success: false,
-        error: 'ID del producto inválido'
-      }, { status: 400 });
-    }
-
-    const response = await fetch(`${supabaseConfig.restUrl}/productos?id=eq.${id}`, {
-      method: 'DELETE',
-      headers: getHeaders()
-    });
-
-    if (!response.ok) {
-      const errorData = await response.text();
-      return NextResponse.json({
-        success: false,
-        error: `Error del servidor: ${response.status} ${response.statusText}`,
-        details: errorData
-      }, { status: response.status });
-    }
-
-    await handleResponse(response);
+    console.error('Error deleting product:', error);
     
     return NextResponse.json({
-      success: true,
-      data: undefined
-    });
-  } catch (error) {
-    return NextResponse.json({
       success: false,
-      error: error instanceof Error ? error.message : 'Error al eliminar producto'
+      error: 'Error de conexión al eliminar producto',
+      details: error instanceof Error ? error.message : 'Error desconocido'
     }, { status: 500 });
   }
 }

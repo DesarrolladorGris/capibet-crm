@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseConfig } from '@/config/supabase';
 import { EspacioTrabajoData } from './domain/espacio_trabajo';
-import { getHeaders, handleResponse } from './utils';
+import { handleResponse } from './utils';
+import { getSupabaseHeaders } from '@/utils/supabaseHeaders';
 
 // POST /api/espacio_trabajos - Crear espacio de trabajo
 export async function POST(request: NextRequest) {
@@ -11,12 +12,13 @@ export async function POST(request: NextRequest) {
     // Preparar los datos con valores por defecto
     const dataToSend = {
       nombre: espacioData.nombre,
-      creado_por: espacioData.creado_por
+      creado_por: espacioData.creado_por,
+      organizacion_id: espacioData.organizacion_id
     };
 
     const response = await fetch(`${supabaseConfig.restUrl}/espacios_de_trabajo`, {
       method: 'POST',
-      headers: getHeaders(),
+      headers: getSupabaseHeaders(request, { preferRepresentation: true }),
       body: JSON.stringify(dataToSend)
     });
 
@@ -49,11 +51,11 @@ export async function POST(request: NextRequest) {
 }
 
 // GET /api/espacio_trabajos - Obtener todos los espacios de trabajo
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const response = await fetch(`${supabaseConfig.restUrl}/espacios_de_trabajo`, {
+    const response = await fetch(`${supabaseConfig.restUrl}/espacios_de_trabajo?select=*&order=orden.asc`, {
       method: 'GET',
-      headers: getHeaders()
+      headers: getSupabaseHeaders(request, { preferRepresentation: true })
     });
 
     if (!response.ok) {

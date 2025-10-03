@@ -1,17 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseConfig } from '@/config/supabase';
 import { QRUpdatePayload, WhatsAppApiResponse, QRUpdateData } from '../../types';
+import { getSupabaseHeaders } from '@/utils/supabaseHeaders';
 
 /**
- * Obtiene los headers para Supabase
+ * Obtiene los headers para Supabase usando serviceRoleKey (webhook del orquestador)
  */
 function getHeaders(): HeadersInit {
-  return {
-    'Content-Type': 'application/json',
-    'apikey': supabaseConfig.anonKey,
-    'Authorization': `Bearer ${supabaseConfig.anonKey}`,
-    'Prefer': 'return=representation'
-  };
+  return getSupabaseHeaders(null, { preferRepresentation: true });
 }
 
 /**

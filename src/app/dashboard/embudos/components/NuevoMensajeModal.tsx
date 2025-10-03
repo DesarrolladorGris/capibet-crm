@@ -9,22 +9,23 @@ import { SesionResponse } from '@/app/api/sesiones/domain/sesion';
 type CanalTipo = 'whatsapp' | 'whatsappApi' | 'email' | 'instagram' | 'messenger' | 'telegram' | 'telegramBot' | 'webChat';
 
 interface Canal {
-  id: number;
+  id: string;
   tipo: CanalTipo;
   descripcion: string;
-  usuario_id: number;
-  espacio_id: number;
+  usuario_id: string;
+  espacio_id: string;
   creado_en?: string;
 }
 import { embudoServices } from '@/services/embudoServices';
 import { EmbudoResponse } from '@/app/api/embudos/domain/embudo';
 import { contactoServices, ContactResponse } from '@/services/contactoServices';
+import { getUserData } from '@/utils/auth';
 
 interface NuevoMensajeModalProps {
   isOpen: boolean;
   onClose: () => void;
   onMensajeCreated: () => void;
-  espacioId?: number;
+  espacioId?: string;
 }
 
 export default function NuevoMensajeModal({ 
@@ -34,18 +35,18 @@ export default function NuevoMensajeModal({
   espacioId 
 }: NuevoMensajeModalProps) {
   const [contenido, setContenido] = useState('');
-  const [canalId, setCanalId] = useState<number>(0);
-  const [sesionId, setSesionId] = useState<number>(0);
-  const [contactoId, setContactoId] = useState<number>(0);
-  const [destinatarioId] = useState<number>(0); // Siempre 0, no necesita setter
-  const [embudoId, setEmbudoId] = useState<number>(0);
+  const [canalId, setCanalId] = useState<string>('');
+  const [sesionId, setSesionId] = useState<string>('');
+  const [contactoId, setContactoId] = useState<string>('');
+  const [destinatarioId] = useState<string>(''); // Siempre vacío, no necesita setter
+  const [embudoId, setEmbudoId] = useState<string>('');
   
   // Estados para datos auxiliares
   const [canales, setCanales] = useState<Canal[]>([]);
   const [sesiones, setSesiones] = useState<SesionResponse[]>([]);
   const [contactos, setContactos] = useState<ContactResponse[]>([]);
   const [embudos, setEmbudos] = useState<EmbudoResponse[]>([]);
-  const [userId, setUserId] = useState<number>(0);
+  const [userId, setUserId] = useState<string>('');
   
   // Estados de UI
   const [isLoading, setIsLoading] = useState(false);
@@ -57,9 +58,9 @@ export default function NuevoMensajeModal({
     setError(null);
     
     try {
-      // Obtener userId del localStorage
-      const userIdString = localStorage.getItem('userId');
-      const currentUserId = userIdString ? parseInt(userIdString, 10) : 0;
+      // Obtener userId desde la nueva estructura
+      const userData = getUserData();
+      const currentUserId = userData?.id || '';
       setUserId(currentUserId);
 
       // Cargar datos en paralelo
@@ -95,7 +96,7 @@ export default function NuevoMensajeModal({
   }, [isOpen, loadInitialData]);
 
   // Cargar sesiones cuando se selecciona un canal
-  const loadSesiones = async (selectedCanalId: number) => {
+  const loadSesiones = async (selectedCanalId: string) => {
     try {
       const sesionesResult = await sesionesServices.getSesionesByCanal(selectedCanalId);
       if (sesionesResult.success && sesionesResult.data) {
@@ -107,12 +108,12 @@ export default function NuevoMensajeModal({
   };
 
   const handleCanalChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const selectedCanalId = parseInt(e.target.value);
+    const selectedCanalId = e.target.value;
     setCanalId(selectedCanalId);
-    setSesionId(0); // Reset sesión
+    setSesionId(''); // Reset sesión
     setSesiones([]); // Limpiar sesiones
     
-    if (selectedCanalId > 0) {
+    if (selectedCanalId) {
       loadSesiones(selectedCanalId);
     }
   };
@@ -151,13 +152,14 @@ export default function NuevoMensajeModal({
 
     try {
       const mensajeData: MensajeData = {
-        canal_id: canalId,
         remitente_id: userId,
-        contenido: contenido.trim(),
         contacto_id: contactoId,
-        sesion_id: sesionId,
-        destinatario_id: destinatarioId,
-        embudo_id: embudoId
+        chat_id: sesionId, // Usar sesionId como chat_id
+        type: 'whatsapp_qr', // Tipo por defecto
+        content: {
+          text: contenido.trim(),
+          message_type: 'text'
+        }
       };
 
       console.log('Enviando mensaje:', mensajeData);
@@ -181,13 +183,13 @@ export default function NuevoMensajeModal({
 
   const handleClose = () => {
     setContenido('');
-    setCanalId(0);
-    setSesionId(0);
-    setContactoId(0);
-    setEmbudoId(0);
+    setCanalId('');
+    setSesionId('');
+    setContactoId('');
+    setEmbudoId('');
     setSesiones([]);
     setError(null);
-    // destinatarioId siempre es 0, no necesita reseteo
+    // destinatarioId siempre es vacío, no necesita reseteo
     onClose();
   };
 
@@ -246,7 +248,7 @@ export default function NuevoMensajeModal({
                   </label>
                   <select
                     value={embudoId}
-                    onChange={(e) => setEmbudoId(parseInt(e.target.value))}
+                    onChange={(e) => setEmbudoId(e.target.value)}
                     className="w-full px-3 py-2 bg-[#1a1d23] border border-[#3a3d45] rounded text-white focus:outline-none focus:ring-2 focus:ring-[#F29A1F] focus:border-[#F29A1F]"
                     required
                   >
@@ -266,7 +268,7 @@ export default function NuevoMensajeModal({
                   </label>
                   <select
                     value={sesionId}
-                    onChange={(e) => setSesionId(parseInt(e.target.value))}
+                    onChange={(e) => setSesionId(e.target.value)}
                     className="w-full px-3 py-2 bg-[#1a1d23] border border-[#3a3d45] rounded text-white focus:outline-none focus:ring-2 focus:ring-[#F29A1F] focus:border-[#F29A1F]"
                     required
                     disabled={!canalId}
@@ -287,7 +289,7 @@ export default function NuevoMensajeModal({
                   </label>
                   <select
                     value={contactoId}
-                    onChange={(e) => setContactoId(parseInt(e.target.value))}
+                    onChange={(e) => setContactoId(e.target.value)}
                     className="w-full px-3 py-2 bg-[#1a1d23] border border-[#3a3d45] rounded text-white focus:outline-none focus:ring-2 focus:ring-[#F29A1F] focus:border-[#F29A1F]"
                     required
                   >

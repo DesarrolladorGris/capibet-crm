@@ -1,14 +1,52 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseConfig } from '@/config/supabase';
 import { ChatData, ChatResponse } from './domain/chat';
-import { getHeaders, handleResponse } from './utils';
+import { handleResponse } from './utils';
+import { getSupabaseHeaders } from '@/utils/supabaseHeaders';
 
-// GET /api/chats - Obtener todos los chats
-export async function GET() {
+// GET /api/chats - Obtener chats filtrados por espacio de trabajo
+export async function GET(request: NextRequest) {
   try {
-    const response = await fetch(`${supabaseConfig.restUrl}/chats`, {
+    const { searchParams } = new URL(request.url);
+    const espacioId = searchParams.get('espacio_id');
+    
+    // Construir la URL de la consulta con filtros
+    let url = `${supabaseConfig.restUrl}/chats`;
+    
+    if (espacioId) {
+      // Si se proporciona espacio_id, necesitamos hacer un join con embudos para filtrar
+      // Primero obtenemos los embudos del espacio
+      const embudosResponse = await fetch(`${supabaseConfig.restUrl}/embudos?espacio_id=eq.${espacioId}`, {
+        method: 'GET',
+        headers: getSupabaseHeaders(request, { preferRepresentation: true })
+      });
+      
+      if (!embudosResponse.ok) {
+        return NextResponse.json({
+          success: false,
+          error: 'Error al obtener embudos del espacio'
+        }, { status: embudosResponse.status });
+      }
+      
+      const embudosData = await handleResponse(embudosResponse);
+      const embudosIds = Array.isArray(embudosData) ? embudosData.map((embudo: any) => embudo.id) : [];
+      
+      if (embudosIds.length === 0) {
+        // Si no hay embudos en el espacio, retornar array vacío
+        return NextResponse.json({
+          success: true,
+          data: []
+        });
+      }
+      
+      // Filtrar chats por los embudos del espacio
+      const embudosFilter = embudosIds.map(id => `embudo_id.eq.${id}`).join(',');
+      url = `${supabaseConfig.restUrl}/chats?or=(${embudosFilter})`;
+    }
+    
+    const response = await fetch(url, {
       method: 'GET',
-      headers: getHeaders()
+      headers: getSupabaseHeaders(request, { preferRepresentation: true })
     });
 
     if (!response.ok) {
@@ -43,7 +81,7 @@ export async function POST(request: NextRequest) {
     
     const response = await fetch(`${supabaseConfig.restUrl}/chats`, {
       method: 'POST',
-      headers: getHeaders(),
+      headers: getSupabaseHeaders(request, { preferRepresentation: true }),
       body: JSON.stringify(chatData)
     });
 
@@ -89,7 +127,7 @@ export async function PATCH(request: NextRequest) {
 
     const response = await fetch(`${supabaseConfig.restUrl}/chats?id=eq.${id}`, {
       method: 'PATCH',
-      headers: getHeaders(),
+      headers: getSupabaseHeaders(request, { preferRepresentation: true }),
       body: JSON.stringify(chatData),
     });
 
@@ -131,7 +169,7 @@ export async function DELETE(request: NextRequest) {
 
     const response = await fetch(`${supabaseConfig.restUrl}/chats?id=eq.${id}`, {
       method: 'DELETE',
-      headers: getHeaders()
+      headers: getSupabaseHeaders(request, { preferRepresentation: true })
     });
 
     if (!response.ok) {

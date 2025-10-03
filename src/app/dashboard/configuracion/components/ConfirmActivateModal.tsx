@@ -1,6 +1,6 @@
 'use client';
 
-import { UsuarioResponse } from '@/services/supabaseService';
+import { UsuarioResponse } from '@/app/api/usuarios/domain/usuario';
 
 interface ConfirmActivateModalProps {
   isOpen: boolean;
@@ -64,7 +64,7 @@ export default function ConfirmActivateModal({
                 />
               </div>
               <div>
-                <h3 className="text-white font-medium">{usuario.nombre_usuario}</h3>
+                <h3 className="text-white font-medium">{usuario.nombre}</h3>
                 <p className="text-gray-400 text-sm">{usuario.correo_electronico}</p>
                 <p className="text-gray-500 text-xs">{usuario.nombre_agencia}</p>
               </div>

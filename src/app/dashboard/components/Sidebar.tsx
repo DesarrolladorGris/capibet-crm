@@ -25,11 +25,11 @@ const menuItems: MenuItem[] = [
   { id: 'internal-chat', icon: <MessageSquare className="w-5 h-5" />, label: 'Chat Interno', active: false },
   { id: 'emails', icon: <Mail className="w-5 h-5" />, label: 'Emails', active: false },
   { id: 'calendar', icon: <Calendar className="w-5 h-5" />, label: 'Calendario', active: false },
-  { id: 'contacts', icon: <Users className="w-5 h-5" />, label: 'Contactos', active: false, requiredRoles: ['Administrador', 'Admin'] },
+  { id: 'contacts', icon: <Users className="w-5 h-5" />, label: 'Contactos', active: false, requiredRoles: ['admin'] },
   { id: 'sales', icon: <ShoppingCart className="w-5 h-5" />, label: 'Ventas', active: false },
   { id: 'bulk-sends', icon: <Send className="w-5 h-5" />, label: 'Envíos masivos', active: false },
-  { id: 'config', icon: <Settings className="w-5 h-5" />, label: 'Configuración', active: false, requiredRoles: ['Administrador', 'Admin'] },
-  { id: 'academy', icon: <GraduationCap className="w-5 h-5" />, label: 'CAPIBET Academy', active: false, requiredRoles: ['Administrador', 'Admin'] },
+  { id: 'config', icon: <Settings className="w-5 h-5" />, label: 'Configuración', active: false, requiredRoles: ['admin'] },
+  { id: 'academy', icon: <GraduationCap className="w-5 h-5" />, label: 'CAPIBET Academy', active: false, requiredRoles: ['admin'] },
 ];
 
 export default function Sidebar({ isOpen }: SidebarProps) {
@@ -133,7 +133,7 @@ export default function Sidebar({ isOpen }: SidebarProps) {
   };
 
   return (
-    <div className={`bg-[var(--bg-primary)] border-r border-[var(--border-primary)] transition-all duration-300 ${isOpen ? 'w-64' : 'w-16'}`}>
+    <div className={`bg-[var(--bg-primary)] border-r border-[var(--border-primary)] transition-all duration-300 flex-shrink-0 ${isOpen ? 'w-64 min-w-64' : 'w-16 min-w-16'}`}>
       {/* Logo */}
       <div className="p-4 border-b border-[var(--border-primary)]">
         <div className="flex items-center space-x-3">

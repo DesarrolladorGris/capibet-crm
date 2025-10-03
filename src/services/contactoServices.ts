@@ -1,52 +1,53 @@
+import { authGet, authPost, authPatch, authDelete, ApiResponse } from '@/utils/apiClient';
+
 // Tipos de datos para contactos
 export interface ContactData {
+  id?: string;
   nombre: string;
-  apellido: string;
+  apellido?: string;
+  nombre_completo?: string;
   correo: string;
   telefono: string;
-  empresa?: string;
-  cargo?: string;
   notas?: string;
   direccion?: string;
   cumpleaños?: string;
   sitio_web?: string;
-  etiqueta?: string;
-  empresa_id?: number;
-  creado_por: number;
+  creado_por: string;
+  agente?: string;
+  organizacion_id?: string;
+  etiquetas?: string[];
+  genero?: string;
+  fecha_cumpleaños?: string;
+  origen?: string;
+  whatsapp_jid?: string;
 }
 
 export interface ContactResponse {
-  id: number;
+  id: string;
   nombre: string;
-  apellido: string;
-  nombre_completo: string;
+  apellido?: string;
+  nombre_completo?: string;
   correo: string;
   telefono: string;
-  empresa?: string;
-  cargo?: string;
   notas?: string;
   direccion?: string;
   cumpleaños?: string;
   sitio_web?: string;
-  etiqueta?: string;
-  empresa_id?: number;
-  creado_por: number;
-  created_at: string;
-  updated_at: string;
+  creado_en: string;
+  actualizado_en: string;
+  genero?: string;
+  fecha_cumpleaños?: string;
+  origen?: string;
+  whatsapp_jid?: string;
+  creado_por: string;
+  agente?: string;
+  organizacion_id?: string;
+  etiquetas?: string[];
 }
 
 export interface ImportResponse {
   message: string;
   errores?: string[];
-}
-
-// Tipos para las respuestas de la API
-interface ApiResponse<T = unknown> {
-  success: boolean;
-  data?: T;
-  error?: string;
-  details?: string;
-  message?: string;
 }
 
 // Configuración de la API
@@ -55,129 +56,38 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '';
 // Endpoints de la API
 const apiEndpoints = {
   contactos: `${API_BASE_URL}/api/contactos`,
-  contactosById: (id: number) => `${API_BASE_URL}/api/contactos/${id}`,
+  contactosById: (id: string) => `${API_BASE_URL}/api/contactos/${id}`,
   contactosImportar: `${API_BASE_URL}/api/contactos/importar`,
   contactosExportar: `${API_BASE_URL}/api/contactos/exportar`
 };
 
 class ContactoServices {
   /**
-   * Obtiene los headers para las peticiones
-   */
-  private getHeaders(): HeadersInit {
-    return {
-      'Content-Type': 'application/json',
-    };
-  }
-
-  /**
-   * Maneja la respuesta de la API
-   */
-  private async handleResponse<T>(response: Response): Promise<T> {
-    if (!response.ok) {
-      const errorData = await response.text();
-      throw new Error(`Error del servidor: ${response.status} ${response.statusText} - ${errorData}`);
-    }
-    
-    return await response.json();
-  }
-
-  /**
    * Obtiene todos los contactos del usuario logueado
    */
   async getAllContactos(): Promise<ApiResponse<ContactResponse[]>> {
-    try {
-      const response = await fetch(apiEndpoints.contactos, {
-        method: 'GET',
-        headers: this.getHeaders()
-      });
-
-      const data = await this.handleResponse<ApiResponse<ContactResponse[]>>(response);
-      return data;
-
-    } catch (error) {
-      console.error('Error fetching contacts:', error);
-      
-      return {
-        success: false,
-        error: 'Error de conexión al obtener contactos',
-        details: error instanceof Error ? error.message : 'Error desconocido'
-      };
-    }
+    return authGet<ContactResponse[]>(apiEndpoints.contactos);
   }
 
   /**
    * Crea un nuevo contacto
    */
   async createContacto(contactData: ContactData): Promise<ApiResponse<ContactResponse>> {
-    try {
-      const response = await fetch(apiEndpoints.contactos, {
-        method: 'POST',
-        headers: this.getHeaders(),
-        body: JSON.stringify(contactData)
-      });
-
-      const data = await this.handleResponse<ApiResponse<ContactResponse>>(response);
-      return data;
-
-    } catch (error) {
-      console.error('Error creating contact:', error);
-      
-      return {
-        success: false,
-        error: 'Error de conexión al crear contacto',
-        details: error instanceof Error ? error.message : 'Error desconocido'
-      };
-    }
+    return authPost<ContactResponse>(apiEndpoints.contactos, contactData);
   }
 
   /**
    * Actualiza un contacto existente
    */
-  async updateContacto(contactData: Partial<ContactData> & { id: number }): Promise<ApiResponse<ContactResponse>> {
-    try {
-      const response = await fetch(apiEndpoints.contactos, {
-        method: 'PATCH',
-        headers: this.getHeaders(),
-        body: JSON.stringify(contactData)
-      });
-
-      const data = await this.handleResponse<ApiResponse<ContactResponse>>(response);
-      return data;
-
-    } catch (error) {
-      console.error('Error updating contact:', error);
-      
-      return {
-        success: false,
-        error: 'Error de conexión al actualizar contacto',
-        details: error instanceof Error ? error.message : 'Error desconocido'
-      };
-    }
+  async updateContacto(contactData: Partial<ContactData> & { id: string }): Promise<ApiResponse<ContactResponse>> {
+    return authPatch<ContactResponse>(apiEndpoints.contactos, contactData);
   }
 
   /**
    * Elimina un contacto
    */
-  async deleteContacto(id: number): Promise<ApiResponse> {
-    try {
-      const response = await fetch(`${apiEndpoints.contactos}?id=${id}`, {
-        method: 'DELETE',
-        headers: this.getHeaders()
-      });
-
-      const data = await this.handleResponse<ApiResponse>(response);
-      return data;
-
-    } catch (error) {
-      console.error('Error deleting contact:', error);
-      
-      return {
-        success: false,
-        error: 'Error de conexión al eliminar contacto',
-        details: error instanceof Error ? error.message : 'Error desconocido'
-      };
-    }
+  async deleteContacto(id: string): Promise<ApiResponse> {
+    return authDelete(`${apiEndpoints.contactos}/${id}`);
   }
 
   /**
@@ -188,13 +98,7 @@ class ContactoServices {
       const formData = new FormData();
       formData.append('file', file);
 
-      const response = await fetch(apiEndpoints.contactosImportar, {
-        method: 'POST',
-        body: formData
-      });
-
-      const data = await this.handleResponse<ApiResponse<ImportResponse>>(response);
-      return data;
+      return authPost<ImportResponse>(apiEndpoints.contactosImportar, formData, true);
 
     } catch (error) {
       console.error('Error importing contacts:', error);
@@ -212,7 +116,9 @@ class ContactoServices {
    */
   async exportarContactos(): Promise<ApiResponse<Blob>> {
     try {
-      const response = await fetch(apiEndpoints.contactosExportar, {
+      const { authFetch } = await import('@/utils/apiClient');
+      
+      const response = await authFetch(apiEndpoints.contactosExportar, {
         method: 'GET'
       });
 

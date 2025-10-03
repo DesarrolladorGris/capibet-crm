@@ -1,28 +1,12 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { RefreshCw, Plus, MessageCircle, Edit2, Trash2 } from 'lucide-react';
-import { SupabaseService } from '@/services/supabaseService';
-
-// Interfaces
-interface RespuestaRapida {
-  id?: number;
-  titulo: string;
-  contenido: string;
-  categoria: string;
-  activa: boolean;
-  created_at?: string;
-}
-
-interface RespuestaRapidaFormData {
-  titulo: string;
-  contenido: string;
-  categoria: string;
-}
+import { respuestasRapidasServices, RespuestaRapida, RespuestaRapidaFormData } from '@/services/respuestasRapidasServices';
 
 // Datos de prueba
 const respuestasPrueba: RespuestaRapida[] = [
   {
-    id: 1,
+    id: '00000000-0000-0000-0000-000000000001',
     titulo: 'Bienvenida',
     contenido: '¡Hola! Bienvenido a CAPIBET Casino. ¿En qué puedo ayudarte hoy?',
     categoria: 'General',
@@ -30,7 +14,7 @@ const respuestasPrueba: RespuestaRapida[] = [
     created_at: '2024-12-28T10:00:00Z'
   },
   {
-    id: 2,
+    id: '00000000-0000-0000-0000-000000000002',
     titulo: 'Problema de Pago',
     contenido: 'Entiendo que tienes un problema con el pago. Te ayudo a resolverlo paso a paso.',
     categoria: 'Soporte',
@@ -38,7 +22,7 @@ const respuestasPrueba: RespuestaRapida[] = [
     created_at: '2024-12-28T10:00:00Z'
   },
   {
-    id: 3,
+    id: '00000000-0000-0000-0000-000000000003',
     titulo: 'Promociones',
     contenido: 'Tenemos excelentes promociones disponibles. Te envío el enlace con todos los detalles.',
     categoria: 'Marketing',
@@ -46,7 +30,7 @@ const respuestasPrueba: RespuestaRapida[] = [
     created_at: '2024-12-28T10:00:00Z'
   },
   {
-    id: 4,
+    id: '00000000-0000-0000-0000-000000000004',
     titulo: 'Cierre de Sesión',
     contenido: 'Para cerrar sesión, haz clic en tu nombre en la esquina superior derecha y selecciona "Cerrar Sesión".',
     categoria: 'Cuenta',
@@ -83,15 +67,13 @@ export default function RespuestasRapidasTab() {
   const [nuevaCategoria, setNuevaCategoria] = useState('');
   const [error, setError] = useState<string | null>(null);
 
-  const supabaseService = new SupabaseService();
-
   const cargarRespuestas = async () => {
     try {
       setLoading(true);
       setError(null);
       console.log('RespuestasRapidasTab: Cargando respuestas desde Supabase...');
       
-      const response = await supabaseService.getAllRespuestasRapidas();
+      const response = await respuestasRapidasServices.getAllRespuestasRapidas();
       
       if (response.success && response.data) {
         setRespuestas(response.data);
@@ -127,7 +109,7 @@ export default function RespuestasRapidasTab() {
     try {
       if (editingRespuesta && editingRespuesta.id) {
         // Actualizar respuesta existente
-        const response = await supabaseService.updateRespuestaRapida(editingRespuesta.id, formData);
+        const response = await respuestasRapidasServices.updateRespuestaRapida(editingRespuesta.id, formData);
         
         if (response.success) {
           // Recargar las respuestas desde la base de datos
@@ -140,7 +122,7 @@ export default function RespuestasRapidasTab() {
         }
       } else {
         // Crear nueva respuesta
-        const response = await supabaseService.createRespuestaRapida(formData);
+        const response = await respuestasRapidasServices.createRespuestaRapida(formData);
         
         if (response.success) {
           // Recargar las respuestas desde la base de datos
@@ -177,7 +159,7 @@ export default function RespuestasRapidasTab() {
     }
 
     try {
-      const response = await supabaseService.deleteRespuestaRapida(respuestaToDelete.id);
+      const response = await respuestasRapidasServices.deleteRespuestaRapida(respuestaToDelete.id);
       
       if (response.success) {
         // Recargar las respuestas desde la base de datos
@@ -201,7 +183,7 @@ export default function RespuestasRapidasTab() {
     }
 
     try {
-      const response = await supabaseService.toggleRespuestaRapidaStatus(respuesta.id, !respuesta.activa);
+      const response = await respuestasRapidasServices.toggleRespuestaRapidaStatus(respuesta.id, !respuesta.activa);
       
       if (response.success) {
         // Recargar las respuestas desde la base de datos
@@ -276,11 +258,12 @@ export default function RespuestasRapidasTab() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center">
-        <div>
-          <h3 className="text-lg font-semibold text-gray-900">Respuestas Rápidas</h3>
-          <p className="text-sm text-gray-600">
-            Gestiona respuestas predefinidas para el soporte al cliente
-          </p>
+        <div className="flex items-center space-x-3">
+          <MessageCircle className="w-8 h-8" />
+          <div>
+            <h2 className="text-white text-2xl font-semibold">Respuestas Rápidas</h2>
+            <p className="text-gray-400 text-sm">Crear, editar y eliminar respuestas predefinidas.</p>
+          </div>
         </div>
         <div className="flex space-x-3">
                      <button

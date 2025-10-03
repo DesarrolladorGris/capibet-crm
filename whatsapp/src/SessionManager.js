@@ -242,10 +242,18 @@ export class SessionManager {
         
         const message = m.messages[0];
         
-        // FILTRO: Solo procesar mensajes entrantes
+        // FILTRO: Solo procesar mensajes entrantes (excluye mensajes enviados por nosotros)
         if (!this._isValidIncomingMessage(message)) {
-            console.log(`[${sessionId}] === MENSAJE FILTRADO (NO ES MENSAJE ENTRANTE) ===`);
-            console.log(`[${sessionId}] Tipo de mensaje filtrado:`, this._getMessageType(message));
+            const messageType = this._getMessageType(message);
+            const fromMe = message.key?.fromMe;
+            
+            if (fromMe) {
+                console.log(`[${sessionId}] === MENSAJE FILTRADO (ENVIADO POR NOSOTROS) ===`);
+                console.log(`[${sessionId}] Mensaje enviado por nosotros omitido para evitar duplicación`);
+            } else {
+                console.log(`[${sessionId}] === MENSAJE FILTRADO (NO ES MENSAJE ENTRANTE VÁLIDO) ===`);
+                console.log(`[${sessionId}] Tipo de mensaje filtrado:`, messageType);
+            }
             return;
         }
 
@@ -294,16 +302,19 @@ export class SessionManager {
             // Remitente: El participant o remoteJid (quien nos envía)
             // Destinatario: Nuestra sesión
             
-            senderPhoneNumber = this._extractPhoneNumberFromJid(participant);
-            
+            // Para mensajes con @lid, usar el remoteJid completo como senderPhoneNumber
             if (remoteJid.includes('@lid')) {
+                senderPhoneNumber = remoteJid; // Usar el JID completo para @lid
                 senderAccountType = 'lid_account';
-            } else if (remoteJid.includes('@s.whatsapp.net')) {
-                senderAccountType = 'personal';
-            } else if (remoteJid.includes('@g.us')) {
-                senderAccountType = 'group';
             } else {
-                senderAccountType = 'other';
+                senderPhoneNumber = this._extractPhoneNumberFromJid(participant);
+                if (remoteJid.includes('@s.whatsapp.net')) {
+                    senderAccountType = 'personal';
+                } else if (remoteJid.includes('@g.us')) {
+                    senderAccountType = 'group';
+                } else {
+                    senderAccountType = 'other';
+                }
             }
             
             // El destinatario es nuestra sesión
@@ -370,6 +381,9 @@ export class SessionManager {
         
         // Crear objeto de datos del mensaje con información completa
         const messageData = {
+            // ID único del mensaje (CRÍTICO para prevenir duplicados)
+            messageId: message.key?.id,
+            
             // Información de la sesión (destinatario)
             sessionId,
             recipientPhoneNumber: sessionData.phoneNumber,
@@ -400,6 +414,7 @@ export class SessionManager {
         };
 
         console.log(`[${sessionId}] === DATOS DEL MENSAJE ===`);
+        console.log(`[${sessionId}] Message ID: ${messageData.messageId}`);
         console.log(`[${sessionId}] Dirección: ${fromMe ? 'SALIENTE' : 'ENTRANTE'} (fromMe: ${fromMe})`);
         console.log(`[${sessionId}] Remitente: ${senderName} (${senderPhoneNumber}) - Tipo: ${senderAccountType}`);
         console.log(`[${sessionId}] Destinatario: ${recipientInfo.name} (${recipientInfo.phoneNumber})`);
@@ -420,14 +435,19 @@ export class SessionManager {
 
     /**
      * Extrae el número de teléfono de cualquier tipo de JID
+     * Para JIDs con @lid, devuelve el JID completo
      */
     _extractPhoneNumberFromJid(jid) {
         if (!jid) return null;
         
+        // Para JIDs que contienen @lid, devolver el JID completo
+        if (jid.includes('@lid')) {
+            return jid;
+        }
+        
         // Para JIDs que contienen números de teléfono
         // Ejemplos:
         // "5491234567890@s.whatsapp.net" -> "5491234567890"
-        // "126224911302675@lid" -> "126224911302675"
         // "5491234567890:1@s.whatsapp.net" -> "5491234567890"
         
         // Dividir por '@' para separar el identificador del dominio
@@ -499,10 +519,18 @@ export class SessionManager {
 
     /**
      * Valida si un mensaje debe procesarse (solo conversaciones individuales, excluye grupos)
+     * IMPORTANTE: Excluye mensajes enviados por nosotros mismos para evitar duplicación
      */
     _isValidIncomingMessage(message) {
         // Verificar que el mensaje tenga la estructura básica
         if (!message || !message.key || !message.message) {
+            return false;
+        }
+
+        // FILTRO CRÍTICO: Excluir mensajes enviados por nosotros mismos
+        // Esto evita que los mensajes enviados a través del endpoint sean procesados como recibidos
+        if (message.key.fromMe) {
+            console.log(`[FILTER] Mensaje enviado por nosotros omitido (fromMe: true)`);
             return false;
         }
 
@@ -969,6 +997,7 @@ export class SessionManager {
      */
     async sendMessage(sessionId, number, message) {
         const sessionData = this.sessions.get(sessionId);
+
         if (!sessionData) {
             throw new Error(`Sesión ${sessionId} no encontrada`);
         }
@@ -984,10 +1013,14 @@ export class SessionManager {
         console.log(`[${sessionId}] Número destino:`, formattedNumber);
         console.log(`[${sessionId}] Mensaje:`, message);
         
-        // Verificar si el número existe en WhatsApp
-        const [result] = await sessionData.sock.onWhatsApp(number);
-        if (!result?.exists) {
-            throw new Error('El número no tiene WhatsApp');
+        // Verificar si el número existe en WhatsApp (solo para números individuales)
+        // No verificar para grupos (@g.us), newsletters (@lid), etc.
+        const isPhoneNumber = formattedNumber.endsWith('@s.whatsapp.net');
+        if (isPhoneNumber) {
+            const [result] = await sessionData.sock.onWhatsApp(number);
+            if (!result?.exists) {
+                throw new Error('El número no tiene WhatsApp');
+            }
         }
         
         // Enviar mensaje

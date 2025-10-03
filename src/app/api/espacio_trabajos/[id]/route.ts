@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseConfig } from '@/config/supabase';
 import { EspacioTrabajoData } from '../domain/espacio_trabajo';
-import { getHeaders, handleResponse } from '../utils';
+import { handleResponse } from '../utils';
+import { getSupabaseHeaders } from '@/utils/supabaseHeaders';
 
 // GET /api/espacio_trabajos/[id] - Obtener espacio de trabajo por ID
 export async function GET(
@@ -11,7 +12,7 @@ export async function GET(
   try {
     const id = params.id;
     
-    if (!id || isNaN(Number(id))) {
+    if (!id) {
       return NextResponse.json({
         success: false,
         error: 'ID de espacio de trabajo inválido'
@@ -20,7 +21,7 @@ export async function GET(
 
     const response = await fetch(`${supabaseConfig.restUrl}/espacios_de_trabajo?id=eq.${id}`, {
       method: 'GET',
-      headers: getHeaders()
+      headers: getSupabaseHeaders(request, { preferRepresentation: true })
     });
 
     if (!response.ok) {
@@ -59,7 +60,7 @@ export async function PATCH(
   try {
     const id = params.id;
     
-    if (!id || isNaN(Number(id))) {
+    if (!id) {
       return NextResponse.json({
         success: false,
         error: 'ID de espacio de trabajo inválido'
@@ -70,7 +71,7 @@ export async function PATCH(
 
     const response = await fetch(`${supabaseConfig.restUrl}/espacios_de_trabajo?id=eq.${id}`, {
       method: 'PATCH',
-      headers: getHeaders(),
+      headers: getSupabaseHeaders(request, { preferRepresentation: true }),
       body: JSON.stringify(espacioData)
     });
 
@@ -110,16 +111,58 @@ export async function DELETE(
   try {
     const id = params.id;
     
-    if (!id || isNaN(Number(id))) {
+    if (!id) {
       return NextResponse.json({
         success: false,
         error: 'ID de espacio de trabajo inválido'
       }, { status: 400 });
     }
 
+    // Paso 1: Verificar si existen embudos asociados al espacio de trabajo
+    const embudosResponse = await fetch(`${supabaseConfig.restUrl}/embudos?espacio_id=eq.${id}`, {
+      method: 'GET',
+      headers: getSupabaseHeaders(request, { preferRepresentation: true })
+    });
+
+    if (!embudosResponse.ok) {
+      return NextResponse.json({
+        success: false,
+        error: 'Error al verificar embudos asociados',
+        details: `Error del servidor: ${embudosResponse.status} ${embudosResponse.statusText}`
+      }, { status: embudosResponse.status });
+    }
+
+    const embudosData = await handleResponse(embudosResponse);
+    const embudos = Array.isArray(embudosData) ? embudosData : [];
+
+    // Paso 2: Si existen embudos, eliminarlos primero
+    if (embudos.length > 0) {
+      console.log(`Eliminando ${embudos.length} embudo(s) asociado(s) al espacio de trabajo ${id}`);
+      
+      // Eliminar todos los embudos asociados
+      const deleteEmbudosResponse = await fetch(`${supabaseConfig.restUrl}/embudos?espacio_id=eq.${id}`, {
+        method: 'DELETE',
+        headers: getSupabaseHeaders(request, { preferRepresentation: true })
+      });
+
+      if (!deleteEmbudosResponse.ok) {
+        const errorData = await deleteEmbudosResponse.text();
+        
+        return NextResponse.json({
+          success: false,
+          error: 'Error al eliminar embudos asociados',
+          details: `Error del servidor: ${deleteEmbudosResponse.status} ${deleteEmbudosResponse.statusText} - ${errorData}`
+        }, { status: deleteEmbudosResponse.status });
+      }
+
+      await handleResponse(deleteEmbudosResponse);
+      console.log(`Embudos eliminados exitosamente para el espacio de trabajo ${id}`);
+    }
+
+    // Paso 3: Eliminar el espacio de trabajo
     const response = await fetch(`${supabaseConfig.restUrl}/espacios_de_trabajo?id=eq.${id}`, {
       method: 'DELETE',
-      headers: getHeaders()
+      headers: getSupabaseHeaders(request, { preferRepresentation: true })
     });
 
     if (!response.ok) {
@@ -127,7 +170,7 @@ export async function DELETE(
       
       return NextResponse.json({
         success: false,
-        error: `Error del servidor: ${response.status} ${response.statusText}`,
+        error: `Error del servidor al eliminar espacio de trabajo: ${response.status} ${response.statusText}`,
         details: errorData
       }, { status: response.status });
     }
@@ -136,7 +179,10 @@ export async function DELETE(
     
     return NextResponse.json({
       success: true,
-      data: undefined
+      data: undefined,
+      message: embudos.length > 0 
+        ? `Espacio de trabajo eliminado junto con ${embudos.length} embudo(s) asociado(s)`
+        : 'Espacio de trabajo eliminado exitosamente'
     });
 
   } catch (error) {

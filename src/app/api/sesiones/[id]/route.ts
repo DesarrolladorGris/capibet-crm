@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseConfig } from '@/config/supabase';
 import { SesionData, SesionResponse } from '../domain/sesion';
-import { getHeaders, handleResponse } from '../utils';
+import { handleResponse } from '../utils';
+import { getSupabaseHeaders } from '@/utils/supabaseHeaders';
 import { whatsAppApiService } from '@/config/whatsapp_api';
 
 // GET /api/sesiones/[id] - Obtener sesión por ID
@@ -12,7 +13,7 @@ export async function GET(
   try {
     const { id } = await params;
     
-    if (!id || isNaN(Number(id))) {
+    if (!id) {
       return NextResponse.json({
         success: false,
         error: 'ID de sesión inválido'
@@ -21,7 +22,7 @@ export async function GET(
 
     const response = await fetch(`${supabaseConfig.restUrl}/sesiones?id=eq.${id}`, {
       method: 'GET',
-      headers: getHeaders()
+      headers: getSupabaseHeaders(request, { preferRepresentation: true })
     });
 
     if (!response.ok) {
@@ -57,7 +58,7 @@ export async function PATCH(
   try {
     const { id } = await params;
     
-    if (!id || isNaN(Number(id))) {
+    if (!id) {
       return NextResponse.json({
         success: false,
         error: 'ID de sesión inválido'
@@ -68,7 +69,7 @@ export async function PATCH(
 
     const response = await fetch(`${supabaseConfig.restUrl}/sesiones?id=eq.${id}`, {
       method: 'PATCH',
-      headers: getHeaders(),
+      headers: getSupabaseHeaders(request, { preferRepresentation: true }),
       body: JSON.stringify(sesionData),
     });
 
@@ -104,19 +105,19 @@ export async function DELETE(
   try {
     const { id } = await params;
     
-    if (!id || isNaN(Number(id))) {
+    if (!id) {
       return NextResponse.json({
         success: false,
         error: 'ID de sesión inválido'
       }, { status: 400 });
     }
 
-    const sesionId = Number(id);
+    const sesionId = id;
 
     // 0. Obtener la sesión para verificar su tipo y whatsapp_session
     const sesionResponse = await fetch(`${supabaseConfig.restUrl}/sesiones?id=eq.${sesionId}`, {
       method: 'GET',
-      headers: getHeaders()
+      headers: getSupabaseHeaders(request, { preferRepresentation: true })
     });
 
     if (!sesionResponse.ok) {
@@ -139,7 +140,7 @@ export async function DELETE(
     // 1. Obtener todos los chats de la sesión
     const chatsResponse = await fetch(`${supabaseConfig.restUrl}/chats?sesion_id=eq.${sesionId}`, {
       method: 'GET',
-      headers: getHeaders()
+      headers: getSupabaseHeaders(request, { preferRepresentation: true })
     });
 
     if (!chatsResponse.ok) {
@@ -156,7 +157,7 @@ export async function DELETE(
     for (const chat of chatsArray) {
       const mensajesResponse = await fetch(`${supabaseConfig.restUrl}/mensajes?chat_id=eq.${chat.id}`, {
         method: 'DELETE',
-        headers: getHeaders()
+        headers: getSupabaseHeaders(request, { preferRepresentation: true })
       });
 
       if (!mensajesResponse.ok) {
@@ -169,7 +170,7 @@ export async function DELETE(
     if (chatsArray.length > 0) {
       const deleteChatsResponse = await fetch(`${supabaseConfig.restUrl}/chats?sesion_id=eq.${sesionId}`, {
         method: 'DELETE',
-        headers: getHeaders()
+        headers: getSupabaseHeaders(request, { preferRepresentation: true })
       });
 
       if (!deleteChatsResponse.ok) {
@@ -189,7 +190,7 @@ export async function DELETE(
         // 4.1. Obtener la whatsapp_session para acceder al session_id del orquestador
         const whatsappSessionResponse = await fetch(`${supabaseConfig.restUrl}/whatsapp_sessions?id=eq.${sesion.whatsapp_session}`, {
           method: 'GET',
-          headers: getHeaders()
+          headers: getSupabaseHeaders(request, { preferRepresentation: true })
         });
 
         if (whatsappSessionResponse.ok) {
@@ -215,7 +216,7 @@ export async function DELETE(
         // 4.3. Eliminar la whatsapp_session de la base de datos
         const deleteWhatsAppSessionResponse = await fetch(`${supabaseConfig.restUrl}/whatsapp_sessions?id=eq.${sesion.whatsapp_session}`, {
           method: 'DELETE',
-          headers: getHeaders()
+          headers: getSupabaseHeaders(request, { preferRepresentation: true })
         });
 
         if (deleteWhatsAppSessionResponse.ok) {
@@ -235,7 +236,7 @@ export async function DELETE(
     // 5. Finalmente, eliminar la sesión
     const response = await fetch(`${supabaseConfig.restUrl}/sesiones?id=eq.${sesionId}`, {
       method: 'DELETE',
-      headers: getHeaders()
+      headers: getSupabaseHeaders(request, { preferRepresentation: true })
     });
 
     if (!response.ok) {

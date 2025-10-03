@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseConfig } from '@/config/supabase';
 import { whatsAppApiService } from '@/config/whatsapp_api';
-import { getHeaders, handleResponse } from '../../utils';
+import { handleResponse } from '../../utils';
+import { getSupabaseHeaders } from '@/utils/supabaseHeaders';
 
 /**
  * POST /api/whatsapp_sessions/[id]/disconnect
@@ -24,7 +25,7 @@ export async function POST(
     // Obtener la sesión de WhatsApp para verificar que existe y obtener el session_id
     const fetchResponse = await fetch(`${supabaseConfig.restUrl}/whatsapp_sessions?id=eq.${id}`, {
       method: 'GET',
-      headers: getHeaders()
+      headers: getSupabaseHeaders(request, { preferRepresentation: true })
     });
 
     if (!fetchResponse.ok) {
@@ -77,7 +78,7 @@ export async function POST(
       // Actualizar el estado de la sesión en la base de datos
       const updateResponse = await fetch(`${supabaseConfig.restUrl}/whatsapp_sessions?id=eq.${id}`, {
         method: 'PATCH',
-        headers: getHeaders(),
+        headers: getSupabaseHeaders(request, { preferRepresentation: true }),
         body: JSON.stringify({
           status: 'disconnected',
           updated_at: new Date().toISOString()

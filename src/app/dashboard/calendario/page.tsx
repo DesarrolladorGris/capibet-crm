@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Tag, Zap, User, Edit2, Trash2, Calendar, AlertTriangle } from 'lucide-react';
-import { isUserAuthenticated } from '@/utils/auth';
-import { supabaseService } from '@/services/supabaseService';
+import { isUserAuthenticated, getUserRole, getCurrentUserId } from '@/utils/auth';
+import { tareasServices } from '@/services/tareasServices';
 import { userServices } from '@/services/userServices';
 import { UsuarioResponse } from '@/app/api/usuarios/domain/usuario';
 
@@ -28,8 +28,7 @@ interface Task {
 
 interface Usuario {
   id: number;
-  nombre_usuario: string;
-  correo_electronico: string;
+  nombre: string;
   rol: string;
 }
 
@@ -97,11 +96,11 @@ export default function CalendarioPage() {
   const loadTareas = async () => {
     setLoading(true);
     try {
-      const result = await supabaseService.getAllTareas();
+      const result = await tareasServices.getAllTareas();
       if (result.success && result.data) {
         // Obtener el rol del usuario actual
-        const currentUserRole = localStorage.getItem('userRole');
-        const currentUserId = parseInt(localStorage.getItem('userId') || '0');
+        const currentUserRole = getUserRole();
+        const currentUserId = getCurrentUserId();
         
         // Enriquecer tareas con información de usuarios y colores
         let enrichedTasks = result.data.map((task: Task) => {
@@ -113,7 +112,7 @@ export default function CalendarioPage() {
             hora: task.hora || '09:00', // Hora por defecto si no se especifica
             color: categoria?.color || '#4ecdc4',
             completada: false, // Por defecto, las tareas no están completadas
-            asignado_nombre: usuario?.nombre_usuario || undefined
+            asignado_nombre: usuario?.nombre || undefined
           };
         });
 
@@ -243,7 +242,7 @@ export default function CalendarioPage() {
     setLoading(true);
     
     try {
-      const currentUserId = parseInt(localStorage.getItem('userId') || '0');
+      const currentUserId = getCurrentUserId();
       
       const tareaData = {
         titulo: formData.titulo,
@@ -257,7 +256,7 @@ export default function CalendarioPage() {
 
       if (editingTask) {
         // Actualizar tarea existente
-        const result = await supabaseService.updateTarea(editingTask.id, tareaData);
+        const result = await tareasServices.updateTarea(editingTask.id, tareaData);
         if (result.success) {
           // Recargar tareas para obtener datos actualizados
           await loadTareas();
@@ -267,7 +266,7 @@ export default function CalendarioPage() {
         }
       } else {
         // Crear nueva tarea
-        const result = await supabaseService.createTarea(tareaData);
+        const result = await tareasServices.createTarea(tareaData);
         if (result.success) {
           // Recargar tareas para obtener datos actualizados
           await loadTareas();
@@ -296,7 +295,7 @@ export default function CalendarioPage() {
 
     setLoading(true);
     try {
-      const result = await supabaseService.deleteTarea(taskToDelete.id);
+      const result = await tareasServices.deleteTarea(taskToDelete.id);
       if (result.success) {
         // Recargar tareas para obtener datos actualizados
         await loadTareas();
@@ -360,7 +359,7 @@ export default function CalendarioPage() {
               ))}
             </div>
 
-            {localStorage.getItem('userRole') !== 'Comercial' && (
+            {getUserRole() !== 'Comercial' && (
               <button 
                 onClick={() => openNewTaskModal(selectedDate)}
                 className="flex items-center space-x-2 bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] text-white px-4 py-2 rounded text-sm font-medium transition-colors cursor-pointer"
@@ -633,7 +632,7 @@ export default function CalendarioPage() {
                     >
                       <Edit2 className="w-4 h-4" />
                     </button>
-                    {localStorage.getItem('userRole') !== 'Comercial' && (
+                    {getUserRole() !== 'Comercial' && (
                       <button
                         onClick={() => openDeleteModal(task)}
                         className="text-[var(--text-muted)] hover:text-red-400 text-sm cursor-pointer"
@@ -649,7 +648,7 @@ export default function CalendarioPage() {
                 <div className="text-center py-8 text-[var(--text-muted)]">
                   <div className="text-4xl mb-2"><Calendar className="w-4 h-4" /></div>
                   <p>
-                    {localStorage.getItem('userRole') === 'Comercial' 
+                    {getUserRole() === 'Comercial' 
                       ? 'No tienes tareas asignadas para este día'
                       : 'No hay tareas para este día'
                     }
@@ -719,7 +718,7 @@ export default function CalendarioPage() {
                       >
                         <Edit2 className="w-4 h-4" />
                       </button>
-                      {localStorage.getItem('userRole') !== 'Comercial' && (
+                      {getUserRole() !== 'Comercial' && (
                         <button
                           onClick={() => openDeleteModal(task)}
                           className="text-[var(--text-muted)] hover:text-red-400 text-sm cursor-pointer"
@@ -815,7 +814,7 @@ export default function CalendarioPage() {
                 <label className="block text-[var(--text-muted)] text-sm mb-2">Asignar a</label>
                 {localStorage.getItem('userRole') === 'Comercial' ? (
                   <div className="w-full bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded px-3 py-2 text-[var(--text-muted)] cursor-not-allowed">
-                    {usuarios.find(u => u.id === formData.asignada)?.nombre_usuario || 'Sin asignar'} (Solo lectura)
+                    {usuarios.find(u => u.id === formData.asignada)?.nombre || 'Sin asignar'} (Solo lectura)
                   </div>
                 ) : (
                   <select
@@ -828,7 +827,7 @@ export default function CalendarioPage() {
                       .filter(usuario => usuario.rol !== 'Cliente')
                       .map((usuario) => (
                         <option key={usuario.id} value={usuario.id}>
-                          {usuario.nombre_usuario} ({usuario.rol})
+                          {usuario.nombre} ({usuario.rol})
                         </option>
                       ))}
                   </select>

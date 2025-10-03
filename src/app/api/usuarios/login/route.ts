@@ -1,14 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseConfig } from '@/config/supabase';
-import { LoginCredentials, UsuarioData } from '../domain/usuario';
-import { getHeaders, handleResponse } from '../utils';
+import { LoginCredentials, SupabaseAuthResponse, UsuarioData, OrganizacionData } from '../domain/usuario';
+import { getSupabaseHeaders } from '@/utils/supabaseHeaders';
 
-// POST /api/usuarios/login - Autenticación de usuario
+/**
+ * POST /api/usuarios/login - Autenticación de usuario
+ * 
+ * Flujo:
+ * 1. Autentica con Supabase Auth
+ * 2. Obtiene los datos del usuario de la tabla usuarios
+ * 3. Obtiene los datos de la organización
+ * 4. Retorna todo junto
+ */
 export async function POST(request: NextRequest) {
   try {
     const credentials: LoginCredentials = await request.json();
 
-    // Validar que se proporcionen las credenciales
     if (!credentials.correo_electronico || !credentials.contrasena) {
       return NextResponse.json({
         success: false,
@@ -16,7 +23,6 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    // Validar formato de email básico
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(credentials.correo_electronico)) {
       return NextResponse.json({
@@ -25,42 +31,115 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    const response = await fetch(`${supabaseConfig.restUrl}/usuarios?correo_electronico=eq.${encodeURIComponent(credentials.correo_electronico)}&contrasena=eq.${encodeURIComponent(credentials.contrasena)}`, {
-      method: 'GET',
-      headers: getHeaders()
+    const authResponse = await fetch(`${supabaseConfig.url}/auth/v1/token?grant_type=password`, {
+      method: 'POST',
+      headers: getSupabaseHeaders(null),
+      body: JSON.stringify({
+        email: credentials.correo_electronico,
+        password: credentials.contrasena
+      })
     });
 
-    if (!response.ok) {
+    if (!authResponse.ok) {
+      const errorData = await authResponse.json().catch(() => ({}));
       return NextResponse.json({
         success: false,
-        error: 'Error en las credenciales'
-      }, { status: response.status });
+        error: errorData.error_description || 'Credenciales incorrectas'
+      }, { status: authResponse.status });
     }
 
-    const data = await handleResponse(response);
+    const authData: SupabaseAuthResponse = await authResponse.json();
     
-    if (Array.isArray(data) && data.length > 0) {
-      const usuario = data[0] as UsuarioData;
-      
-      // Verificar que el usuario esté activo
-      if (usuario.activo === false) {
-        return NextResponse.json({
-          success: false,
-          error: 'Usuario desactivado. Contacta al administrador.'
-        }, { status: 403 });
-      }
-
-      return NextResponse.json({
-        success: true,
-        data: usuario,
-        message: 'Login exitoso'
-      });
-    } else {
+    const { access_token, refresh_token, user } = authData;
+    
+    if (!user || !user.id) {
       return NextResponse.json({
         success: false,
-        error: 'Credenciales incorrectas'
-      }, { status: 401 });
+        error: 'Error al obtener datos del usuario autenticado'
+      }, { status: 500 });
     }
+
+    const usuarioResponse = await fetch(`${supabaseConfig.restUrl}/usuarios`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': supabaseConfig.anonKey || '',
+        'Authorization': `Bearer ${access_token}`
+      }
+    });
+
+    if (!usuarioResponse.ok) {
+      return NextResponse.json({
+        success: false,
+        error: 'Error al obtener los datos del usuario'
+      }, { status: usuarioResponse.status });
+    }
+
+    const usuariosData = await usuarioResponse.json();
+    
+    if (!Array.isArray(usuariosData) || usuariosData.length === 0) {
+      return NextResponse.json({
+        success: false,
+        error: 'Usuario no encontrado en la base de datos'
+      }, { status: 404 });
+    }
+
+    const usuarioData = usuariosData[0];
+
+    let organizacion: OrganizacionData | undefined;
+    
+    if (usuarioData.organizacion_id) {
+      const organizacionResponse = await fetch(
+        `${supabaseConfig.restUrl}/organizaciones?id=eq.${usuarioData.organizacion_id}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': supabaseConfig.anonKey || '',
+            'Authorization': `Bearer ${access_token}`
+          }
+        }
+      );
+
+      if (organizacionResponse.ok) {
+        const organizacionesData = await organizacionResponse.json();
+        
+        if (Array.isArray(organizacionesData) && organizacionesData.length > 0) {
+          const org = organizacionesData[0];
+          organizacion = {
+            id: org.id,
+            nombre: org.nombre,
+            website: org.website || null,
+            logo: org.logo || null
+          };
+        }
+      }
+    }
+
+    // Paso 4: Construir la respuesta completa
+    const usuarioCompleto: UsuarioData = {
+      id: user.id,
+      correo_electronico: user.email,
+      nombre: usuarioData.nombre,
+      telefono: usuarioData.telefono,
+      codigo_pais: usuarioData.codigo_pais,
+      rol: usuarioData.rol,
+      activo: usuarioData.activo,
+      organizacion_id: usuarioData.organizacion_id,
+      organizacion: organizacion,
+      creado_en: usuarioData.creado_en,
+      actualizado_en: usuarioData.actualizado_en
+    };
+
+    return NextResponse.json({
+      success: true,
+      data: {
+        ...usuarioCompleto,
+        access_token,
+        refresh_token
+      },
+      message: 'Login exitoso'
+    });
 
   } catch (error) {
     console.error('Error in login:', error);

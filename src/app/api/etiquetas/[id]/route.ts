@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseConfig } from '@/config/supabase';
 import { EtiquetaData, EtiquetaResponse } from '../domain/etiqueta';
-import { getHeaders, handleResponse } from '../utils';
+import { handleResponse } from '../utils';
+import { getSupabaseHeaders } from '@/utils/supabaseHeaders';
 
 // GET /api/etiquetas/[id] - Obtener etiqueta por ID
 export async function GET(
@@ -11,7 +12,7 @@ export async function GET(
   try {
     const { id } = await params;
     
-    if (!id || isNaN(Number(id))) {
+    if (!id || typeof id !== 'string' || id.trim() === '') {
       return NextResponse.json({
         success: false,
         error: 'ID de etiqueta inválido'
@@ -20,7 +21,7 @@ export async function GET(
 
     const response = await fetch(`${supabaseConfig.restUrl}/etiquetas?id=eq.${id}`, {
       method: 'GET',
-      headers: getHeaders()
+      headers: getSupabaseHeaders(request, { preferRepresentation: true })
     });
 
     if (!response.ok) {
@@ -56,7 +57,7 @@ export async function PATCH(
   try {
     const { id } = await params;
     
-    if (!id || isNaN(Number(id))) {
+    if (!id || typeof id !== 'string' || id.trim() === '') {
       return NextResponse.json({
         success: false,
         error: 'ID de etiqueta inválido'
@@ -65,10 +66,13 @@ export async function PATCH(
 
     const etiquetaData: Partial<EtiquetaData> = await request.json();
 
+    // Filtrar campos que no deben ser modificados en una actualización
+    const { creado_por, organizacion_id, ...dataToUpdate } = etiquetaData;
+
     const response = await fetch(`${supabaseConfig.restUrl}/etiquetas?id=eq.${id}`, {
       method: 'PATCH',
-      headers: getHeaders(),
-      body: JSON.stringify(etiquetaData),
+      headers: getSupabaseHeaders(request, { preferRepresentation: true }),
+      body: JSON.stringify(dataToUpdate),
     });
 
     if (!response.ok) {
@@ -103,7 +107,7 @@ export async function DELETE(
   try {
     const { id } = await params;
     
-    if (!id || isNaN(Number(id))) {
+    if (!id || typeof id !== 'string' || id.trim() === '') {
       return NextResponse.json({
         success: false,
         error: 'ID de etiqueta inválido'
@@ -112,7 +116,7 @@ export async function DELETE(
 
     const response = await fetch(`${supabaseConfig.restUrl}/etiquetas?id=eq.${id}`, {
       method: 'DELETE',
-      headers: getHeaders()
+      headers: getSupabaseHeaders(request, { preferRepresentation: true })
     });
 
     if (!response.ok) {

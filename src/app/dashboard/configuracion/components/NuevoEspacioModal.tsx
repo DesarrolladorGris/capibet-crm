@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Lightbulb } from 'lucide-react';
 import { espacioTrabajoServices, EspacioTrabajoData } from '@/services/espacioTrabajoServices';
+import { getCurrentUserId, getUserData } from '@/utils/auth';
 
 interface NuevoEspacioModalProps {
   isOpen: boolean;
@@ -35,10 +36,10 @@ export default function NuevoEspacioModal({ isOpen, onClose, onEspacioCreated }:
     setIsLoading(true);
 
     try {
-      // Obtener ID del usuario logueado
-      const userId = localStorage.getItem('userId');
-      if (!userId) {
-        setError('No se pudo obtener la información del usuario. Inicia sesión nuevamente.');
+      // Obtener datos del usuario logueado
+      const userData = getUserData();
+      if (!userData || !userData.organizacion_id) {
+        setError('No se pudo obtener la información del usuario o organización. Inicia sesión nuevamente.');
         setIsLoading(false);
         return;
       }
@@ -46,7 +47,8 @@ export default function NuevoEspacioModal({ isOpen, onClose, onEspacioCreated }:
       // Preparar datos para enviar
       const espacioData: EspacioTrabajoData = {
         nombre: formData.nombre.trim(),
-        creado_por: parseInt(userId)
+        creado_por: userData.id,
+        organizacion_id: userData.organizacion_id
       };
 
       console.log('Creando espacio de trabajo:', espacioData);
@@ -148,13 +150,6 @@ export default function NuevoEspacioModal({ isOpen, onClose, onEspacioCreated }:
             </button>
           </div>
         </form>
-
-        {/* Info */}
-        <div className="mt-4 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
-          <p className="text-blue-400 text-xs">
-            <Lightbulb className="w-4 h-4 inline mr-1" /> El espacio de trabajo se creará asociado a tu usuario actual.
-          </p>
-        </div>
       </div>
     </div>
   );

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseConfig } from '@/config/supabase';
 import { ToggleStatusRequest } from '../../domain/respuesta_rapida';
-import { getHeaders } from '../../utils';
+import { getSupabaseHeaders } from '@/utils/supabaseHeaders';
 
 // PATCH /api/respuestas-rapidas/[id]/toggle-status - Cambiar estado de la respuesta rápida (activa/inactiva)
 export async function PATCH(
@@ -11,10 +11,10 @@ export async function PATCH(
   try {
     const id = params.id;
     
-    if (!id || isNaN(Number(id))) {
+    if (!id) {
       return NextResponse.json({
         success: false,
-        error: 'ID de respuesta rápida inválido'
+        error: 'ID de respuesta rápida requerido'
       }, { status: 400 });
     }
 
@@ -29,7 +29,7 @@ export async function PATCH(
 
     const response = await fetch(`${supabaseConfig.restUrl}/respuestas_rapidas?id=eq.${id}`, {
       method: 'PATCH',
-      headers: getHeaders(),
+      headers: getSupabaseHeaders(request, { preferRepresentation: true }),
       body: JSON.stringify({ activa }),
     });
 

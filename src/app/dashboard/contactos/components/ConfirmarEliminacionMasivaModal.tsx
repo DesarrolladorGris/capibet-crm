@@ -68,11 +68,7 @@ export default function ConfirmarEliminacionMasivaModal({ isOpen, onClose, onCon
 
             {/* Contact Count Info */}
             <div className="bg-[#2a2d35] rounded-lg p-4">
-              <div className="text-gray-300 text-sm mb-2">Contactos a eliminar:</div>
-              <div className="text-white font-medium text-lg">{contactCount} contacto{contactCount !== 1 ? 's' : ''}</div>
-              <div className="text-gray-400 text-sm mt-1">
-                Se eliminarán permanentemente de la base de datos
-              </div>
+              <div className="text-white font-medium text-lg">{contactCount} contacto{contactCount !== 1 ? 's' : ''} seleccionados</div>
             </div>
 
             {/* Buttons */}

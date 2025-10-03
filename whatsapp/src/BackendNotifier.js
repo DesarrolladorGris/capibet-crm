@@ -6,7 +6,7 @@ export class BackendNotifier {
     constructor(options = {}) {
         this.backendBaseUrl = options.backendBaseUrl || 'http://localhost:3001'; // URL de tu backend principal
         this.apiKey = options.apiKey || null; // API Key si es necesario
-        this.timeout = options.timeout || 5000; // Timeout para requests
+        this.timeout = options.timeout || 30000; // Timeout para requests (30 segundos)
         this.retries = options.retries || 3; // Reintentos en caso de error
     }
 
@@ -106,6 +106,9 @@ export class BackendNotifier {
     async notifyMessageReceived(sessionId, messageData) {
         const payload = {
             session_id: sessionId,
+            
+            // ID único del mensaje para prevenir duplicados
+            message_id: messageData.messageId, // ID único de WhatsApp (CRÍTICO para idempotencia)
             
             // Información del remitente
             sender_name: messageData.senderName,
@@ -288,7 +291,7 @@ export const createBackendNotifier = (environment = 'development') => {
     const configs = {
         development: {
             backendBaseUrl: 'http://localhost:3001',
-            timeout: 5000,
+            timeout: 30000,
             retries: 2
         },
         production: {

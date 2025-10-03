@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseConfig } from '@/config/supabase';
 import { RespuestaRapidaData, RespuestaRapidaResponse } from '../domain/respuesta_rapida';
-import { getHeaders, handleResponse } from '../utils';
+import { handleResponse } from '../utils';
+import { getSupabaseHeaders } from '@/utils/supabaseHeaders';
 
 // GET /api/respuestas-rapidas/[id] - Obtener respuesta rápida por ID
 export async function GET(
@@ -11,16 +12,16 @@ export async function GET(
   try {
     const id = params.id;
     
-    if (!id || isNaN(Number(id))) {
+    if (!id) {
       return NextResponse.json({
         success: false,
-        error: 'ID de respuesta rápida inválido'
+        error: 'ID de respuesta rápida requerido'
       }, { status: 400 });
     }
 
     const response = await fetch(`${supabaseConfig.restUrl}/respuestas_rapidas?id=eq.${id}`, {
       method: 'GET',
-      headers: getHeaders()
+      headers: getSupabaseHeaders(request, { preferRepresentation: true })
     });
 
     if (!response.ok) {
@@ -56,10 +57,10 @@ export async function PATCH(
   try {
     const id = params.id;
     
-    if (!id || isNaN(Number(id))) {
+    if (!id) {
       return NextResponse.json({
         success: false,
-        error: 'ID de respuesta rápida inválido'
+        error: 'ID de respuesta rápida requerido'
       }, { status: 400 });
     }
 
@@ -67,7 +68,7 @@ export async function PATCH(
 
     const response = await fetch(`${supabaseConfig.restUrl}/respuestas_rapidas?id=eq.${id}`, {
       method: 'PATCH',
-      headers: getHeaders(),
+      headers: getSupabaseHeaders(request, { preferRepresentation: true }),
       body: JSON.stringify(respuestaData),
     });
 
@@ -103,16 +104,16 @@ export async function DELETE(
   try {
     const id = params.id;
     
-    if (!id || isNaN(Number(id))) {
+    if (!id) {
       return NextResponse.json({
         success: false,
-        error: 'ID de respuesta rápida inválido'
+        error: 'ID de respuesta rápida requerido'
       }, { status: 400 });
     }
 
     const response = await fetch(`${supabaseConfig.restUrl}/respuestas_rapidas?id=eq.${id}`, {
       method: 'DELETE',
-      headers: getHeaders()
+      headers: getSupabaseHeaders(request, { preferRepresentation: true })
     });
 
     if (!response.ok) {

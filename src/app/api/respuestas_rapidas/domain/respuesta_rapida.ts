@@ -1,22 +1,26 @@
 // Tipos para respuestas rápidas
 export interface RespuestaRapidaData {
-  id?: number;
+  id?: string;
   titulo: string;
   contenido: string;
   categoria?: string;
   activa?: boolean;
   created_at?: string;
   updated_at?: string;
+  creado_por?: string;
+  organizacion_id?: string;
 }
 
 export interface RespuestaRapidaResponse {
-  id: number;
+  id: string;
   titulo: string;
   contenido: string;
   categoria: string;
   activa: boolean;
   created_at: string;
   updated_at?: string;
+  creado_por?: string;
+  organizacion_id?: string;
 }
 
 export interface RespuestaRapidaFormData {

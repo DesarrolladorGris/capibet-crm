@@ -19,7 +19,7 @@ const modules: ModuleProgress[] = [
     id: 'dashboard',
     name: 'Módulo de Dashboard',
     description: 'Panel principal con métricas y resumen del sistema',
-    progress: 40,
+    progress: 50,
     status: 'in-progress',
     icon: '🏠',
     color: 'bg-cyan-500'
@@ -28,7 +28,7 @@ const modules: ModuleProgress[] = [
     id: 'embudos',
     name: 'Módulo de Embudos',
     description: 'Automatización de procesos de venta y marketing',
-    progress: 20,
+    progress: 90,
     status: 'in-progress',
     icon: '🔽',
     color: 'bg-purple-500'
@@ -37,7 +37,7 @@ const modules: ModuleProgress[] = [
     id: 'chats',
     name: 'Módulo de Chats',
     description: 'Sistema de comunicación interna y externa',
-    progress: 20,
+    progress: 70,
     status: 'in-progress',
     icon: '💬',
     color: 'bg-orange-500'
@@ -46,8 +46,8 @@ const modules: ModuleProgress[] = [
     id: 'chat-interno',
     name: 'Módulo de Chat Interno',
     description: 'Sistema de comunicación interna del equipo',
-    progress: 70,
-    status: 'in-progress',
+    progress: 100,
+    status: 'completed',
     icon: '💭',
     color: 'bg-teal-500'
   },
@@ -55,7 +55,7 @@ const modules: ModuleProgress[] = [
     id: 'emails',
     name: 'Módulo de Emails',
     description: 'Gestión de campañas de email marketing',
-    progress: 20,
+    progress: 70,
     status: 'in-progress',
     icon: '✉️',
     color: 'bg-red-500'
@@ -64,7 +64,7 @@ const modules: ModuleProgress[] = [
     id: 'calendario',
     name: 'Módulo de Calendario',
     description: 'Planificación y gestión de eventos',
-    progress: 70,
+    progress: 50,
     status: 'in-progress',
     icon: '📅',
     color: 'bg-indigo-500'
@@ -73,8 +73,8 @@ const modules: ModuleProgress[] = [
     id: 'contactos',
     name: 'Módulo de Contactos',
     description: 'Gestión de clientes y base de datos de contactos',
-    progress: 70,
-    status: 'in-progress',
+    progress: 100,
+    status: 'completed',
     icon: '👥',
     color: 'bg-blue-500'
   },
@@ -82,8 +82,8 @@ const modules: ModuleProgress[] = [
     id: 'ventas',
     name: 'Módulo de Ventas',
     description: 'Sistema completo de gestión de ventas de fichas digitales',
-    progress: 60,
-    status: 'in-progress',
+    progress: 100,
+    status: 'completed',
     icon: '🛒',
     color: 'bg-green-500'
   },
@@ -91,7 +91,7 @@ const modules: ModuleProgress[] = [
     id: 'envios-masivos',
     name: 'Módulo de Envíos Masivos',
     description: 'Campañas de comunicación masiva',
-    progress: 20,
+    progress: 0,
     status: 'in-progress',
     icon: '📤',
     color: 'bg-pink-500'
@@ -100,7 +100,7 @@ const modules: ModuleProgress[] = [
     id: 'configuracion',
     name: 'Módulo de Configuración',
     description: 'Administración y configuración del sistema',
-    progress: 60,
+    progress: 65,
     status: 'in-progress',
     icon: '⚙️',
     color: 'bg-gray-500'
@@ -153,7 +153,7 @@ export default function AcademyPage() {
   };
 
   const getOverallProgress = () => {
-    return 52; // Progreso general fijo al 52%
+    return 75; // Progreso general fijo al 52%
   };
 
 

@@ -3,14 +3,14 @@
 import { useState, useEffect } from 'react';
 import { mensajesServices } from '@/services/mensajesServices';
 import { MensajeResponse } from '@/app/api/mensajes/domain/mensaje';
-import { EmbUpdoResponse } from '@/services/supabaseService';
+import { EmbudoResponse } from '@/app/api/embudos/domain/embudo';
 
 interface MoverMensajeModalProps {
   isOpen: boolean;
   onClose: () => void;
   mensaje: MensajeResponse | null;
-  embudos: EmbUpdoResponse[];
-  onMensajeMoved: (mensajeId: number, nuevoEmbudoId: number) => void;
+  embudos: EmbudoResponse[];
+  onMensajeMoved: (mensajeId: string, nuevoEmbudoId: string) => void;
 }
 
 export default function MoverMensajeModal({ 
@@ -20,7 +20,7 @@ export default function MoverMensajeModal({
   embudos,
   onMensajeMoved
 }: MoverMensajeModalProps) {
-  const [selectedEmbudoId, setSelectedEmbudoId] = useState<number>(0);
+  const [selectedEmbudoId, setSelectedEmbudoId] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -29,7 +29,7 @@ export default function MoverMensajeModal({
 
   useEffect(() => {
     if (isOpen && mensaje) {
-      setSelectedEmbudoId(0);
+      setSelectedEmbudoId('');
       setError(null);
     }
   }, [isOpen, mensaje]);
@@ -70,7 +70,7 @@ export default function MoverMensajeModal({
 
   const handleClose = () => {
     if (!isLoading) {
-      setSelectedEmbudoId(0);
+      setSelectedEmbudoId('');
       setError(null);
       onClose();
     }
@@ -115,11 +115,11 @@ export default function MoverMensajeModal({
             </label>
             <select
               value={selectedEmbudoId}
-              onChange={(e) => setSelectedEmbudoId(parseInt(e.target.value))}
+              onChange={(e) => setSelectedEmbudoId(e.target.value)}
               className="w-full px-3 py-2 bg-[#1a1d23] border border-[#3a3d45] rounded text-white focus:outline-none focus:ring-2 focus:ring-[#F29A1F] focus:border-[#F29A1F]"
               disabled={isLoading}
             >
-              <option value={0}>Seleccionar embudo destino</option>
+              <option value=''>Seleccionar embudo destino</option>
               {embudosDisponibles.map((embudo) => (
                 <option key={embudo.id} value={embudo.id}>
                   {embudo.nombre}
